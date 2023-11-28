@@ -1,0 +1,214 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Engine Code">
+      <UniqueIdentifier>{4c3bbf9c-a0c8-47c7-be78-fbaa5a664825}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Starting and Loading">
+      <UniqueIdentifier>{2fe600b7-773b-42fa-81c2-588156898c64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Starting and Loading\UI Load">
+      <UniqueIdentifier>{4d7d1228-e469-47c0-8719-4cfdee7a1ec4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI Resources">
+      <UniqueIdentifier>{aaca3213-d039-4282-b310-b54f96706f1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{d6cd1617-f668-422f-bcf5-c56cdc8bfb1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{7e42c7fe-3556-4407-924d-2325748a5b9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3D">
+      <UniqueIdentifier>{ea475c87-14be-42bc-b6c0-c812ae4b08c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd party">
+      <UniqueIdentifier>{2bb3e2bb-bb79-4837-9ecc-a55460c4d419}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Resources">
+      <UniqueIdentifier>{7744d6c0-4117-445c-91c5-647fa36aa318}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Resources\Math">
+      <UniqueIdentifier>{d0ebdbae-ca57-4544-a496-379c099c2b07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Testing">
+      <UniqueIdentifier>{77919750-a16e-468e-b142-d21d99652646}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI Resources\UI">
+      <UniqueIdentifier>{78dbeee2-0c9f-43d4-ae77-8d0aab961167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders">
+      <UniqueIdentifier>{30acea8c-cd82-4b2b-854c-e43f82d08859}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\3D Shaders">
+      <UniqueIdentifier>{d0f3676b-be52-40bc-9d37-63d6cbecee4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\2D Color Shaders">
+      <UniqueIdentifier>{19a201fa-c703-47e7-9c9b-3d50f2c467fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\2D Texture Shaders">
+      <UniqueIdentifier>{575e5df5-4641-4a8a-87bc-3d117ae02f92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects">
+      <UniqueIdentifier>{33455f58-d1bb-4dba-ba00-5814208bb81a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Resources\Time">
+      <UniqueIdentifier>{bf47795a-2e21-4d82-8a9e-0a62cef78c08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Engine Info">
+      <UniqueIdentifier>{59142712-548f-460a-97c4-e2ee7f6d59d3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="StartEngine.cpp">
+      <Filter>Engine Code\Starting and Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Engine Code\Starting and Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="TextRenderer.cpp">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClCompile>
+    <ClCompile Include="ShipwreckUI.cpp">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowStruct.cpp">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClCompile>
+    <ClCompile Include="UITypes.cpp">
+      <Filter>UI Resources\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelImporter.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="FontCreation.cpp">
+      <Filter>UI Resources\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="testing.cpp">
+      <Filter>Testing</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeManagement.cpp">
+      <Filter>Resource Files\Resources\Time</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="StartEngine.h">
+      <Filter>Engine Code\Starting and Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Engine Code\Starting and Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="TextRenderer.h">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClInclude>
+    <ClInclude Include="ShipwreckUI.h">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowStruct.h">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClInclude>
+    <ClInclude Include="UIElement.h">
+      <Filter>Engine Code\Starting and Loading\UI Load</Filter>
+    </ClInclude>
+    <ClInclude Include="MathExtras.h">
+      <Filter>Resource Files\Resources\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="UITypes.h">
+      <Filter>UI Resources\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelImporter.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="FontCreation.h">
+      <Filter>UI Resources\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="testing.h">
+      <Filter>Testing</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeManagement.h">
+      <Filter>Resource Files\Resources\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files\Engine Info</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico">
+      <Filter>Resource Files\Engine Info</Filter>
+    </Image>
+    <Image Include="icon2.ico">
+      <Filter>Resource Files\Engine Info</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="PixelShader3D.hlsl">
+      <Filter>Rendering\Shaders\3D Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShader3D.hlsl">
+      <Filter>Rendering\Shaders\3D Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PixelShader.hlsl">
+      <Filter>Rendering\Shaders\2D Color Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
+      <Filter>Rendering\Shaders\2D Color Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PixelShaderTexture.hlsl">
+      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShaderTexture.hlsl">
+      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ColoredTexturedPS.hlsl">
+      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ColoredTexturedVS.hlsl">
+      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="3DTexturedPS.hlsl">
+      <Filter>Rendering\Shaders\3D Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="3DTexturedVS.hlsl">
+      <Filter>Rendering\Shaders\3D Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Shipwreck Engine 3D.rc">
+      <Filter>Resource Files\Engine Info</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
