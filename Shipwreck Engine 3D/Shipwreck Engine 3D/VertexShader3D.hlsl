@@ -11,7 +11,7 @@ cbuffer CBuffer {
 VSOut main(float3 pos : POSITION, float4 color : COLOR)
 {
 	VSOut vsout;
-	vsout.pos = mul(float4(pos, 1.0f), transform);
+    vsout.pos = mul(float4(pos, 1.0f), transform);
 	vsout.pos = mul(vsout.pos, camera);
 
 	vsout.color = color;

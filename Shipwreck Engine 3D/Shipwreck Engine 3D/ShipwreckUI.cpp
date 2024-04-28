@@ -12,7 +12,7 @@
 
 
 
-void Graphics::RenderTriangles(std::vector<Vertice> vertices, HWND hWnd) {
+void D3DGraphics::RenderTriangles(std::vector<Vertice> vertices, HWND hWnd) {
 	
 	/*
 	std::ostringstream oss;
@@ -113,7 +113,7 @@ void Graphics::RenderTriangles(std::vector<Vertice> vertices, HWND hWnd) {
 
 
 
-void Graphics::RenderText(std::vector<UV_Vertice> vertices, Vec2 letPos, FT_Bitmap* text_bitmap, HWND hWnd) {
+void D3DGraphics::RenderText(std::vector<UV_Vertice> vertices, Vec2 letPos, FT_Bitmap* text_bitmap, HWND hWnd) {
 
 	/*
 	std::ostringstream oss;
@@ -335,7 +335,7 @@ void Graphics::RenderText(std::vector<UV_Vertice> vertices, Vec2 letPos, FT_Bitm
 
 
 
-void Graphics::RenderTexTris(std::vector<UV_Vertice> vertices, Vec2 texPos, Texture* tex, HWND hWnd) {
+void D3DGraphics::RenderTexTris(std::vector<UV_Vertice> vertices, Vec2 texPos, Texture* tex, HWND hWnd) {
 
 
 	D3D11_SUBRESOURCE_DATA resourceData;
@@ -548,7 +548,7 @@ void Graphics::RenderTexTris(std::vector<UV_Vertice> vertices, Vec2 texPos, Text
 
 
 
-void Graphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned short> indices, Vec3 position, Rotation rotation, Camera camera, HWND hWnd) {
+void D3DGraphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned short> indices, Vec3 position, Rotation rotation, Camera camera, HWND hWnd) {
 
 	int indexSize = indices.size() * sizeof(unsigned short);
 	int vertSize = vertices.size() * sizeof(ColorVertex);
@@ -746,7 +746,7 @@ void Graphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<
 }
 
 
-void Graphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, HWND hWnd) {
+void D3DGraphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, HWND hWnd) {
 
 	int indexSize = model.indices.size() * sizeof(unsigned short);
 	int vertSize = model.vertices.size() * sizeof(TexturedVertex);
@@ -757,28 +757,28 @@ void Graphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera
 
 
 
-	renderer->AddTransparency();
+	renderer->AddTransparency(device, deviceContext);
 
 
 	D3D11_SUBRESOURCE_DATA sd = {};
 	sd.pSysMem = std::data(model.vertices); //model.vertices
 
-	renderer->SetVertexBuffer(vertSize, stride, offset, sd);
+	renderer->SetVertexBuffer(vertSize, stride, offset, sd, device, deviceContext);
 
 
 	D3D11_SUBRESOURCE_DATA indexSd = {};
 	indexSd.pSysMem = std::data(model.indices);
 
-	renderer->SetIndexBuffer(indexSize, indexSd);
+	renderer->SetIndexBuffer(indexSize, indexSd, device, deviceContext);
 
 
-	renderer->SetConstantBuffers(camera, position, rotation);
+	renderer->SetConstantBuffers(camera, position, rotation, device, deviceContext);
 
 
 	//lighting
 
 
-	ID3DBlob* blob = renderer->SetPSAndVS(L"3DTexturedPS.cso", L"3DTexturedVS.cso");
+	ID3DBlob* blob = renderer->SetPSAndVS(L"3DTexturedPS.cso", L"3DTexturedVS.cso", device, deviceContext);
 
 
 
@@ -786,9 +786,9 @@ void Graphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera
 	//input layout idk how to make it dynamic/changeable
 	ID3D11InputLayout* inputLayout;
 	const D3D11_INPUT_ELEMENT_DESC ied[] = {
-		{"Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"Normal",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12u,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"Color",0,DXGI_FORMAT_R8G8B8A8_UNORM,0,24u,D3D11_INPUT_PER_VERTEX_DATA,0}
+		{"Color",0,DXGI_FORMAT_R8G8B8A8_UNORM,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"Normal",0,DXGI_FORMAT_R32G32B32_FLOAT,0,4u,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,16u,D3D11_INPUT_PER_VERTEX_DATA,0}
 	};
 	device->CreateInputLayout(ied, (UINT)std::size(ied), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout);
 	blob->Release();
@@ -801,7 +801,7 @@ void Graphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera
 
 
 
-	renderer->SetViewports(hWnd);
+	renderer->SetViewports(hWnd, device, deviceContext);
 
 
 	//deviceContext->Draw(vertCount, 0u);
@@ -818,7 +818,7 @@ void Graphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera
 
 
 
-void Graphics::DrawTestCube(Color rectColor, Vec3 pos, Rotation rot, Camera camera, HWND hWnd) {
+void D3DGraphics::DrawTestCube(Color rectColor, Vec3 pos, Rotation rot, Camera camera, HWND hWnd) {
 
 	std::vector<ColorVertex> vertices;
 	std::vector<unsigned short> indices = {
@@ -849,7 +849,7 @@ void Graphics::DrawTestCube(Color rectColor, Vec3 pos, Rotation rot, Camera came
 
 
 
-void Graphics::ShowText(Textbox text) {
+void D3DGraphics::ShowText(Textbox text) {
 
 
 	/*FT_Matrix matrix;
@@ -980,7 +980,7 @@ void Graphics::ShowText(Textbox text) {
 }
 
 
-void Graphics::DrawRect(Vec2 coords, Vec2 size, int cornerTris, float roundness/*radius*/, Color rectColor, HWND hWnd) {
+void D3DGraphics::DrawRect(Vec2 coords, Vec2 size, int cornerTris, float roundness/*radius*/, Color rectColor, HWND hWnd) {
 
 	// Color construction:
 	// Color rectColor = Color(1.0f, 0.0f, 0.0f);
@@ -1112,7 +1112,7 @@ void Graphics::DrawRect(Vec2 coords, Vec2 size, int cornerTris, float roundness/
 	vertices.push_back(Vert(-halfX, halfY));*/
 }
 
-void Graphics::DrawSprite(Vec2 coords, Vec2 scale, Texture* tex, HWND hWnd) {
+void D3DGraphics::DrawSprite(Vec2 coords, Vec2 scale, Texture* tex, HWND hWnd) {
 
 	float halfX = ((float)tex->width / tex->height) / 2 * scale.x;
 	float halfY = 1.0f / 2 * scale.y;
@@ -1130,7 +1130,7 @@ void Graphics::DrawSprite(Vec2 coords, Vec2 scale, Texture* tex, HWND hWnd) {
 	RenderTexTris(vertices, coords, tex, hWnd);
 }
 
-void Graphics::DrawTextRect(Vec2 size, Vec2 letPos, FT_Bitmap* ft_bitmap, HWND hWnd) {
+void D3DGraphics::DrawTextRect(Vec2 size, Vec2 letPos, FT_Bitmap* ft_bitmap, HWND hWnd) {
 
 	float halfX = (size.x / 2);
 	float halfY = (size.y / 2);
@@ -1156,7 +1156,7 @@ void Graphics::DrawTextRect(Vec2 size, Vec2 letPos, FT_Bitmap* ft_bitmap, HWND h
 
 //Rendering stuff that works with DX
 
-void Renderer::AddTransparency() {
+void D3DRenderer::AddTransparency(ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 	D3D11_BLEND_DESC blendDesc = {};
 	blendDesc.RenderTarget[0].BlendEnable = FALSE;
@@ -1169,12 +1169,12 @@ void Renderer::AddTransparency() {
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	ID3D11BlendState* blendState;
-	device.CreateBlendState(&blendDesc, &blendState);
-	deviceContext.OMSetBlendState(blendState, nullptr, 0xFFFFFFu);
+	device->CreateBlendState(&blendDesc, &blendState);
+	deviceContext->OMSetBlendState(blendState, nullptr, 0xFFFFFFu);
 	blendState->Release();
 }
 
-void Renderer::SetVertexBuffer(int vertSize, UINT stride, UINT offset, D3D11_SUBRESOURCE_DATA sd/*vertice data*/) {
+void D3DRenderer::SetVertexBuffer(int vertSize, UINT stride, UINT offset, D3D11_SUBRESOURCE_DATA sd, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 	ID3D11Buffer* vertexBuffer;
 	D3D11_BUFFER_DESC bufferDesc = {};
@@ -1186,14 +1186,14 @@ void Renderer::SetVertexBuffer(int vertSize, UINT stride, UINT offset, D3D11_SUB
 	bufferDesc.StructureByteStride = stride;
 
 
-	device.CreateBuffer(&bufferDesc, &sd, &vertexBuffer);
+	device->CreateBuffer(&bufferDesc, &sd, &vertexBuffer);
 
 
-	deviceContext.IASetVertexBuffers(0u, 1u, &vertexBuffer, &stride, &offset);
+	deviceContext->IASetVertexBuffers(0u, 1u, &vertexBuffer, &stride, &offset);
 	vertexBuffer->Release();
 }
 
-void Renderer::SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd/*vertice data*/) {
+void D3DRenderer::SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 	ID3D11Buffer* indexBuffer;
 	D3D11_BUFFER_DESC indexBufferDesc = {};
@@ -1204,13 +1204,13 @@ void Renderer::SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd/*ver
 	indexBufferDesc.ByteWidth = indexSize;
 	indexBufferDesc.StructureByteStride = sizeof(unsigned short);
 
-	device.CreateBuffer(&indexBufferDesc, &indexSd, &indexBuffer);
-	deviceContext.IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0u);
+	device->CreateBuffer(&indexBufferDesc, &indexSd, &indexBuffer);
+	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0u);
 	indexBuffer->Release();
 }
 
 
-void Renderer::SetConstantBuffers(Camera camera, Vec3 position, Rotation rotation) {
+void D3DRenderer::SetConstantBuffers(Camera camera, Vec3 position, Rotation rotation, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 	struct ConstBuffer {
 		DirectX::XMMATRIX transform;
@@ -1251,13 +1251,13 @@ void Renderer::SetConstantBuffers(Camera camera, Vec3 position, Rotation rotatio
 	D3D11_SUBRESOURCE_DATA constSd = {};
 	constSd.pSysMem = constBuffers.data();
 
-	device.CreateBuffer(&constBufferDesc, &constSd, &constBuffer);
-	deviceContext.VSSetConstantBuffers(0u, 1u, &constBuffer);
+	device->CreateBuffer(&constBufferDesc, &constSd, &constBuffer);
+	deviceContext->VSSetConstantBuffers(0u, 1u, &constBuffer);
 	constBuffer->Release();
 }
 
 
-void Renderer::SetViewports(HWND hWnd) {
+void D3DRenderer::SetViewports(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 	RECT rect;
 
@@ -1277,32 +1277,207 @@ void Renderer::SetViewports(HWND hWnd) {
 	vp.MaxDepth = 1;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
-	deviceContext.RSSetViewports(1u, &vp);
+	deviceContext->RSSetViewports(1u, &vp);
 }
 
 
-ID3DBlob* Renderer::SetPSAndVS(const wchar_t* psName, const wchar_t* vsName) {
+ID3DBlob* D3DRenderer::SetPSAndVS(const wchar_t* psName, const wchar_t* vsName, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 
 	ID3D11PixelShader* pixelShader;
 	ID3DBlob* blob;
 
 	D3DReadFileToBlob(psName, &blob);
-	device.CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
+	device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
 	blob->Release();
 
-	deviceContext.PSSetShader(pixelShader, nullptr, 0u);
+	deviceContext->PSSetShader(pixelShader, nullptr, 0u);
 	pixelShader->Release();
 
 
 
 	ID3D11VertexShader* vertexShader;
 	D3DReadFileToBlob(L"3DTexturedVS.cso", &blob);
-	device.CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
+	device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 
-	deviceContext.VSSetShader(vertexShader, nullptr, 0u);
+	deviceContext->VSSetShader(vertexShader, nullptr, 0u);
 	vertexShader->Release();
 
 	return blob;
 }
 
+
+
+
+
+
+//OpenGL Section of all implemented functions above
+void GLGraphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned int> indices, Vec3 position, Rotation rotation, Camera camera, GLFWwindow* window) {
+
+	glAttachShader(shaderProgram, vertexShader1);
+	glAttachShader(shaderProgram, fragmentShader1);
+
+	glLinkProgram(shaderProgram);
+
+	int indexSize = indices.size() * sizeof(unsigned int);
+	int vertSize = sizeof(ColorVertex) * vertices.size();
+	int vertCount = vertices.size() * indices.size();
+
+	glBufferData(GL_ARRAY_BUFFER, vertSize, std::data(vertices), GL_STATIC_DRAW);
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, std::data(indices), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Color) + sizeof(Vec3), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Color) + sizeof(Vec3), (void*)(sizeof(Vec3)));
+
+
+
+	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
+	model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	//view = glm::translate(view, glm::vec3(position.x, position.y, position.z));
+	view = glm::translate(view, glm::vec3(-position.x, position.y, -position.z));
+
+	int width;
+	int height;
+	glfwGetWindowSize(window, &width, &height);
+
+	projection = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100000.0f);
+	glm::mat4 mvp = projection * view * model;
+	// Set the uniform
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "matrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+
+	struct ConstBuffer2 {
+		struct
+		{
+			float r;
+			float g;
+			float b;
+			float a;
+		} face_colors[6];
+	};
+
+	ConstBuffer2 faceBuffer =
+	{
+		{
+			{1.0f, 0.0f, 1.0f},
+			{1.0f, 0.0f, 0.0f},
+			{0.0f, 1.0f, 0.0f},
+			{0.0f, 0.0f, 1.0f},
+			{1.0f, 1.0f, 0.0f},
+			{0.0f, 1.0f, 1.0f}
+		}
+	};
+	
+
+	glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, 0);
+}
+
+
+
+void GLGraphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, GLFWwindow* window) {
+
+	glAttachShader(shaderProgram, vertexShader2);
+	glAttachShader(shaderProgram, fragmentShader2);
+
+	glLinkProgram(shaderProgram);
+
+	int indexSize = model.indices.size() * sizeof(unsigned int);
+	int vertSize = sizeof(TexturedVertex) * model.vertices.size();
+	int vertCount = model.vertices.size() * model.indices.size();
+
+	glBufferData(GL_ARRAY_BUFFER, vertSize, std::data(model.vertices), GL_STATIC_DRAW);
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, std::data(model.indices), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Color) + sizeof(Vec3) + sizeof(Vec3), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Color) + sizeof(Vec3) + sizeof(Vec3), (void*)(sizeof(Color)));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Color) + sizeof(Vec3) + sizeof(Vec3), (void*)(sizeof(Color) + sizeof(Vec3)));
+
+
+
+	glm::mat4 _model = glm::mat4(1.0f);
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
+	_model = glm::rotate(_model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	_model = glm::rotate(_model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	_model = glm::rotate(_model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	//view = glm::translate(view, glm::vec3(position.x, position.y, position.z));
+	//view = glm::translate(view, glm::vec3(-position.x, position.y, -position.z));
+	view = glm::translate(view, glm::vec3(8, 8, 0));
+
+	int width;
+	int height;
+	glfwGetWindowSize(window, &width, &height);
+
+	projection = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100000.0f);
+	glm::mat4 transform = view * _model;
+	// Set the uniform
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_FALSE, glm::value_ptr(transform));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "camera"), 1, GL_FALSE, glm::value_ptr(projection));
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+
+
+	glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, 0);
+}
+
+
+
+void GLGraphics::DrawTestCube(Color rectColor, Vec3 pos, Rotation rot, Camera camera, GLFWwindow* window) {
+
+	std::vector<ColorVertex> vertices;
+	/*std::vector<unsigned int> indices = {
+		0,2,1, 2,3,1,
+		1,3,5, 3,7,5,
+		2,6,3, 3,6,7,
+		4,5,7, 4,7,6,
+		0,4,2, 2,4,6,
+		0,1,4, 1,5,4
+	};*/
+	std::vector<unsigned int> indices = {
+		0, 1, 2,   2, 1, 3,
+		1, 5, 3,   3, 5, 7,
+		5, 4, 7,   7, 4, 6,
+		4, 0, 6,   6, 0, 2,
+		2, 3, 6,   6, 3, 7,
+		4, 5, 0,   0, 5, 1
+	};
+
+	/*vertices.push_back({ Vec3(-1.0f, -1.0f, -1.0f),  Color(255,255,255,255)});
+	vertices.push_back({ Vec3(1.0f, -1.0f, -1.0f),  Color(0,255,0,255) });
+	vertices.push_back({ Vec3(-1.0f,  1.0f, -1.0f),  Color(255,0,0,255) });
+	vertices.push_back({ Vec3(1.0f,  1.0f, -1.0f),  Color(0,0,255,255) });
+
+	vertices.push_back({ Vec3(-1.0f, -1.0f,  1.0f),  Color(255,0,255,255) });
+	vertices.push_back({ Vec3(1.0f, -1.0f,  1.0f),  Color(255,255,0,255) });
+	vertices.push_back({ Vec3(-1.0f,  1.0f,  1.0f),  Color(0,255,255,255) });
+	vertices.push_back({ Vec3(1.0f,  1.0f,  1.0f),  Color(0,0,0,255) });*/
+	vertices = {
+	{ Vec3(-1.0f, -1.0f, -1.0f), Color(255, 255, 255, 255) }, // 0
+	{ Vec3(1.0f, -1.0f, -1.0f), Color(0, 255, 0, 255) },     // 1
+	{ Vec3(-1.0f,  1.0f, -1.0f), Color(255, 0, 0, 255) },     // 2
+	{ Vec3(1.0f,  1.0f, -1.0f), Color(0, 0, 255, 255) },     // 3
+	{ Vec3(-1.0f, -1.0f,  1.0f), Color(255, 0, 255, 255) },   // 4
+	{ Vec3(1.0f, -1.0f,  1.0f), Color(255, 255, 0, 255) },   // 5
+	{ Vec3(-1.0f,  1.0f,  1.0f), Color(0, 255, 255, 255) },   // 6
+	{ Vec3(1.0f,  1.0f,  1.0f), Color(0, 0, 0, 255) }        // 7
+	};
+
+	Render3DTriangles(vertices, indices, pos, rot, camera, window);
+}

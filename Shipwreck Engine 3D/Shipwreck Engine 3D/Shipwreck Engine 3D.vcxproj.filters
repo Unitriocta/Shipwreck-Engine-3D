@@ -44,15 +44,6 @@
     <Filter Include="Rendering\Shaders">
       <UniqueIdentifier>{30acea8c-cd82-4b2b-854c-e43f82d08859}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Rendering\Shaders\3D Shaders">
-      <UniqueIdentifier>{d0f3676b-be52-40bc-9d37-63d6cbecee4d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Rendering\Shaders\2D Color Shaders">
-      <UniqueIdentifier>{19a201fa-c703-47e7-9c9b-3d50f2c467fc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Rendering\Shaders\2D Texture Shaders">
-      <UniqueIdentifier>{575e5df5-4641-4a8a-87bc-3d117ae02f92}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Objects">
       <UniqueIdentifier>{33455f58-d1bb-4dba-ba00-5814208bb81a}</UniqueIdentifier>
     </Filter>
@@ -61,6 +52,27 @@
     </Filter>
     <Filter Include="Resource Files\Engine Info">
       <UniqueIdentifier>{59142712-548f-460a-97c4-e2ee7f6d59d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\HLSL">
+      <UniqueIdentifier>{3306a5b3-32e6-4a03-8df7-4c4ce1d297ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\HLSL\2D Color Shaders">
+      <UniqueIdentifier>{19a201fa-c703-47e7-9c9b-3d50f2c467fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\HLSL\2D Texture Shaders">
+      <UniqueIdentifier>{575e5df5-4641-4a8a-87bc-3d117ae02f92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\HLSL\3D Shaders">
+      <UniqueIdentifier>{d0f3676b-be52-40bc-9d37-63d6cbecee4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\GL">
+      <UniqueIdentifier>{adf4b71b-389a-4925-a355-b2fbdccd3122}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\GL\Default 2D Color Shader">
+      <UniqueIdentifier>{deec5d62-9d96-4b69-bd5b-c96eb064e3b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering\Shaders\GL\3D Shaders">
+      <UniqueIdentifier>{40252e01-0048-4b04-9217-f334114ec27f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -109,6 +121,7 @@
     <ClCompile Include="TimeManagement.cpp">
       <Filter>Resource Files\Resources\Time</Filter>
     </ClCompile>
+    <ClCompile Include="..\Includes\glad\src\glad.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StartEngine.h">
@@ -176,39 +189,53 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader3D.hlsl">
-      <Filter>Rendering\Shaders\3D Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\3D Shaders</Filter>
     </FxCompile>
     <FxCompile Include="VertexShader3D.hlsl">
-      <Filter>Rendering\Shaders\3D Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\3D Shaders</Filter>
     </FxCompile>
     <FxCompile Include="PixelShader.hlsl">
-      <Filter>Rendering\Shaders\2D Color Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\2D Color Shaders</Filter>
     </FxCompile>
     <FxCompile Include="VertexShader.hlsl">
-      <Filter>Rendering\Shaders\2D Color Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\2D Color Shaders</Filter>
     </FxCompile>
     <FxCompile Include="PixelShaderTexture.hlsl">
-      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\2D Texture Shaders</Filter>
     </FxCompile>
     <FxCompile Include="VertexShaderTexture.hlsl">
-      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\2D Texture Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ColoredTexturedPS.hlsl">
-      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\2D Texture Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ColoredTexturedVS.hlsl">
-      <Filter>Rendering\Shaders\2D Texture Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\2D Texture Shaders</Filter>
     </FxCompile>
     <FxCompile Include="3DTexturedPS.hlsl">
-      <Filter>Rendering\Shaders\3D Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\3D Shaders</Filter>
     </FxCompile>
     <FxCompile Include="3DTexturedVS.hlsl">
-      <Filter>Rendering\Shaders\3D Shaders</Filter>
+      <Filter>Rendering\Shaders\HLSL\3D Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Shipwreck Engine 3D.rc">
       <Filter>Resource Files\Engine Info</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="GLPS.frag">
+      <Filter>Rendering\Shaders\GL\Default 2D Color Shader</Filter>
+    </None>
+    <None Include="GLVS.vert">
+      <Filter>Rendering\Shaders\GL\Default 2D Color Shader</Filter>
+    </None>
+    <None Include="3DGLShader.frag">
+      <Filter>Rendering\Shaders\GL\3D Shaders</Filter>
+    </None>
+    <None Include="3DGLShader.vert">
+      <Filter>Rendering\Shaders\GL\3D Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

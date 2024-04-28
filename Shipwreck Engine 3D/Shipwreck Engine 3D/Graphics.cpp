@@ -8,14 +8,7 @@
 #pragma comment(lib,"D3DCompiler.lib")
 
 
-#include <string>
-#include <tchar.h>
-
-#include <iostream>
-#include <sstream>
-
-
-Graphics::Graphics( HWND hWnd) {
+D3DGraphics::D3DGraphics( HWND hWnd) {
 	//reads and renders pixels on screen from layers in application
 
 	RECT rect;
@@ -35,8 +28,8 @@ Graphics::Graphics( HWND hWnd) {
 	sd.BufferDesc.RefreshRate.Denominator = 0;
 	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.SampleDesc.Count = 1;
-	sd.SampleDesc.Quality = 0;
+	sd.SampleDesc.Count = 4;
+	sd.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = 1;
 	sd.OutputWindow = hWnd;
@@ -56,6 +49,40 @@ Graphics::Graphics( HWND hWnd) {
 
 
 
+	//Anti-aliasing for smoother lines:
+	D3D11_TEXTURE2D_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+	desc.Width = width; // Your screen width
+	desc.Height = height; // Your screen height
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // Common swap chain format
+	desc.SampleDesc.Count = 4; // The number of multisamples per pixel
+	desc.SampleDesc.Quality = 0; // The image quality level. The higher, the better image quality
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+
+	ID3D11Texture2D* msaaRenderTarget = nullptr;
+	device->CreateTexture2D(&desc, nullptr, &msaaRenderTarget);
+
+	ID3D11RenderTargetView* msaaRenderTargetView = nullptr;
+	device->CreateRenderTargetView(msaaRenderTarget, nullptr, &msaaRenderTargetView);
+
+	// Set the render target for drawing
+	deviceContext->OMSetRenderTargets(1, &msaaRenderTargetView, nullptr);
+
+
+	// Resolve the MSAA render target to a non-MSAA texture to display
+	ID3D11Texture2D* resolvedRenderTarget = nullptr;
+	device->CreateTexture2D(&desc, nullptr, &resolvedRenderTarget); // desc should be adjusted for non-MSAA texture
+
+
+
+
+
+
 	//get texture from swap chain
 	ID3D11Resource* resource = nullptr;
 	swapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&resource));
@@ -64,7 +91,7 @@ Graphics::Graphics( HWND hWnd) {
 
 
 	//														  |																																									|
-	//Error description: After initializing the depth buffer \|/, whenever we use the device to render something, it immediately stops running and prints an Access violation reading location error, it may be a problem with \|/
+	//Error description: After initializing the depth buffer \|/, whenever we use the renderer to render something, it immediately stops running and prints an Access violation reading location error, it may be a problem with \|/
 
 	//Depth buffer
 	D3D11_DEPTH_STENCIL_DESC depthDesc = {}; //dsDesc
@@ -73,7 +100,7 @@ Graphics::Graphics( HWND hWnd) {
 	depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
 
 	ID3D11DepthStencilState* depthState;
-	device->CreateDepthStencilState(&depthDesc, &depthState); //error			--			--				--					--				--						--						--			--			 <--- This line
+	device->CreateDepthStencilState(&depthDesc, &depthState);
 
 
 	deviceContext->OMSetDepthStencilState(depthState, 1u);
@@ -85,8 +112,8 @@ Graphics::Graphics( HWND hWnd) {
 	dsTexDesc.MipLevels = 1u;
 	dsTexDesc.ArraySize = 1u;
 	dsTexDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsTexDesc.SampleDesc.Count = 1u;
-	dsTexDesc.SampleDesc.Quality = 0u;
+	dsTexDesc.SampleDesc.Count = 4;
+	dsTexDesc.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
 	dsTexDesc.Usage = D3D11_USAGE_DEFAULT;
 	dsTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
@@ -101,9 +128,11 @@ Graphics::Graphics( HWND hWnd) {
 	device->CreateDepthStencilView(depthStencil, &depthViewDesc, &depthView);
 
 	deviceContext->OMSetRenderTargets( 1u, &target, depthView );
+
+
 }
 
-void Graphics::DrawTestTri(HWND hWnd) {
+void D3DGraphics::DrawTestTri(HWND hWnd) {
 	struct Vertice {
 		float x;
 		float y;
@@ -209,7 +238,7 @@ void Graphics::DrawTestTri(HWND hWnd) {
 }
 
 
-Graphics::~Graphics() {
+D3DGraphics::~D3DGraphics() {
 	if (deviceContext != nullptr) {
 		deviceContext->Release();
 	}
@@ -227,6 +256,89 @@ Graphics::~Graphics() {
 	}
 }
 
-void Graphics::EndFrame() {
+void D3DGraphics::EndFrame() {
 	swapChain->Present(1u,0u);
+}
+
+
+
+//OpenGL section:
+
+
+GLGraphics::GLGraphics() {
+	//reads and renders pixels on screen from layers in application
+
+	/*RECT rect;
+
+	GetWindowRect(hWnd, &rect);
+
+
+	int width = (rect.right - rect.left);
+	int height = (rect.bottom - rect.top);*/
+
+
+	InitRenderer();
+
+	//make transparent:
+
+	//SetWindowLong(hWnd, GWL_EXSTYLE, GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+	//SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 0, LWA_COLORKEY);
+
+
+}
+
+void GLGraphics::DrawTestTri() {
+
+	glAttachShader(shaderProgram, vertexShader1);
+	glAttachShader(shaderProgram, fragmentShader1);
+
+	glLinkProgram(shaderProgram);
+
+	// set up vertex data (and buffer(s)) and configure vertex attributes
+	// ------------------------------------------------------------------
+	std::vector<ColorVertex> vertices;
+
+	vertices.push_back(ColorVertex(Vec3(0.5f, 0.5f, 0.0f), Color(255, 0, 0, 255)));   // top     right
+	vertices.push_back(ColorVertex(Vec3(-0.5f, 0.5f, 0.0f), Color(255, 0, 0, 255)));  // top     left
+	vertices.push_back(ColorVertex(Vec3(-0.5f, -0.5f, 0.0f), Color(255, 0, 0, 255))); // bottom  left
+	vertices.push_back(ColorVertex(Vec3(0.5f, -0.5f, 0.0f), Color(255, 0, 0, 255)));  // bottom  right
+
+
+	std::vector<unsigned int> indices = {  // note that we start from 0!
+		0, 1, 2,  // first Triangle
+		0, 2, 3   // second Triangle
+	};
+
+	int indexSize = indices.size() * sizeof(unsigned int);
+	int vertSize = sizeof(ColorVertex) * vertices.size();
+	int vertCount = vertices.size() * indices.size();
+
+
+	glBufferData(GL_ARRAY_BUFFER, vertSize, std::data(vertices), GL_STATIC_DRAW);
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, std::data(indices), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Color) + sizeof(Vec3), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Color) + sizeof(Vec3), (void*)(sizeof(Vec3)));
+
+	// uncomment this call to draw in wireframe polygons.
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, 0);
+}
+
+void GLGraphics::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
+
+
+GLGraphics::~GLGraphics() {
+}
+
+void GLGraphics::EndFrame() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

@@ -7,6 +7,7 @@ using namespace physx;
 using namespace std;
 #include <vector>
 
+#include <chrono>
 
 
 class Physics {
@@ -362,10 +363,15 @@ public:
 
     
     void Simulate() {
+        std::chrono::high_resolution_clock::time_point currentFrameTime = std::chrono::high_resolution_clock::now();
 
-        scene->simulate(1.0f / 60.0f); //not consistent, this is the time from last from to current frame
+        float deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentFrameTime - lastFrameTime).count();
+
+        scene->simulate(deltaTime * 1.4f);
         scene->fetchResults();
         //rigidbody->addForce(PxVec3(0.0f,1.0f,0.0f),PxForceMode::eFORCE);
+
+        lastFrameTime = currentFrameTime;
     }
 
 
@@ -389,4 +395,7 @@ public:
     PxTaskManager* taskManager;
 
     PxBroadPhase* broadPhase;
+
+private:
+    std::chrono::high_resolution_clock::time_point lastFrameTime = std::chrono::high_resolution_clock::now();
 };

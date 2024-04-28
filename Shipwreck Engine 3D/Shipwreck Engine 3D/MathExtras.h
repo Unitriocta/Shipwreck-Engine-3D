@@ -216,11 +216,12 @@ using namespace std;
 	struct TexturedVertex {
 
 	public:
-		Vec3 position;
+		Color color;
 
 		Vec3 normal;
 
-		Color color;
+		Vec3 position;
+
 		
 	public:
 		TexturedVertex(Vec3 _position, Vec3 _normal, Color _color)

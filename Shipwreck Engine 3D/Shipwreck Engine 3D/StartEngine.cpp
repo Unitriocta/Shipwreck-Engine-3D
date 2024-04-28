@@ -62,8 +62,13 @@ Physics physics;
 
 ModelImporter modelImporter;
 
-bool exited = false;
+GLFWwindow* window;
 
+bool exited = false;
+bool isD3D = true;
+
+int targetFPS = 240;
+std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 
 void DisplayVarAsTitle(float newVar);
 void DisplayVarAsTitle(float newVar) {
@@ -90,6 +95,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     LoadString(hInstance, APP_NAME, szTitle, MAX_LOADSTRING);
     LoadString(hInstance, PROJ_FILENAME, szWindowClass, MAX_LOADSTRING);
 
+    startEng.isD3D = isD3D;
+
     startEng.timeManager.StartTime();
 
     MyRegisterClass(hInstance);
@@ -101,7 +108,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     /*StartEngine gfx;*/
-    startEng.postGraphics = std::make_unique<Graphics>(hWnd);
+    if (isD3D) {
+        startEng.postD3DGraphics = std::make_unique<D3DGraphics>(hWnd);
+    }
+    else {
+        startEng.postGLGraphics = std::make_unique<GLGraphics>();
+    }
 
 
     setupFace = &startEng.Font().LoadFont("C:/Windows/Fonts/Arial.ttf");
@@ -139,13 +151,15 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Untitled_Artwork.png");
     //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Tree.png");
     //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Other/Platforms.png");
-    newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Other/Player.png");
+    //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Other/Player.png");
+    newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
 
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
     modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
+    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.obj");
 
 
     startEng.RenderFrame();
@@ -153,12 +167,13 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     MSG msg;
 
     // Main message loop:
-    while (!exited)
-    {/*
+    while (!exited && !glfwWindowShouldClose(window))
+    {
+        auto frameStart = std::chrono::high_resolution_clock::now();
+        /*
         if (GetMessage(&msg, nullptr, 0, 0) <= 0) {
 
         }*/
-
         if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -208,11 +223,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 }
 
             }
-            /*if (startEng.keyboard.GetKeyState('H')) {
+            if (startEng.keyboard.GetKeyState('H')) {
                 MessageBox(hWnd, L"H", L"Hey", 0);
-            }*/
+            }
 
             startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+
+            auto frameEnd = std::chrono::high_resolution_clock::now();
+            auto frameDuration = frameEnd - frameStart;
+
+            if (frameDuration < targetFrameLength) {
+                std::this_thread::sleep_for(targetFrameLength - frameDuration);
+            }
         }
 
 
@@ -220,71 +242,132 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         //use '[key letter]' for letters
         //use VK_[key name] for accelerator keys like [CTRL], [SPACE], and [ALT]
     }
+    if (!isD3D) {
+        glfwDestroyWindow(window);
+        glDeleteVertexArrays(1, &startEng.GLGfx().VAO);
+        glDeleteBuffers(1, &startEng.GLGfx().VBO);
+        glDeleteBuffers(1, &startEng.GLGfx().EBO);
+        glDeleteBuffers(1, &startEng.GLGfx().FBO);
+        glDeleteProgram(startEng.GLGfx().shaderProgram);
+
+        glfwTerminate();
+    }
     return (int)msg.wParam;
 }
 
 void StartEngine::RenderFrame() {
-    Gfx().ClearBuffer(0.4f, 0.4f, 0.4f);
-    //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 19, 0.5f /*0.2f*/, Color(30, 30, 30, 255), hWnd);
-    float rotTimer = startEng.timeManager.GetTime() / 1000;
     
+    if (isD3D) {
+        D3DGfx().ClearBuffer(0.4f, 0.4f, 0.4f);
+        //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 19, 0.5f /*0.2f*/, Color(30, 30, 30, 255), hWnd);
+        float rotTimer = startEng.timeManager.GetTime() / 1000;
 
 
 
-    RECT rect;
-    GetWindowRect(hWnd, &rect);
-    int width = (rect.right - rect.left);
-    int height = (rect.bottom - rect.top);
+
+        RECT rect;
+        GetWindowRect(hWnd, &rect);
+        int width = (rect.right - rect.left);
+        int height = (rect.bottom - rect.top);
 
 
 
-    physics.Simulate();
+        physics.Simulate();
 
 
-    //PxActor** actors;
-    //physics.scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC,actors,1); //actors[0]->is<PxRigidDynamic>()->getGlobalPose().p.z
+        //PxActor** actors;
+        //physics.scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC,actors,1); //actors[0]->is<PxRigidDynamic>()->getGlobalPose().p.z
 
 
-    PxVec3 pos = physics.rigidbody->getGlobalPose().p;
-    PxQuat rotQuat = physics.rigidbody->getGlobalPose().q;
-    PxVec3 rot = rotQuat.getBasisVector1();
+        PxVec3 pos = physics.rigidbody->getGlobalPose().p;
+        PxQuat rotQuat = physics.rigidbody->getGlobalPose().q;
+        PxVec3 rot = rotQuat.getBasisVector1();
 
 
-    PxVec3 pos2 = physics.rigidbody2->getGlobalPose().p;
-    PxQuat rot2Quat = physics.rigidbody2->getGlobalPose().q;
-    PxVec3 rot2 = rot2Quat.getBasisVector1();
+        PxVec3 pos2 = physics.rigidbody2->getGlobalPose().p;
+        PxQuat rot2Quat = physics.rigidbody2->getGlobalPose().q;
+        PxVec3 rot2 = rot2Quat.getBasisVector1();
 
-    //rot2Quat.toRadiansAndUnitAxis(angle2, rot2);
-    //radians to degrees conversion (57.2958 degrees is 1 radian)
-    /*rot2 *= angle2;
-    rot2 /= 57.2958f;*/
-
-
-
-    
-    //Gfx().DrawTestCube(Color(10, 170, 170, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), hWnd);
-    Gfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd);
-
-    Gfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
-    //Gfx().RenderModel(modelImporter.meshes[0], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
+        //rot2Quat.toRadiansAndUnitAxis(angle2, rot2);
+        //radians to degrees conversion (57.2958 degrees is 1 radian)
+        /*rot2 *= angle2;
+        rot2 /= 57.2958f;*/
 
 
 
-    //Gfx().DrawSprite(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), &newTexture, hWnd);
+
+        //Gfx().DrawTestCube(Color(10, 170, 170, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), hWnd);
+        D3DGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd);
+
+        D3DGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
+
+        //Gfx().RenderModel(modelImporter.meshes[0], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
 
 
-    Gfx().ShowText(newText/*Textbox("igiaiii", setupFace, Vec2(55.0f, 0.0f), Vec2(100.0f, 0.0f), 12, hWnd)*/);
 
-    //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0, 0 /*0.2f*/, Color(30, 30, 30, 255), hWnd);
+        //D3DGfx().DrawSprite(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), &newTexture, hWnd);
 
-    //Gfx().DrawTestCube(Color(255, 0, 0, 255), Rotation(rotTimer,rotTimer,rotTimer), hWnd);
-    //Gfx().DrawTestCube(Color(255, 0, 0, 255), Rotation(rotTimer + 50,rotTimer + 50,rotTimer + 50), hWnd);
-     
-    Gfx().EndFrame();
+
+        D3DGfx().ShowText(newText/*Textbox("igiaiii", setupFace, Vec2(55.0f, 0.0f), Vec2(100.0f, 0.0f), 12, hWnd)*/);
+
+        //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0, 0 /*0.2f*/, Color(30, 30, 30, 255), hWnd);
+
+        //Gfx().DrawTestCube(Color(255, 0, 0, 255), Rotation(rotTimer,rotTimer,rotTimer), hWnd);
+        //Gfx().DrawTestCube(Color(255, 0, 0, 255), Rotation(rotTimer + 50,rotTimer + 50,rotTimer + 50), hWnd);
+
+        D3DGfx().EndFrame();
+    }
+    else {
+        physics.Simulate();
+
+
+        //PxActor** actors;
+        //physics.scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC,actors,1); //actors[0]->is<PxRigidDynamic>()->getGlobalPose().p.z
+
+
+        PxVec3 pos = physics.rigidbody->getGlobalPose().p;
+        PxQuat rotQuat = physics.rigidbody->getGlobalPose().q;
+        PxVec3 rot = rotQuat.getBasisVector1();
+
+
+        PxVec3 pos2 = physics.rigidbody2->getGlobalPose().p;
+        PxQuat rot2Quat = physics.rigidbody2->getGlobalPose().q;
+        PxVec3 rot2 = rot2Quat.getBasisVector1();
+
+        //rot2Quat.toRadiansAndUnitAxis(angle2, rot2);
+        //radians to degrees conversion (57.2958 degrees is 1 radian)
+        /*rot2 *= angle2;
+        rot2 /= 57.2958f;*/
+
+        GLGfx().ClearBuffer(0.3f, 0.3f, 0.3f);
+        //GLGfx().DrawTestTri();
+        //GLGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, window);
+        //GLGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, window);
+        GLGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, window);
+
+        // draw our first triangle
+        glUseProgram(startEng.GLGfx().shaderProgram);
+        glBindVertexArray(startEng.GLGfx().VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); //Called from individual draw functions
+        // glBindVertexArray(0); // no need to unbind it every time 
+
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // -------------------------------------------------------------------------------
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+
+        //GLGfx().EndFrame();
+    }
 }
 
-Graphics& StartEngine::Gfx() {
-    return *postGraphics;
+D3DGraphics& StartEngine::D3DGfx() {
+     return *postD3DGraphics;
+}
+
+GLGraphics& StartEngine::GLGfx() {
+    return *postGLGraphics;
 }
 
 
@@ -325,17 +408,61 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize)
     GetWindowRect(screenSize,&screenRect);
 
 
-    hWnd = CreateWindow(szWindowClass, szTitle, WS_POPUP, //WS_POPUP,
-        (screenRect.right / 2) - (windSize.x / 2), (screenRect.bottom / 2) - (windSize.y / 2), windSize.x, windSize.y, nullptr, nullptr, hInstance, nullptr);
+    if (isD3D) {
+        hWnd = CreateWindow(szWindowClass, szTitle, WS_POPUP, //WS_POPUP,
+            (screenRect.right / 2) - (windSize.x / 2), (screenRect.bottom / 2) - (windSize.y / 2), windSize.x, windSize.y, nullptr, nullptr, hInstance, nullptr);
 
 
-    if (!hWnd)
-    {
-        return FALSE;
+        if (!hWnd)
+        {
+            return FALSE;
+        }
+
+        ShowWindow(hWnd, nCmdShow);
+        UpdateWindow(hWnd);
+    }
+    else {
+        glfwInit();
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_DEPTH_BITS, 24); //Depth
+        //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+        //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+        size_t sizeNeeded;
+        wcstombs_s(&sizeNeeded, nullptr, 0, szTitle, 0);
+
+        // Allocate the multibyte string buffer
+        char* mbstr = new char[sizeNeeded];
+
+        // Convert the wide character string to a multibyte string
+        size_t convertedChars;
+        errno_t charString = wcstombs_s(&convertedChars, mbstr, sizeNeeded, szTitle, _TRUNCATE);
+
+
+        window = glfwCreateWindow(windSize.x, windSize.y, mbstr, NULL, NULL);
+        delete[] mbstr;
+
+        if (window == NULL)
+        {
+            std::cout << "Failed to create GLFW window" << std::endl;
+            glfwTerminate();
+            return FALSE;
+        }
+        glfwMakeContextCurrent(window);
+
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        {
+            std::cout << "Failed to initialize GLAD" << std::endl;
+            return FALSE;
+        }
+
+        glViewport(0, 0, windSize.x, windSize.y);
+
+        glfwSetFramebufferSizeCallback(window, GLGraphics::framebuffer_size_callback);
     }
 
-    ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
 
 
     return TRUE;
@@ -350,18 +477,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
     case WM_COMMAND:
     {
-        int wmId = LOWORD(wParam);
-        // Parse the menu selections:
-        switch (wmId)
-        {
-        case IDM_ABOUT:
-            //DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-            break;
-        case IDM_EXIT:
-            DestroyWindow(hWnd);
-            break;
-        default:
-            return DefWindowProc(hWnd, msg, wParam, lParam);
+        if (isD3D) {
+            int wmId = LOWORD(wParam);
+            // Parse the menu selections:
+            switch (wmId)
+            {
+            case IDM_ABOUT:
+                //DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+                break;
+            case IDM_EXIT:
+                DestroyWindow(hWnd);
+                break;
+            default:
+                return DefWindowProc(hWnd, msg, wParam, lParam);
+            }
         }
     }
     break;
@@ -380,18 +509,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_PAINT:
     {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hWnd, &ps);
-        // TODO: Add any drawing code that uses hdc here...
+        if (isD3D) {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hWnd, &ps);
+            // TODO: Add any drawing code that uses hdc here...
 
-        EndPaint(hWnd, &ps);
+            EndPaint(hWnd, &ps);
+        }
     }
     break;
 
     case WM_DESTROY:
     {
-        exited = true;
-        PostQuitMessage(0);
+        if (isD3D) {
+            exited = true;
+            PostQuitMessage(0);
+        }
     }
     break;
 

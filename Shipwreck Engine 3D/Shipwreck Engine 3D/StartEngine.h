@@ -46,11 +46,15 @@
 #include "ModelImporter.h"
 #include "Model.h"
 
+#include <chrono> //fps limit/timer
+#include <thread> //fps limit/timer
 
 class StartEngine {
 public:
+	bool isD3D;
 
-	Graphics& Gfx();
+	GLGraphics& GLGfx();
+	D3DGraphics& D3DGfx();
 	FontCreation& Font();
 
 	MathFunctions& Math(){
@@ -60,7 +64,8 @@ public:
 
 	void RenderFrame();
 
-	std::unique_ptr<Graphics> postGraphics;
+	std::unique_ptr<GLGraphics> postGLGraphics;
+	std::unique_ptr<D3DGraphics> postD3DGraphics;
 
 	std::unique_ptr<FontCreation> fontManagement;
 

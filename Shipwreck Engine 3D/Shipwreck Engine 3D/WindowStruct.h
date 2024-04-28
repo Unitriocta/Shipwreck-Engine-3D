@@ -27,7 +27,7 @@ public:
 
 	HWND hWnd;
 
-	std::unique_ptr<Graphics> postGraphics;
+	std::unique_ptr<D3DGraphics> postGraphics;
 
 	UINT formatType;
 	std::vector<UIElement> elements;
