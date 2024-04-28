@@ -59,7 +59,7 @@ public:
 	void OnButton1Down() noexcept;
 	void OnButton1Up() noexcept;
 
-	void OnMouseMove(int x, int y) noexcept;
+	void OnMouseMove(int x, int y, bool mouseCentered, Vec2 center) noexcept;
 
 	void OnWheelDown() noexcept;
 	void OnWheelUp() noexcept;
@@ -78,6 +78,7 @@ public:
 
 	void UpdateMouse() noexcept {
 		scrollWheel = 0.0f; //1 on up, -1 on down
+		mouseDelta = Vec2(0.0f, 0.0f);
 	}
 
 
@@ -89,15 +90,16 @@ private:
 
 private:
 	static constexpr unsigned int bufferSize = 16u;
-
-	std::queue<MouseEvent> mouseBuffer;
 	
 public:
 	Vec2 mousePosition;
+	Vec2 mouseDelta;
 	bool inWindow;
 
 	bool Button0;
 	bool Button1;
 
 	float scrollWheel;
+
+	std::queue<MouseEvent> mouseBuffer;
 };

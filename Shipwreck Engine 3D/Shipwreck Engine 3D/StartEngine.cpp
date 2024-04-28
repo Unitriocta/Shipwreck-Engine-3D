@@ -70,8 +70,23 @@ bool isD3D = true;
 int targetFPS = 240;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 
-void DisplayVarAsTitle(float newVar);
-void DisplayVarAsTitle(float newVar) {
+bool mouseShown;
+
+void DisplayNumAsTitle(float newVar);
+void DisplayNumAsTitle(float newVar) {
+
+    std::ostringstream oss;
+    oss << "variable: " << newVar;
+
+
+    std::string widthStr = oss.str();
+
+    //MessageBoxA(hWnd, widthStr.c_str(), "Hey", 0);
+    SetWindowTextA(hWnd, widthStr.c_str());
+}
+
+void DisplayStringAsTitle(unsigned char newVar);
+void DisplayStringAsTitle(unsigned char newVar) {
 
     std::ostringstream oss;
     oss << "variable: " << newVar;
@@ -161,7 +176,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.obj");
 
-
+    
     startEng.RenderFrame();
 
     MSG msg;
@@ -180,6 +195,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         }
         else {
             startEng.RenderFrame();
+
             
 
             if (!startEng.mouse.IsEmpty()) {
@@ -193,9 +209,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                     /*WPARAM wp = 0;
                     LPARAM lp = 0;
                     SendMessage(hWnd, Msgbox, wp, lp);*/
-                    WPARAM wp = 0;
+                    /*WPARAM wp = 0;
                     LPARAM lp = 0;
-                    SendMessage(hWnd, Msgbox, wp, lp);
+                    SendMessage(hWnd, Msgbox, wp, lp);*/
+                    mouseShown = false;
                 }
 
                 if (startEng.mouse.Button1) {
@@ -223,12 +240,22 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 }
 
             }
-            if (startEng.keyboard.GetKeyState('H')) {
-                MessageBox(hWnd, L"H", L"Hey", 0);
+            if (startEng.keyboard.GetKeyState(VK_ESCAPE)) {
+                mouseShown = true;
             }
 
-            startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
-
+            DisplayNumAsTitle(startEng.mouse.mouseDelta.x);
+            
+            if (!mouseShown) {
+                startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+                startEng.HideMouse();
+                startEng.CenterMouse(hWnd);
+            }
+            else {
+                startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+                startEng.ShowMouse();
+            }
+            
             auto frameEnd = std::chrono::high_resolution_clock::now();
             auto frameDuration = frameEnd - frameStart;
 
@@ -375,6 +402,47 @@ FontCreation& StartEngine::Font() {
     return *fontManagement;
 }
 
+
+
+void StartEngine::CenterMouse(HWND hwnd) {
+    RECT rect;
+    GetClientRect(hwnd, &rect); // Get the dimensions of the window client area
+
+    // Calculate the center position
+    POINT center;
+    center.x = rect.left + (rect.right - rect.left) / 2;
+    center.y = rect.top + (rect.bottom - rect.top) / 2;
+
+    // Convert client coordinates to screen coordinates
+    ClientToScreen(hwnd, &center);
+
+    // Move the cursor to the center
+    SetCursorPos(center.x, center.y);
+}
+
+Vec2 StartEngine::GetCenter(HWND hwnd) {
+    RECT rect;
+    GetClientRect(hwnd, &rect); // Get the dimensions of the window client area
+
+    // Calculate the center position
+    POINT center;
+    center.x = rect.left + (rect.right - rect.left) / 2;
+    center.y = rect.top + (rect.bottom - rect.top) / 2;
+
+    return Vec2(center.x, center.y);
+}
+
+void StartEngine::HideMouse() {
+    while (ShowCursor(FALSE) >= 0);
+}
+
+void StartEngine::ShowMouse() {
+    while (ShowCursor(TRUE) < 0);
+}
+
+
+//Setup Break Point:
+
 //   \/  \/  \/  \/  \/  \/  \/  \/   Registers the window class.    WNDCLASSEX
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
@@ -409,7 +477,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize)
 
 
     if (isD3D) {
-        hWnd = CreateWindow(szWindowClass, szTitle, WS_POPUP, //WS_POPUP,
+        hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, //WS_POPUP, WS_OVERLAPPEDWINDOW
             (screenRect.right / 2) - (windSize.x / 2), (screenRect.bottom / 2) - (windSize.y / 2), windSize.x, windSize.y, nullptr, nullptr, hInstance, nullptr);
 
 
@@ -574,7 +642,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_SYSKEYDOWN:
     {
-        startEng.keyboard.OnKeyUp(wParam);
+        startEng.keyboard.OnKeyDown(wParam);
     }
     break;
 
@@ -603,7 +671,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         if (pts.x >= 0 && pts.x < width && pts.y >= 0 && pts.y < height) {
 
-            startEng.mouse.OnMouseMove(pts.x,pts.y);
+            startEng.mouse.OnMouseMove(pts.x,pts.y, mouseShown, startEng.GetCenter(hWnd));
 
             //mouse in window
             if (!startEng.mouse.inWindow) {
@@ -616,7 +684,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         else {
             if ( startEng.mouse.Button0 & (MK_LBUTTON | MK_RBUTTON)) {
 
-                startEng.mouse.OnMouseMove(pts.x, pts.y);
+                startEng.mouse.OnMouseMove(pts.x, pts.y, mouseShown, startEng.GetCenter(hWnd));
             }
             else {
                 ReleaseCapture();

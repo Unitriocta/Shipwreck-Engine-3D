@@ -64,6 +64,11 @@ public:
 
 	void RenderFrame();
 
+	void CenterMouse(HWND hwnd);
+	Vec2 GetCenter(HWND hwnd);
+	void HideMouse();
+	void ShowMouse();
+
 	std::unique_ptr<GLGraphics> postGLGraphics;
 	std::unique_ptr<D3DGraphics> postD3DGraphics;
 

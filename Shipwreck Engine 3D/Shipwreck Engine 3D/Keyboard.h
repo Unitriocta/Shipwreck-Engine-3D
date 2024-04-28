@@ -14,6 +14,7 @@ public:
 			Up,
 			None
 		};
+
 	private:
 		State keyState;
 		unsigned char keycode;

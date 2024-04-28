@@ -31,7 +31,15 @@ void Mouse::OnButton1Up() noexcept {
 }
 
 
-void Mouse::OnMouseMove(int x, int y) noexcept {
+void Mouse::OnMouseMove(int x, int y, bool mouseCentered, Vec2 center) noexcept {
+
+	if (!mouseCentered) {
+		mouseDelta = Vec2(x - center.x, y - center.y);
+	}
+	else {
+		mouseDelta = Vec2(x - mousePosition.x, y - mousePosition.y);
+	}
+
 	mousePosition.x = x;
 	mousePosition.y = y;
 
