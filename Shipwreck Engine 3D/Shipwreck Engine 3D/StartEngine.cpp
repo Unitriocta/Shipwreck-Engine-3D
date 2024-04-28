@@ -155,8 +155,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
 
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
-    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx");
+    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
+    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.obj");

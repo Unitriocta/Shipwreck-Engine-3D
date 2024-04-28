@@ -748,7 +748,7 @@ void D3DGraphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vect
 
 void D3DGraphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, HWND hWnd) {
 
-	int indexSize = model.indices.size() * sizeof(unsigned short);
+	int indexSize = model.indices.size() * sizeof(unsigned int);
 	int vertSize = model.vertices.size() * sizeof(TexturedVertex);
 	int vertCount = model.vertices.size();
 
@@ -1202,10 +1202,10 @@ void D3DRenderer::SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd, 
 	indexBufferDesc.CPUAccessFlags = 0u;
 	indexBufferDesc.MiscFlags = 0u;
 	indexBufferDesc.ByteWidth = indexSize;
-	indexBufferDesc.StructureByteStride = sizeof(unsigned short);
+	indexBufferDesc.StructureByteStride = sizeof(unsigned int);
 
 	device->CreateBuffer(&indexBufferDesc, &indexSd, &indexBuffer);
-	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0u);
+	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0u);
 	indexBuffer->Release();
 }
 

@@ -9,5 +9,5 @@ using namespace std;
 class Model {
 public:
 	std::vector<TexturedVertex> vertices;
-	std::vector<unsigned short> indices; //change to unsigned int for OpenGL
+	std::vector<unsigned int> indices; //change to unsigned int for OpenGL, unsigned short for DirectX11
 };
