@@ -614,7 +614,7 @@ void D3DGraphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vect
 	const ConstBuffer cameraBuffer = {
 		{
 		DirectX::XMMatrixTranspose(
-			camera.GetMatrix() *
+			camera.GetMatrixD3D() *
 			DirectX::XMMatrixPerspectiveLH(1.0f, 5.0f / 5.0f, camera.clippingNear, camera.clippingFar)
 		)
 		}
@@ -1229,8 +1229,7 @@ void D3DRenderer::SetConstantBuffers(Camera camera, Vec3 position, Rotation rota
 	const ConstBuffer cameraBuffer = {
 		{
 		DirectX::XMMatrixTranspose(
-			camera.GetMatrix() *
-			DirectX::XMMatrixPerspectiveLH(1.0f, 5.0f / 5.0f, camera.clippingNear, camera.clippingFar)
+			camera.GetMatrixD3D()
 		)
 		}
 	};
@@ -1384,8 +1383,8 @@ void GLGraphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vecto
 
 
 
-void GLGraphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, GLFWwindow* window) {
-
+void GLGraphics::RenderModel(Model model, Vec3 position, Rotation rotation, Camera* camera, GLFWwindow* window) {
+	//glDisable(GL_CULL_FACE);
 	glAttachShader(shaderProgram, vertexShader2);
 	glAttachShader(shaderProgram, fragmentShader2);
 
@@ -1400,41 +1399,46 @@ void GLGraphics::RenderModel(Model model, Vec3 position, Rotation rotation, Came
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, std::data(model.indices), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Color) + sizeof(Vec3) + sizeof(Vec3), (void*)0);
+	glVertexAttribPointer(0, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TexturedVertex), (void*)0);
 
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Color) + sizeof(Vec3) + sizeof(Vec3), (void*)(sizeof(Color)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), (void*)(sizeof(Color)));
 
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Color) + sizeof(Vec3) + sizeof(Vec3), (void*)(sizeof(Color) + sizeof(Vec3)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(TexturedVertex), (void*)(sizeof(Color) + sizeof(Vec3)));
 
 
 
 	glm::mat4 _model = glm::mat4(1.0f);
-	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
-	_model = glm::rotate(_model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	_model = glm::rotate(_model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	_model = glm::rotate(_model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	_model = glm::translate(_model, glm::vec3(position.x, position.y, -position.z));
+	_model = glm::rotate(_model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+	_model = glm::rotate(_model, -rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+	_model = glm::rotate(_model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//view = glm::translate(view, glm::vec3(position.x, position.y, position.z));
 	//view = glm::translate(view, glm::vec3(-position.x, position.y, -position.z));
-	view = glm::translate(view, glm::vec3(8, 8, 0));
+	/*projection = glm::rotate(view, camera.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+	projection = glm::rotate(view, camera.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+	projection = glm::rotate(view, camera.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));*/
 
 	int width;
 	int height;
 	glfwGetWindowSize(window, &width, &height);
+	projection = camera->GetMatrixGL(Vec2(width, height));
 
-	projection = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100000.0f);
-	glm::mat4 transform = view * _model;
+	glm::mat4 _transform = _model;
+	glm::mat4 _camera = projection;
+
 	// Set the uniform
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_FALSE, glm::value_ptr(transform));
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "camera"), 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "cameraIn"), 1, GL_TRUE, glm::value_ptr(projection));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transformIn"), 1, GL_FALSE, glm::value_ptr(_transform));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "viewPosIn"), 1, GL_FALSE, (const GLfloat*)&camera->position);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
 
-	glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_INT, 0);
 }
 
 

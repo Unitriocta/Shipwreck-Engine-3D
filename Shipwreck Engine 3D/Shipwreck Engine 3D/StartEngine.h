@@ -29,6 +29,7 @@
 
 #include "Keyboard.h"
 #include "Mouse.h"
+#include "Input.h"
 
 
 #include <sstream>
@@ -46,11 +47,21 @@
 #include "ModelImporter.h"
 #include "Model.h"
 
+#include "Transform.h"
+
 #include <chrono> //fps limit/timer
 #include <thread> //fps limit/timer
 
 class StartEngine {
 public:
+	StartEngine() {
+
+	}
+
+
+	
+
+
 	bool isD3D;
 
 	GLGraphics& GLGfx();
@@ -64,10 +75,9 @@ public:
 
 	void RenderFrame();
 
-	void CenterMouse(HWND hwnd);
-	Vec2 GetCenter(HWND hwnd);
-	void HideMouse();
-	void ShowMouse();
+
+	Vec3 NormalizeAngles(Vec3 input);
+
 
 	std::unique_ptr<GLGraphics> postGLGraphics;
 	std::unique_ptr<D3DGraphics> postD3DGraphics;
@@ -75,7 +85,16 @@ public:
 	std::unique_ptr<FontCreation> fontManagement;
 
 	Time timeManager;
+
+	Keyboard& GetKeyboard() {
+		return keyboard;
+	}
+	Mouse& GetMouse() {
+		return mouse;
+	}
+
 public:
+	Input input;
 	Keyboard keyboard;
 	Mouse mouse;
 

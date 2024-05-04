@@ -142,6 +142,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FontCreation.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="ModelImporter.cpp" />
     <ClCompile Include="Mouse.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FontCreation.h" />
     <ClInclude Include="Graphics.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="MathExtras.h" />
     <ClInclude Include="Model.h" />
@@ -170,6 +172,7 @@
     <ClInclude Include="testing.h" />
     <ClInclude Include="TextRenderer.h" />
     <ClInclude Include="TimeManagement.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="UIElement.h" />
     <ClInclude Include="UITypes.h" />
     <ClInclude Include="WindowStruct.h" />

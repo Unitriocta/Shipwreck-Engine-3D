@@ -122,6 +122,7 @@
       <Filter>Resource Files\Resources\Time</Filter>
     </ClCompile>
     <ClCompile Include="..\Includes\glad\src\glad.c" />
+    <ClCompile Include="Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StartEngine.h">
@@ -178,6 +179,10 @@
     <ClInclude Include="resource.h">
       <Filter>Resource Files\Engine Info</Filter>
     </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico">

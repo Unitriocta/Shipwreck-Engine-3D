@@ -30,24 +30,25 @@ public:
 	}
 
 	void LoadScene(const aiScene* scene, const char* filename) {
-		meshes.resize(scene->mNumMeshes);
-		textures.resize(scene->mNumMaterials);
+		for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+		{
+			Model mesh; // Create a new mesh for each scene mesh
+			mesh.vertices.resize(scene->mMeshes[i]->mNumVertices);
 
-		for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-			meshes[i].vertices.resize(scene->mMeshes[i]->mNumVertices);
-			textures.resize(scene->mNumMaterials);
-
-			for (unsigned int j = 0; j < scene->mMeshes[i]->mNumVertices; j++) {
-
-				if (scene->mMeshes[i]->HasPositions()) {
-					meshes[i].vertices[j].position.x = scene->mMeshes[i]->mVertices[j].x;
-					meshes[i].vertices[j].position.y = scene->mMeshes[i]->mVertices[j].y;
-					meshes[i].vertices[j].position.z = scene->mMeshes[i]->mVertices[j].z;
+			// Populate vertex data
+			for (unsigned int j = 0; j < scene->mMeshes[i]->mNumVertices; j++)
+			{
+				if (scene->mMeshes[i]->HasPositions())
+				{
+					mesh.vertices[j].position.x = scene->mMeshes[i]->mVertices[j].x;
+					mesh.vertices[j].position.y = scene->mMeshes[i]->mVertices[j].y;
+					mesh.vertices[j].position.z = scene->mMeshes[i]->mVertices[j].z;
 				}
-				if (scene->mMeshes[i]->HasNormals()) {
-					meshes[i].vertices[j].normal.x = scene->mMeshes[i]->mNormals[j].x;
-					meshes[i].vertices[j].normal.y = scene->mMeshes[i]->mNormals[j].y;
-					meshes[i].vertices[j].normal.z = scene->mMeshes[i]->mNormals[j].z;
+				if (scene->mMeshes[i]->HasNormals())
+				{
+					mesh.vertices[j].normal.x = scene->mMeshes[i]->mNormals[j].x;
+					mesh.vertices[j].normal.y = scene->mMeshes[i]->mNormals[j].y;
+					mesh.vertices[j].normal.z = scene->mMeshes[i]->mNormals[j].z;
 				}
 				/*if (scene->mMeshes[i]->HasTextureCoords(j)) {
 					meshes[i].vertices[j].uv.x = scene->mMeshes[i]->mTextureCoords[0][j].x;
@@ -70,14 +71,16 @@ public:
 				}
 			}
 			
-			for (unsigned int t = 0; t < scene->mMeshes[0]->mNumFaces; t++) {
-				const struct aiFace* face = &scene->mMeshes[0]->mFaces[t];
-
-
-				for (unsigned int k = 0; k < face->mNumIndices; k++) {
-					meshes[i].indices.push_back(face->mIndices[k]); //push back
+			for (unsigned int m = 0; m < scene->mMeshes[i]->mNumFaces; m++)
+			{
+				const struct aiFace* face = &scene->mMeshes[i]->mFaces[m];
+				for (unsigned int k = 0; k < face->mNumIndices; k++)
+				{
+					mesh.indices.push_back(face->mIndices[k]);
 				}
 			}
+
+			meshes.push_back(mesh);
 		}
 	}
 

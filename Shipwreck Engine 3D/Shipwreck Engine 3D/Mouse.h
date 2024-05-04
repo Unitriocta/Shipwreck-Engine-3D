@@ -3,6 +3,8 @@
 
 #include "MathExtras.h"
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 
 #include <bitset>
 #include <queue>
@@ -85,6 +87,27 @@ public:
 	void ClearStates() noexcept;
 	MouseEvent ReadMouse() noexcept;
 
+
+
+
+	void D3DCenterMouse(HWND hwnd);
+
+	Vec2 D3DGetCenter(HWND hwnd);
+
+	void D3DHideMouse();
+
+	void D3DShowMouse();
+
+
+
+	void GLCenterMouse(GLFWwindow* window);
+
+	Vec2 GLGetCenter(GLFWwindow* window);
+
+	void GLHideMouse(GLFWwindow* window);
+
+	void GLShowMouse(GLFWwindow* window);
+
 private:
 	void ReleaseBuffer() noexcept;
 
@@ -98,6 +121,8 @@ public:
 
 	bool Button0;
 	bool Button1;
+
+	bool mouseShown;
 
 	float scrollWheel;
 

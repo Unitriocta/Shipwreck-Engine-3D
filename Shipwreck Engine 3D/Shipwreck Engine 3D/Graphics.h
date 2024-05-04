@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Application.h"
+#include "Input.h"
 
 #include <vector>
 
@@ -34,6 +35,10 @@
 //#include "GL/glew.h"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+
+#include "Keyboard.h"
+#include "Mouse.h"
+
 
 #include "glm/glm.hpp" //Math
 #include <glm/gtc/matrix_transform.hpp>
@@ -371,7 +376,7 @@ public:
 
 	void Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned int> indices, Vec3 position, Rotation rotation, Camera camera, GLFWwindow* window);
 
-	void RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, GLFWwindow* window);
+	void RenderModel(Model model, Vec3 position, Rotation rotation, Camera* camera, GLFWwindow* window);
 
 
 
@@ -389,14 +394,37 @@ public:
 
 	void ShowText(Textbox text); //loops through characters and calls DrawTextRect()
 
-	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-	//void processInput(GLFWwindow* window);
+
+	//Callbacks:
+	static void frameBufferCallback(GLFWwindow* window, int width, int height);
+	
+	static void windowCloseCallback(GLFWwindow* window);
+
+	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+	static void mouseClickCallback(GLFWwindow* window, int button, int action, int mods);
+
+	static void mouseMoveCallback(GLFWwindow* window, double xpos, double ypos);
+
+	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+
+	/*void SetKeyboard(Keyboard* _keyboard) {
+		keyboard = _keyboard;
+	}
+	void SetMouse(Mouse* _mouse) {
+		mouse = _mouse;
+	}*/
 public:
 	unsigned int shaderProgram;
 	unsigned int VBO, VAO, EBO, FBO;
 
 	unsigned int vertexShader1, fragmentShader1;
 	unsigned int vertexShader2, fragmentShader2;
+	
+//public:
+//	Keyboard* keyboard;
+//	Mouse* mouse;
 private:
 	GLRenderer* renderer;
 

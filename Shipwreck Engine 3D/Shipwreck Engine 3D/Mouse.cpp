@@ -86,3 +86,68 @@ void Mouse::ReleaseBuffer() noexcept {
 		mouseBuffer.pop();
 	}
 }
+
+
+
+
+void Mouse::D3DCenterMouse(HWND hwnd) {
+	RECT rect;
+	GetClientRect(hwnd, &rect); // Get the dimensions of the window client area
+
+	// Calculate the center position
+	POINT center;
+	center.x = rect.left + (rect.right - rect.left) / 2;
+	center.y = rect.top + (rect.bottom - rect.top) / 2;
+
+	// Convert client coordinates to screen coordinates
+	ClientToScreen(hwnd, &center);
+
+	// Move the cursor to the center
+	SetCursorPos(center.x, center.y);
+}
+
+Vec2 Mouse::D3DGetCenter(HWND hwnd) {
+	RECT rect;
+	GetClientRect(hwnd, &rect); // Get the dimensions of the window client area
+
+	// Calculate the center position
+	POINT center;
+	center.x = rect.left + (rect.right - rect.left) / 2;
+	center.y = rect.top + (rect.bottom - rect.top) / 2;
+
+	return Vec2(center.x, center.y);
+}
+
+void Mouse::D3DHideMouse() {
+	while (ShowCursor(FALSE) >= 0);
+}
+
+void Mouse::D3DShowMouse() {
+	while (ShowCursor(TRUE) < 0);
+}
+
+
+
+
+void Mouse::GLCenterMouse(GLFWwindow* window) {
+	Vec2 center = GLGetCenter(window);
+
+	glfwSetCursorPos(window, center.x, center.y);
+}
+
+Vec2 Mouse::GLGetCenter(GLFWwindow* window) {
+	int width;
+	int height;
+	
+	glfwGetWindowSize(window, &width, &height);
+
+	return Vec2(width / 2, height / 2);
+}
+
+void Mouse::GLHideMouse(GLFWwindow* window) {
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+}
+
+void Mouse::GLShowMouse(GLFWwindow* window) {
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}

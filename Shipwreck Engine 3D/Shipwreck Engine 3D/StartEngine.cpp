@@ -55,6 +55,7 @@ Texture newTexture;
 Textbox newText;
 
 Camera camera;
+Transform camTransform;
 
 
 Physics physics;
@@ -70,11 +71,11 @@ bool isD3D = true;
 int targetFPS = 240;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 
-bool mouseShown;
+const float sensitivity = 0.1f;
 
 void DisplayNumAsTitle(float newVar);
 void DisplayNumAsTitle(float newVar) {
-
+    
     std::ostringstream oss;
     oss << "variable: " << newVar;
 
@@ -122,14 +123,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         return FALSE;
     }
 
-    /*StartEngine gfx;*/
-    if (isD3D) {
-        startEng.postD3DGraphics = std::make_unique<D3DGraphics>(hWnd);
-    }
-    else {
-        startEng.postGLGraphics = std::make_unique<GLGraphics>();
-    }
-
 
     setupFace = &startEng.Font().LoadFont("C:/Windows/Fonts/Arial.ttf");
     //setupFace = &startEng.Font().LoadFont("D:/Shipwreck Engine 3D/Shipwreck Engine 3D/Myfont-Regular.ttf");
@@ -169,15 +162,34 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Other/Player.png");
     newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
 
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
     modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx");
+    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.obj");
 
     
     startEng.RenderFrame();
+
+
+    //Hides mouse and centers it so the delta doesn't skyrocket the moment the loop starts
+    if (isD3D) {
+        if (!startEng.mouse.mouseShown) {
+            startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+            startEng.mouse.D3DHideMouse();
+            startEng.mouse.D3DCenterMouse(hWnd);
+        }
+    }
+    else {
+
+        if (!startEng.mouse.mouseShown) {
+            startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+            startEng.mouse.GLHideMouse(window);
+            startEng.mouse.GLCenterMouse(window);
+        }
+    }
+
 
     MSG msg;
 
@@ -189,13 +201,15 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         if (GetMessage(&msg, nullptr, 0, 0) <= 0) {
 
         }*/
-        if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+        if (isD3D && PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
         else {
+            if(!isD3D) {
+                glfwPollEvents();
+            }
             startEng.RenderFrame();
-
             
 
             if (!startEng.mouse.IsEmpty()) {
@@ -206,13 +220,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 }*/
 
                 if (startEng.mouse.Button0) {
-                    /*WPARAM wp = 0;
-                    LPARAM lp = 0;
-                    SendMessage(hWnd, Msgbox, wp, lp);*/
-                    /*WPARAM wp = 0;
-                    LPARAM lp = 0;
-                    SendMessage(hWnd, Msgbox, wp, lp);*/
-                    mouseShown = false;
+                    startEng.mouse.mouseShown = false;
                 }
 
                 if (startEng.mouse.Button1) {
@@ -240,21 +248,41 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 }
 
             }
-            if (startEng.keyboard.GetKeyState(VK_ESCAPE)) {
-                mouseShown = true;
-            }
+            if (isD3D) {
+                if (startEng.keyboard.GetKeyState(VK_ESCAPE)) {
+                    startEng.mouse.mouseShown = true;
+                }
 
-            DisplayNumAsTitle(startEng.mouse.mouseDelta.x);
-            
-            if (!mouseShown) {
-                startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
-                startEng.HideMouse();
-                startEng.CenterMouse(hWnd);
+
+
+                if (!startEng.mouse.mouseShown) {
+                    startEng.mouse.D3DHideMouse();
+                    startEng.mouse.D3DCenterMouse(hWnd);
+                    startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+                }
+                else {
+                    startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+                    startEng.mouse.D3DShowMouse();
+                }
             }
             else {
-                startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
-                startEng.ShowMouse();
+
+                if (startEng.keyboard.GetKeyState(GLFW_KEY_ESCAPE)) {
+                    startEng.mouse.mouseShown = true;
+                }
+
+                if (!startEng.mouse.mouseShown) {
+                    startEng.mouse.GLHideMouse(window);
+                    startEng.mouse.GLCenterMouse(window);
+                    startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+                }
+                else {
+                    startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+                    startEng.mouse.GLShowMouse(window);
+                }
             }
+
+            
             
             auto frameEnd = std::chrono::high_resolution_clock::now();
             auto frameDuration = frameEnd - frameStart;
@@ -270,7 +298,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         //use VK_[key name] for accelerator keys like [CTRL], [SPACE], and [ALT]
     }
     if (!isD3D) {
-        glfwDestroyWindow(window);
+        //glfwDestroyWindow(window);
         glDeleteVertexArrays(1, &startEng.GLGfx().VAO);
         glDeleteBuffers(1, &startEng.GLGfx().VBO);
         glDeleteBuffers(1, &startEng.GLGfx().EBO);
@@ -285,7 +313,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 void StartEngine::RenderFrame() {
     
     if (isD3D) {
-        D3DGfx().ClearBuffer(0.4f, 0.4f, 0.4f);
+        D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
         //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 19, 0.5f /*0.2f*/, Color(30, 30, 30, 255), hWnd);
         float rotTimer = startEng.timeManager.GetTime() / 1000;
 
@@ -315,16 +343,31 @@ void StartEngine::RenderFrame() {
         PxQuat rot2Quat = physics.rigidbody2->getGlobalPose().q;
         PxVec3 rot2 = rot2Quat.getBasisVector1();
 
-        //rot2Quat.toRadiansAndUnitAxis(angle2, rot2);
-        //radians to degrees conversion (57.2958 degrees is 1 radian)
-        /*rot2 *= angle2;
-        rot2 /= 57.2958f;*/
+
+
+        //FPS camera
+
+        // Update rotations based on mouse delta
+        camTransform.rotation.x += startEng.mouse.mouseDelta.y * sensitivity;
+        camTransform.rotation.y += startEng.mouse.mouseDelta.x * sensitivity;
+
+        // Clamp the rotationY to prevent flipping over at the poles
+        camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
+
+        // Implement rotation around Z for VR
+        // rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
+
+        camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
+        
+        Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
+        camera.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
 
 
 
 
         //Gfx().DrawTestCube(Color(10, 170, 170, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), hWnd);
-        D3DGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd);
+        D3DGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
+        //D3DGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd);
 
         D3DGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
 
@@ -366,11 +409,38 @@ void StartEngine::RenderFrame() {
         /*rot2 *= angle2;
         rot2 /= 57.2958f;*/
 
-        GLGfx().ClearBuffer(0.3f, 0.3f, 0.3f);
+
+
+        //FPS camera
+
+        // Update rotations based on mouse delta
+        camTransform.rotation.x += startEng.mouse.mouseDelta.y * sensitivity;
+        camTransform.rotation.y += startEng.mouse.mouseDelta.x * sensitivity;
+
+        // Clamp the rotationY to prevent flipping over at the poles
+        camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
+
+        camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
+        // Implement rotation around Z for VR
+        // rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
+
+
+        Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
+        camera.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+
+        /*char buffer[64];
+        snprintf(buffer, sizeof(buffer), "%f", mouse.mouseDelta.x);
+
+        glfwSetWindowTitle(window, buffer);*/
+
+
+        GLGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
         //GLGfx().DrawTestTri();
         //GLGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, window);
         //GLGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, window);
-        GLGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, window);
+        GLGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), &camera, window);
+
+        GLGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), &camera, window); //cube
 
         // draw our first triangle
         glUseProgram(startEng.GLGfx().shaderProgram);
@@ -404,40 +474,8 @@ FontCreation& StartEngine::Font() {
 
 
 
-void StartEngine::CenterMouse(HWND hwnd) {
-    RECT rect;
-    GetClientRect(hwnd, &rect); // Get the dimensions of the window client area
-
-    // Calculate the center position
-    POINT center;
-    center.x = rect.left + (rect.right - rect.left) / 2;
-    center.y = rect.top + (rect.bottom - rect.top) / 2;
-
-    // Convert client coordinates to screen coordinates
-    ClientToScreen(hwnd, &center);
-
-    // Move the cursor to the center
-    SetCursorPos(center.x, center.y);
-}
-
-Vec2 StartEngine::GetCenter(HWND hwnd) {
-    RECT rect;
-    GetClientRect(hwnd, &rect); // Get the dimensions of the window client area
-
-    // Calculate the center position
-    POINT center;
-    center.x = rect.left + (rect.right - rect.left) / 2;
-    center.y = rect.top + (rect.bottom - rect.top) / 2;
-
-    return Vec2(center.x, center.y);
-}
-
-void StartEngine::HideMouse() {
-    while (ShowCursor(FALSE) >= 0);
-}
-
-void StartEngine::ShowMouse() {
-    while (ShowCursor(TRUE) < 0);
+Vec3 StartEngine::NormalizeAngles(Vec3 input) {
+    return Vec3(fmod(input.x, 360.0f), fmod(input.y, 360.0f), fmod(input.z, 360.0f));
 }
 
 
@@ -485,12 +523,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize)
         {
             return FALSE;
         }
+        
 
         ShowWindow(hWnd, nCmdShow);
         UpdateWindow(hWnd);
+
+        startEng.postD3DGraphics = std::make_unique<D3DGraphics>(hWnd);
     }
     else {
-        glfwInit();
+        if (!glfwInit()) {
+            return FALSE;
+        }
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -528,13 +571,49 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize)
 
         glViewport(0, 0, windSize.x, windSize.y);
 
-        glfwSetFramebufferSizeCallback(window, GLGraphics::framebuffer_size_callback);
+        //Graphics initialization
+        startEng.postGLGraphics = std::make_unique<GLGraphics>();
+        /*startEng.GLGfx().SetKeyboard(&startEng.GetKeyboard());
+        startEng.GLGfx().SetMouse(&startEng.GetMouse());*/
+
+        
+
+        glfwSetFramebufferSizeCallback(window, startEng.GLGfx().frameBufferCallback);
+        glfwSetWindowCloseCallback(window, startEng.GLGfx().windowCloseCallback);
+
+        startEng.input.mouse = &startEng.GetMouse();
+        startEng.input.keyboard = &startEng.GetKeyboard();
+
+
+        //Mouse Section:
+        glfwSetWindowUserPointer(window, &startEng.input);
+
+        glfwSetMouseButtonCallback(window, startEng.GLGfx().mouseClickCallback);
+        glfwSetCursorPosCallback(window, startEng.GLGfx().mouseMoveCallback);
+        glfwSetScrollCallback(window, startEng.GLGfx().scrollCallback);
+        
+        
+        //Keyboard Section:
+        glfwSetWindowUserPointer(window, &startEng.input);
+        
+        glfwSetKeyCallback(window, startEng.GLGfx().keyCallback);
+
     }
 
 
 
     return TRUE;
 }
+
+
+
+
+//GL callbacks:
+
+
+
+
+
 
 //  WM_COMMAND  - process the application menu
 //  WM_PAINT    - Paint the main window
@@ -600,6 +679,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         startEng.keyboard.ClearKeyStates();
         startEng.mouse.ClearStates();
+        startEng.mouse.mouseShown = true;
         //reset all key states in app
     }
     break;
@@ -671,7 +751,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         if (pts.x >= 0 && pts.x < width && pts.y >= 0 && pts.y < height) {
 
-            startEng.mouse.OnMouseMove(pts.x,pts.y, mouseShown, startEng.GetCenter(hWnd));
+            startEng.mouse.OnMouseMove(pts.x,pts.y, startEng.mouse.mouseShown, startEng.mouse.D3DGetCenter(hWnd));
 
             //mouse in window
             if (!startEng.mouse.inWindow) {
@@ -684,7 +764,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         else {
             if ( startEng.mouse.Button0 & (MK_LBUTTON | MK_RBUTTON)) {
 
-                startEng.mouse.OnMouseMove(pts.x, pts.y, mouseShown, startEng.GetCenter(hWnd));
+                startEng.mouse.OnMouseMove(pts.x, pts.y, startEng.mouse.mouseShown, startEng.mouse.D3DGetCenter(hWnd));
             }
             else {
                 ReleaseCapture();

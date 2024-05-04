@@ -276,7 +276,6 @@ GLGraphics::GLGraphics() {
 	int width = (rect.right - rect.left);
 	int height = (rect.bottom - rect.top);*/
 
-
 	InitRenderer();
 
 	//make transparent:
@@ -330,10 +329,79 @@ void GLGraphics::DrawTestTri() {
 	glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, 0);
 }
 
-void GLGraphics::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+
+
+
+void GLGraphics::frameBufferCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
+
+void GLGraphics::windowCloseCallback(GLFWwindow* window) {
+	// Handle window close event
+	glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+
+
+void GLGraphics::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	
+	/*if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	}*/
+
+	Input* instance = static_cast<Input*>(glfwGetWindowUserPointer(window));
+
+	if (action == GLFW_PRESS) {
+		instance->keyboard->OnKeyDown(key);
+	}
+
+	if (action == GLFW_RELEASE) {
+		instance->keyboard->OnKeyUp(key);
+	}
+}
+
+
+void GLGraphics::mouseClickCallback(GLFWwindow* window, int button, int action, int mods) {
+	Input* instance = static_cast<Input*>(glfwGetWindowUserPointer(window));
+
+
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		instance->mouse->OnButton0Down();
+	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		instance->mouse->OnButton0Up();
+	}
+
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		instance->mouse->OnButton1Down();
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
+		instance->mouse->OnButton1Up();
+	}
+}
+
+
+void GLGraphics::mouseMoveCallback(GLFWwindow* window, double xpos, double ypos) {
+	Input* instance = static_cast<Input*>(glfwGetWindowUserPointer(window));
+
+	instance->mouse->OnMouseMove(xpos + 1, ypos + 1, instance->mouse->mouseShown, instance->mouse->GLGetCenter(window));
+}
+
+
+void GLGraphics::scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+	Input* instance = static_cast<Input*>(glfwGetWindowUserPointer(window));
+
+	if (yoffset > 0) {
+		instance->mouse->OnWheelUp();
+	}
+	else if (yoffset < 0) {
+		instance->mouse->OnWheelDown();
+	}
+}
+
+
+
 
 
 GLGraphics::~GLGraphics() {
