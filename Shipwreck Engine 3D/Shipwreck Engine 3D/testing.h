@@ -4,16 +4,20 @@
 using namespace physx;
 
 
+#include "box2d/box2d.h"
+
 using namespace std;
 #include <vector>
 
 #include <chrono>
 
+#include "Model.h"
 
 class Physics {
 public:
-    Physics() {
-    }
+    Physics() :
+    scene2D(b2Vec2(0.0f, -10.0f))
+    {}
 
 
 
@@ -69,115 +73,12 @@ public:
     };
 
 
-    bool SetupPhysics() {
+    bool SetupPhysics();
 
-        static PxDefaultErrorCallback errorCallback;
-        static PxDefaultAllocator allocatorCallback;
-
-
-        bool recordMemoryAllocations = true;
-
-        foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocatorCallback, errorCallback);
-        if (!foundation)
-        {
-            //Error("PxCreateFoundation failed!");
-            return false;
-        }
-
-        pvd = PxCreatePvd(*foundation);
-        
-        transport = PxDefaultPvdSocketTransportCreate("", 5425, 10);
-
-        pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
+    bool SetupPhysics2D();
 
 
-        physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(1.0f,10.0f), recordMemoryAllocations, pvd);
-        
-        
-        if (!physics)
-        {
-            //Error("PxCreatePhysics failed!");
-            return false;
-        }
-
-        if (!PxInitExtensions(*physics, pvd))
-        {
-            //Error("PxInitExtensions failed!");
-            return false;
-        }
-
-        PxSceneDesc sceneDesc(physics->getTolerancesScale());
-        sceneDesc.gravity = PxVec3(0.0f, -10.0f, 0.0f);
-
-        if (!sceneDesc.cpuDispatcher) {
-            PxDefaultCpuDispatcher* cpuDispatcher = PxDefaultCpuDispatcherCreate(1);
-            if (!cpuDispatcher)
-            {
-                return false;
-            }
-            sceneDesc.cpuDispatcher = cpuDispatcher;
-        }
-        if (!sceneDesc.filterShader)
-        {
-            PxSimulationFilterShader defaultFilterShader = PxDefaultSimulationFilterShader;
-            sceneDesc.filterShader = defaultFilterShader;
-        }
-
-        sceneDesc.broadPhaseType = PxBroadPhaseType::ePABP; //collision sweeping
-
-
-
-        scene = physics->createScene(sceneDesc);
-
-        if (!scene) {
-            return false;
-        }
-
-        scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
-        scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-
-
-
-
-        bool selfCollisions = true;
-
-        PxAggregateFilterHint hint = PxGetAggregateFilterHint(PxAggregateType::eGENERIC, selfCollisions);
-
-        PxU32 maxActors = 30;
-        PxAggregate* aggregate = physics->createAggregate(maxActors,maxActors, hint);
-
-
-
-
-
-        mat = physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
-        if (!mat) {
-            return false;
-        }
-
-
-
-        UserErrorCallback callback;
-
-
-        const PxU32 threads = 8;
-        PxDefaultCpuDispatcher* dispatcher = PxDefaultCpuDispatcherCreate(threads);
-        taskManager = PxTaskManager::createTaskManager(callback, dispatcher);
-
-
-        PxBroadPhaseDesc bpDesc(PxBroadPhaseType::ePABP);
-        broadPhase = PxCreateBroadPhase(bpDesc);
-
-        return true;
-        //PxTolerancesScale scale;
-        //scale.length = 100;        // typical length of an object
-        //scale.speed = 981;         // typical speed of an object, gravity*1s is a reasonable choice
-        //PxPhysics* p = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, scale);
-    }
-
-
-
-    //later have a function that takes in a mesh class
+    //later have a function that takes in a mesh, obsolete now
     bool TestPhysics() {
         vector<PxVec3> verts = 
         { 
@@ -292,9 +193,9 @@ public:
         rigidbody2->attachShape(*triMeshShape);
 
 
+        //staticRbs.push_back(rigidbody2);
 
-
-        scene->addActor(*rigidbody2); // ||  <--- ERROR <--- ||
+        scene->addActor(*rigidbody2);
 
 
 
@@ -310,41 +211,9 @@ public:
     }
     
 
-    virtual void onContact(PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
-    {
-        // Retrieve the current poses and velocities of the two actors involved in the contact event.
+    virtual void onContact(PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs);
 
-        const PxTransform body0PoseAtEndOfSimulateStep = pairHeader.actors[0]->is<PxRigidDynamic>()->getGlobalPose();
-        const PxTransform body1PoseAtEndOfSimulateStep = pairHeader.actors[1]->is<PxRigidDynamic>()->getGlobalPose();
 
-        const PxVec3 body0LinVelAtEndOfSimulateStep = pairHeader.actors[0]->is<PxRigidDynamic>() ? pairHeader.actors[0]->is<PxRigidDynamic>()->getLinearVelocity() : PxVec3(PxZero);
-        const PxVec3 body1LinVelAtEndOfSimulateStep = pairHeader.actors[0]->is<PxRigidDynamic>() ? pairHeader.actors[1]->is<PxRigidDynamic>()->getLinearVelocity() : PxVec3(PxZero);
-
-        const PxVec3 body0AngVelAtEndOfSimulateStep = pairHeader.actors[0]->is<PxRigidDynamic>() ? pairHeader.actors[0]->is<PxRigidDynamic>()->getAngularVelocity() : PxVec3(PxZero);
-        const PxVec3 body1AngVelAtEndOfSimulateStep = pairHeader.actors[0]->is<PxRigidDynamic>() ? pairHeader.actors[1]->is<PxRigidDynamic>()->getAngularVelocity() : PxVec3(PxZero);
-
-        // Retrieve the poses and velocities of the two actors involved in the contact event as they were
-        // when the contact event was detected.
-
-        PxContactPairExtraDataIterator iter(pairHeader.extraDataStream, pairHeader.extraDataStreamSize);
-        while (iter.nextItemSet())
-        {
-            const PxTransform body0PoseAtContactEvent = iter.eventPose->globalPose[0];
-            const PxTransform body1PoseAtContactEvent = iter.eventPose->globalPose[1];
-
-            const PxVec3 body0LinearVelocityAtContactEvent = iter.preSolverVelocity->linearVelocity[0];
-            const PxVec3 body1LinearVelocityAtContactEvent = iter.preSolverVelocity->linearVelocity[1];
-
-            const PxVec3 body0AngularVelocityAtContactEvent = iter.preSolverVelocity->angularVelocity[0];
-            const PxVec3 body1AngularVelocityAtContactEvent = iter.preSolverVelocity->angularVelocity[1];
-        }
-    }
-
-    /*
-    gSensorActor->getShapes(&sensorShape, 1);
-    sensorShape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-    sensorShape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-    */
     void OnTrigger(PxTriggerPair* pairs, PxU32 count)
     {
         for (PxU32 i = 0; i < count; i++)
@@ -362,17 +231,12 @@ public:
     }
 
     
-    void Simulate() {
-        std::chrono::high_resolution_clock::time_point currentFrameTime = std::chrono::high_resolution_clock::now();
+    void Simulate();
 
-        float deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentFrameTime - lastFrameTime).count();
+    void Simulate2D();
 
-        scene->simulate(deltaTime * 1.4f);
-        scene->fetchResults();
-        //rigidbody->addForce(PxVec3(0.0f,1.0f,0.0f),PxForceMode::eFORCE);
-
-        lastFrameTime = currentFrameTime;
-    }
+    bool B2DRayCheck(b2Fixture* fixture);
+    bool RayCheck(PxActor* actor);
 
 
 public:
@@ -388,13 +252,25 @@ public:
 
     PxRigidDynamic* rigidbody;
     PxRigidStatic* rigidbody2;
+    
 
+    /*std::vector<PxRigidStatic*> staticRbs;
+    std::vector<PxRigidDynamic*> dynamicRbs;*/
+    
     PxMaterial* mat;
 
 
     PxTaskManager* taskManager;
 
     PxBroadPhase* broadPhase;
+
+
+    //2D section
+
+    b2World scene2D;
+    
+    int32 velocityIterations = 6;
+    int32 positionIterations = 2;
 
 private:
     std::chrono::high_resolution_clock::time_point lastFrameTime = std::chrono::high_resolution_clock::now();

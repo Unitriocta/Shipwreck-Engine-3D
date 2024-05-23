@@ -90,9 +90,6 @@ D3DGraphics::D3DGraphics( HWND hWnd) {
 
 
 
-	//														  |																																									|
-	//Error description: After initializing the depth buffer \|/, whenever we use the renderer to render something, it immediately stops running and prints an Access violation reading location error, it may be a problem with \|/
-
 	//Depth buffer
 	D3D11_DEPTH_STENCIL_DESC depthDesc = {}; //dsDesc
 	depthDesc.DepthEnable = true;

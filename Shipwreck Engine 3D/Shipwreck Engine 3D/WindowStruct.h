@@ -2,8 +2,8 @@
 #include "UIElement.h"
 
 #include "StartEngine.h"
+using namespace EngineInstance;
 
-#include <Windows.h>
 
 /*  Format Types:
 *  

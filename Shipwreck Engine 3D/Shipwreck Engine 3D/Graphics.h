@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Application.h"
 #include "Input.h"
 
 #include <vector>
@@ -13,15 +12,19 @@
 #include FT_FREETYPE_H
 
 
+
 #include "FontCreation.h"
 
 
+#include "ModelImporter.h"
 
 #include "MathExtras.h"
 
 #include "UITypes.h"
 
 #include "Model.h"
+
+#include "TextureMaps.h"
 
 #include "Camera.h"
 
@@ -38,6 +41,8 @@
 
 #include "Keyboard.h"
 #include "Mouse.h"
+
+#include "Transform.h"
 
 
 #include "glm/glm.hpp" //Math
@@ -62,9 +67,13 @@ public:
 
 	void SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
-	void SetConstantBuffers(Camera camera, Vec3 position, Rotation rotation, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
+	void SetConstantBuffers(bool is2D, Camera camera, Vec3 position, Rotation rotation, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
 	void SetViewports(HWND hWnd, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
+
+	void SetTextures(ModelTextureMaps* textures, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
+
+	void SetTextures2D(ID3D11ShaderResourceView* texture, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
 	ID3DBlob* SetPSAndVS(const wchar_t* psName, const wchar_t* vsName, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
@@ -96,11 +105,11 @@ public:
 
 	void RenderText(std::vector<UV_Vertice> vertices, Vec2 letPos, FT_Bitmap* text_bitmap, HWND hWnd);
 
-	void RenderTexTris(std::vector<UV_Vertice> vertices, Vec2 texPos, Texture* tex, HWND hWnd);
+	void RenderTexTris(std::vector<TexturedVertex> vertices, Camera camera, Vec2 texPos, D3DTexture* tex, HWND hWnd);
 
 	void Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned short> indices, Vec3 position, Rotation rotation, Camera camera, HWND hWnd);
 
-	void RenderModel(Model model, Vec3 position, Rotation rotation, Camera camera, HWND hWnd);
+	void RenderModel(Model model, Transform transform, Camera camera, ModelImporter* importer, HWND hWnd);
 
 
 
@@ -110,7 +119,7 @@ public:
 
 	void DrawRect(Vec2 coords, Vec2 size, int cornerTris, float roundness/*radius*/, Color rectColor, HWND hWnd);
 
-	void DrawSprite(Vec2 coords, Vec2 scale, Texture* tex, HWND hWnd);
+	void DrawSprite(Camera camera, Vec2 coords, Vec2 scale, D3DTexture* tex, HWND hWnd);
 
 
 
@@ -119,7 +128,7 @@ public:
 	void ShowText(Textbox text); //loops through characters and calls DrawTextRect()
 
 
-private:
+public:
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
 	IDXGISwapChain* swapChain = nullptr;
@@ -372,11 +381,11 @@ public:
 
 	void RenderText(std::vector<UV_Vertice> vertices, Vec2 letPos, FT_Bitmap* text_bitmap, HWND hWnd);
 
-	void RenderTexTris(std::vector<UV_Vertice> vertices, Vec2 texPos, Texture* tex, HWND hWnd);
+	void RenderTexTris(std::vector<UV_Vertice> vertices, Vec2 texPos, D3DTexture* tex, HWND hWnd);
 
 	void Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned int> indices, Vec3 position, Rotation rotation, Camera camera, GLFWwindow* window);
 
-	void RenderModel(Model model, Vec3 position, Rotation rotation, Camera* camera, GLFWwindow* window);
+	void RenderModel(Model model, Transform transform, Camera* camera, GLFWwindow* window);
 
 
 
@@ -386,7 +395,7 @@ public:
 
 	void DrawRect(Vec2 coords, Vec2 size, int cornerTris, float roundness/*radius*/, Color rectColor, HWND hWnd) {}
 
-	void DrawSprite(Vec2 coords, Vec2 scale, Texture* tex, HWND hWnd);
+	void DrawSprite(Vec2 coords, Vec2 scale, D3DTexture* tex, HWND hWnd);
 
 
 

@@ -2,7 +2,8 @@ struct VS_In
 {
 	float3 pos: POSITION;
 	float3 normal: NORMAL;
-	float4 color: COLOR;
+    float4 color : COLOR;
+    float2 uv : UV;
 };
 
 struct VS_Out
@@ -10,11 +11,13 @@ struct VS_Out
 	float4 pos: SV_POSITION;
 	float3 worldPos: POSITION;
 	float3 normal: NORMAL;
-	float4 color: COLOR;
+    float4 color : COLOR;
+    float2 uv : UV;
 };
 
 
-cbuffer CBuffer {
+cbuffer CBuffer
+{
 	matrix transform;
 	matrix camera;
 };
@@ -34,6 +37,8 @@ VS_Out main(VS_In input)
 	vsout.color = input.color;
 
 	vsout.worldPos = input.pos;
+	
+    vsout.uv = input.uv;
 
 	return vsout;
 }

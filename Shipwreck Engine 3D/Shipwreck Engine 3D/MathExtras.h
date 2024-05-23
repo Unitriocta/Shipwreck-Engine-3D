@@ -2,9 +2,44 @@
 #include <d3d11.h>
 
 #include <dxtex/DirectXTex.h>
-using namespace std;
 #include <string>
 #include <memory>
+
+
+
+struct Vec3;
+
+
+struct Rotation;
+
+
+
+
+
+struct Color;
+
+class MathFunctions;
+
+struct Vec2;
+
+
+struct UV_Vertice;
+
+
+
+class D3DTexture;
+
+
+
+struct Vertice;
+
+struct Vertex;
+
+
+struct ColorVertex;
+
+
+struct TexturedVertex;
 
 
 
@@ -38,6 +73,9 @@ using namespace std;
 
 		Rotation(float _x, float _y, float _z)
 			: x(_x), y(_y), z(_z)
+		{}
+		Rotation(Vec3 vec3)
+			: x(vec3.x), y(vec3.y), z(vec3.z)
 		{}
 	};
 
@@ -104,44 +142,19 @@ using namespace std;
 
 
 
-	class Texture {
+	class D3DTexture {
 
 	public:
-		Texture() {
+		D3DTexture() {
 			scratch = {};
 			width = 0;
 			height = 0;
 			hasAlpha = false;
 		}
 
-		void LoadTexture(std::string _textPath)
-		{
-			wchar_t texPath[512];
-			mbstowcs_s(nullptr, texPath, _textPath.c_str(), _TRUNCATE);
+		void LoadTexture(std::string _textPath);
 
-			DirectX::ScratchImage img = {};
-			DirectX::LoadFromWICFile(texPath, DirectX::WIC_FLAGS_NONE, nullptr, img, nullptr);
-			const DirectX::Image* newImg = img.GetImage(0, 0, 0);
-
-			width = newImg->width;
-			height = newImg->height;
-
-			if (newImg->format != DXGI_FORMAT_R8G8B8A8_UNORM) {
-				DirectX::ScratchImage convertedImg;
-				HRESULT hr = DirectX::Convert(
-					*img.GetImage(0,0,0),
-					DXGI_FORMAT_R8G8B8A8_UNORM,
-					DirectX::TEX_FILTER_DEFAULT,
-					DirectX::TEX_THRESHOLD_DEFAULT,
-					convertedImg);
-
-				scratch = std::move(convertedImg);
-				return;
-			}
-
-			scratch = std::move(img);
-			return;
-		}
+		void LoadTextureFromFile(ID3D11Device* device, std::string path, ID3D11ShaderResourceView** textureView);
 
 	public:
 
@@ -222,13 +235,15 @@ using namespace std;
 
 		Vec3 position;
 
+		Vec2 uv;
+
 		
 	public:
-		TexturedVertex(Vec3 _position, Vec3 _normal, Color _color)
-			: position(_position), normal(_normal), color(_color)
+		TexturedVertex(Vec3 _position, Vec3 _normal, Color _color, Vec2 _uv)
+			: position(_position), normal(_normal), color(_color), uv(_uv)
 		{}
 
 		TexturedVertex()
-			: position(Vec3(0,0,0)), normal(Vec3(0,0,0)), color(Color(0,0,0,0))
+			: position(Vec3(0,0,0)), normal(Vec3(0,0,0)), color(Color(0,0,0,0)), uv(Vec2(0,0))
 		{}
 	};

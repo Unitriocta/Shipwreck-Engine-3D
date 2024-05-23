@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include <Windows.h>
 #include "Graphics.h"
 
 

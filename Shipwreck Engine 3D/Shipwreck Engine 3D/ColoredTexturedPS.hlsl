@@ -30,7 +30,7 @@ SamplerState samplerState;
 
 float4 main(VS_Out input) : SV_TARGET
 {
-	return min(float4(loadedTexture.Sample(samplerState, input.uv).rgba),float4(1.0f,1.0f,1.0f,1.0f)); //min() MEANING: It returns the lower value and combines all 4 minimum values into 1 float4/Vector4
+	return min(float4(loadedTexture.Sample(samplerState, input.uv).rgba), float4(1.0f,1.0f,1.0f,1.0f)); //min() MEANING: It returns the lower value and combines all 4 minimum values into 1 float4/Vector4
 	//Ex: min(float4(0,1,0,1),float4(1,0,1,0)) returns float4(0,0,0,0)
 	//Ex: min(float4(0,1,0,1),float4(1,0,1,1)) returns float4(0,0,0,1)
 };

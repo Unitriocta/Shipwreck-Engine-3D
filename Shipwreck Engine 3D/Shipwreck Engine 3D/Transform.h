@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics.h"
+#include "MathExtras.h"
 
 class Transform
 {
@@ -17,7 +17,8 @@ public:
 		{}
 
 public:
-	Vec3 position;
+	Vec3 position; //Acts as the component offset if there is a parent, otherwise this is the global position of the Transform
+	Transform* parent;
 	Vec3 rotation;
 	Vec3 scale;
 };

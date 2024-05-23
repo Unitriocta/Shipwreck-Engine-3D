@@ -1,14 +1,31 @@
 #pragma once
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include "Online.h"
 
 #include <windows.h>
+
 #include <iostream>
 
+#include <chrono> //fps limit/timer
+#include <thread> //fps limit/timer
 
+
+#include <string>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <memory>
+#include <sstream>
+
+#include <wingdi.h>
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 
-#define WIN32_LEAN_AND_MEAN
+
 
 
 #include <stdlib.h>
@@ -17,22 +34,22 @@
 #include <tchar.h>
 
 
-#include "d3d11.h"
 
 
 
 #include "resource.h"
 
+
+
+#include "Application.h"
 #include "Graphics.h"
 
-#include <memory>
 
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Input.h"
 
 
-#include <sstream>
 
 
 #include "FontCreation.h"
@@ -47,10 +64,38 @@
 #include "ModelImporter.h"
 #include "Model.h"
 
+#include "Rigidbody.h"
+
 #include "Transform.h"
 
-#include <chrono> //fps limit/timer
-#include <thread> //fps limit/timer
+#include "Console.h"
+using namespace Console;
+
+#include "FileManager.h"
+using namespace FileManager;
+
+
+
+class StartEngine;
+
+namespace EngineInstance {
+
+	extern StartEngine startEng;
+
+	extern HWND hWnd;
+
+	extern bool isD3D;
+}
+
+
+
+#include "Container.h"
+
+
+#include "ShipwreckEngine.h"
+using namespace GameScripting;
+
+
 
 class StartEngine {
 public:
@@ -59,10 +104,6 @@ public:
 	}
 
 
-	
-
-
-	bool isD3D;
 
 	GLGraphics& GLGfx();
 	D3DGraphics& D3DGfx();
@@ -74,6 +115,14 @@ public:
 	};
 
 	void RenderFrame();
+	void InputThread();
+	std::mutex threadMtx;
+
+	//void HandleInput();
+
+
+	void SaveEngine();
+	void LoadEngine();
 
 
 	Vec3 NormalizeAngles(Vec3 input);
@@ -97,7 +146,12 @@ public:
 	Input input;
 	Keyboard keyboard;
 	Mouse mouse;
+	NetworkManager networkManager;
+
+	std::vector<Container*> containers; //Stores container's, which store models, camera's, position, rotation, ect.
+	//std::vector<GameScript*> scripts;
 
 public:
 	friend class WindowStruct;
 };
+

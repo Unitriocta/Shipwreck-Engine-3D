@@ -1,7 +1,6 @@
 #include "FontCreation.h"
 
 #include <sstream>
-#include <windows.h>
 
 //void FontCreation::LoadFont() {
 //	FT_Library fontLibrary;

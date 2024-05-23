@@ -25,6 +25,7 @@ void Textbox::LoadText() {
 	int winWidth = (rect.right - rect.left);
 	int winHeight = (rect.bottom - rect.top);
 
+	rows = 1;
 
 	glyphs.resize(strlen(textToLoad));
 	for (int i = 0; i < strlen(textToLoad); i++) {
@@ -38,6 +39,7 @@ void Textbox::LoadText() {
 		if (pen.x > textPos.x + textRect.x) {
 			pen.x = textPos.x;
 			pen.y += (FT_UInt)(slot->face->height * 1.15f) >> 6/*55*/;
+			rows++;
 		}
 
 		if (textToLoad[i] == ' ') {

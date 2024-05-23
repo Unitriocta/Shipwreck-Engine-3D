@@ -15,19 +15,28 @@
 
 
 
-
+#include "StartEngine.h"
+using namespace EngineInstance;
 
 #include <dxtex/DirectXTex.h>
 
 
 
 
-#include "StartEngine.h"
-#include "Application.h"
 
 
 
 #include "testing.h"
+
+
+namespace EngineInstance {
+
+    StartEngine startEng;
+
+    HWND hWnd;
+
+    bool isD3D = true;
+}
 
 
 
@@ -45,20 +54,33 @@ LRESULT CALLBACK      WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 
-HWND hWnd;
 
-
-StartEngine startEng;
 FontCreation::SetupFace *setupFace;
-Texture newTexture;
+Sprite sprite;
 
 Textbox newText;
 
 Camera camera;
 Transform camTransform;
 
+D3DTexture texLoader;
 
 Physics physics;
+
+Button button;
+
+Container container;
+Container container2;
+Container container3;
+
+Rigidbody rigidbody(&physics, true);   //dynamic
+Rigidbody rigidbody2(&physics, false); //static
+Rigidbody rigidbody3(&physics, true); //dynamic 2d
+
+
+std::vector<Rigidbody> loadedRigidbodies;
+std::vector<Model> loadedModels;
+std::vector<Container> loadedContainers;
 
 
 ModelImporter modelImporter;
@@ -66,12 +88,13 @@ ModelImporter modelImporter;
 GLFWwindow* window;
 
 bool exited = false;
-bool isD3D = true;
 
-int targetFPS = 240;
+int targetFPS = 250;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 
 const float sensitivity = 0.1f;
+
+const std::string engineDataPath = "D:/Shipwreck Engine 3D/Shipwreck Engine 3D/data.json";
 
 void DisplayNumAsTitle(float newVar);
 void DisplayNumAsTitle(float newVar) {
@@ -86,8 +109,8 @@ void DisplayNumAsTitle(float newVar) {
     SetWindowTextA(hWnd, widthStr.c_str());
 }
 
-void DisplayStringAsTitle(unsigned char newVar);
-void DisplayStringAsTitle(unsigned char newVar) {
+void DisplayStringAsTitle(std::string newVar);
+void DisplayStringAsTitle(std::string newVar) {
 
     std::ostringstream oss;
     oss << "variable: " << newVar;
@@ -100,8 +123,11 @@ void DisplayStringAsTitle(unsigned char newVar) {
 }
 
 
+std::string RemoveQuotes(std::string& inString);
+
+
 //WM_KEYDOWN
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
@@ -111,9 +137,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     LoadString(hInstance, APP_NAME, szTitle, MAX_LOADSTRING);
     LoadString(hInstance, PROJ_FILENAME, szWindowClass, MAX_LOADSTRING);
 
-    startEng.isD3D = isD3D;
-
-    startEng.timeManager.StartTime();
 
     MyRegisterClass(hInstance);
 
@@ -123,54 +146,100 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         return FALSE;
     }
 
+    startEng.timeManager.StartTime();
+
+
 
     setupFace = &startEng.Font().LoadFont("C:/Windows/Fonts/Arial.ttf");
     //setupFace = &startEng.Font().LoadFont("D:/Shipwreck Engine 3D/Shipwreck Engine 3D/Myfont-Regular.ttf");
 
 
-    newText.textToLoad = /*"Shipwreck 3D" */ /*"The quick brown fox jumps over the lazy dog"*/ "abcdefghijklmnopqrstuvwxyz" /*"igiaiii"*/; //szTitle for title text
-    newText.fontManager = setupFace;
-    newText.textRect = Vec2(455.0f, 0.0f);
-    newText.textPos = Vec2(-220.0f, 0.0f);
-    newText.fontSize = 12.0f;
-    newText.hWnd = hWnd;
+    ConsoleSetup(setupFace, hWnd);
 
-    newText.LoadText();
-
-
-
-
+    std::string loadText = "abcdefghijklmnopqrstovwxyz";
 
     if (!physics.SetupPhysics()) {
         WPARAM wp = 1111;
         LPARAM lp = 1000;
         SendMessageA(hWnd, Msgbox, wp, lp);
     }
-    if (!physics.TestPhysics()) {
-        WPARAM wp = 1001;
-        LPARAM lp = 1000;
-        SendMessageA(hWnd, Msgbox, wp, lp);
-    }
+    rigidbody.NewRB();
+    rigidbody2.NewRB();
+    rigidbody3.NewRB2D();
+
+    /*button.CreateFixture(rigidbody3.rb2D);
+    if (physics.RayCheck(button.fixture)) {
+        return 1;
+    }*/
+
+    sprite.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
+    //newTexture.LoadTexture("C:/Users/smsal/Downloads/slime-test-free-texture/textures/Depth_basecolor.png");
+
+    D3DTexture loader;
+
+    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
+    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &loader);
+
+    /*modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &loader);
+    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx", &loader);
 
 
 
 
-    //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Cave block.png");
-    //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Untitled_Artwork.png");
-    //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Tree.png");
-    //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Other/Platforms.png");
-    //newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Other/Player.png");
-    newTexture.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
 
-    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx");
-    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx");
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.obj");
+    startEng.containers.push_back(&container2);
+    startEng.containers.push_back(&container);
+    startEng.containers.push_back(&container3);
 
+
+    container.name  = "Ball";
+    container2.name = "Ground";
+    container3.name = "PlayerSprite";
+
+    container.models.AddModel(&modelImporter.meshes[0]);
+    container.models.modelList[0]->modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
+
+    container2.models.AddModel(&modelImporter.meshes[1]);
+    container2.models.modelList[0]->modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx";
+
+    container3.sprites.AddSprite(&sprite);
     
+    container.rigidbody = &rigidbody;
+    container2.rigidbody = &rigidbody2;
+    container3.rigidbody = &rigidbody3;
+    
+
+    container.models.modelList[0]->hasDiffuse = true;
+    
+    std::string narrowString = "C:/Users/smsal/Downloads/slime-test-free-texture/textures/Depth_basecolor.png";
+
+    ID3D11ShaderResourceView* srv = nullptr;
+    loader.LoadTextureFromFile(startEng.D3DGfx().device, narrowString, &srv);
+
+    container.models.modelList[0]->textures.diffuseTex = srv;*/
+
+
+
+
+
+    //container.rigidbody->UpdateMesh(container.models.modelList[0]);
+    //container2.rigidbody->UpdateMesh(container2.models.modelList[0]);
+
+
+    Connection sendAddr;
+    startEng.networkManager.AssignSendAddress(&sendAddr, "192.168.4.156");
+    //sendAddr.SeparateFullAddress(startEng.networkManager.DomainToIP("0.tcp.ngrok.io") + ":18183");
+    //sendAddr.SeparateFullAddress(startEng.networkManager.DomainToIP("smsaliou5935-35752.portmap.host") + ":35752");
+    startEng.networkManager.transformAddresses.insert({0, &container.transform});
+    startEng.networkManager.sendingAddresses.push_back(sendAddr);
+
+
     startEng.RenderFrame();
+    startEng.LoadEngine();
+    startEng.SaveEngine();
+    //startEng.LoadEngine();
+
+
 
 
     //Hides mouse and centers it so the delta doesn't skyrocket the moment the loop starts
@@ -193,6 +262,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     MSG msg;
 
+    /*std::thread renderThread(&StartEngine::RenderFrame, &startEng);
+    std::thread inputThread(&StartEngine::HandleInput, &startEng);
+    
+    renderThread.join();
+    inputThread.join();*/
+
     // Main message loop:
     while (!exited && !glfwWindowShouldClose(window))
     {
@@ -205,98 +280,121 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        else {
-            if(!isD3D) {
-                glfwPollEvents();
-            }
-            startEng.RenderFrame();
-            
-
-            if (!startEng.mouse.IsEmpty()) {
-               /* const auto mouseEvent = startEng.mouse.ReadMouse();
-
-                if (mouseEvent.GetMouseState() == Mouse::MouseEvent::State::Button0Down) {
-                    SendMessageA(hWnd, Msgbox, 0, 0);
-                }*/
-
-                if (startEng.mouse.Button0) {
-                    startEng.mouse.mouseShown = false;
-                }
-
-                if (startEng.mouse.Button1) {
-                    WPARAM wp = 1;
-                    LPARAM lp = 1;
-                    SendMessage(hWnd, Msgbox, wp, lp);
-                }
-
-                if (startEng.mouse.scrollWheel == 1.0f) {
-                    WPARAM wp = 3;
-                    LPARAM lp = 3;
-                    SendMessage(hWnd, Msgbox, wp, lp);
-                }
-                if (startEng.mouse.scrollWheel == -1.0f) {
-                    WPARAM wp = 4;
-                    LPARAM lp = 4;
-                    SendMessage(hWnd, Msgbox, wp, lp);
-                }
+        if (!isD3D) {
+            glfwPollEvents();
+        }
+        startEng.networkManager.StartRecieveThread(startEng.networkManager);
+        //container.rigidbody->rbDynamic->setGlobalPose(PxTransform(startEng.networkManager.transformAddresses[0]->position.x, startEng.networkManager.transformAddresses[0]->position.y, startEng.networkManager.transformAddresses[0]->position.z, PxQuat(0, 0, 0, 0)));
 
 
-                if (!startEng.mouse.inWindow) {
-                    WPARAM wp = 5;
-                    LPARAM lp = 5;
-                    //SendMessage(hWnd, Msgbox, wp, lp);
-                }
+        if (!startEng.mouse.IsEmpty()) {
+            /* const auto mouseEvent = startEng.mouse.ReadMouse();
 
-            }
-            if (isD3D) {
-                if (startEng.keyboard.GetKeyState(VK_ESCAPE)) {
-                    startEng.mouse.mouseShown = true;
-                }
+             if (mouseEvent.GetMouseState() == Mouse::MouseEvent::State::Button0Down) {
+                 SendMessageA(hWnd, Msgbox, 0, 0);
+             }*/
 
+            if (startEng.mouse.Button0) {
 
+                startEng.mouse.mouseShown = false;
 
-                if (!startEng.mouse.mouseShown) {
+                if (isD3D) {
                     startEng.mouse.D3DHideMouse();
                     startEng.mouse.D3DCenterMouse(hWnd);
-                    startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+                    startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
                 }
                 else {
-                    startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
-                    startEng.mouse.D3DShowMouse();
-                }
-            }
-            else {
-
-                if (startEng.keyboard.GetKeyState(GLFW_KEY_ESCAPE)) {
-                    startEng.mouse.mouseShown = true;
-                }
-
-                if (!startEng.mouse.mouseShown) {
                     startEng.mouse.GLHideMouse(window);
                     startEng.mouse.GLCenterMouse(window);
-                    startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
-                }
-                else {
                     startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
-                    startEng.mouse.GLShowMouse(window);
                 }
             }
 
-            
-            
-            auto frameEnd = std::chrono::high_resolution_clock::now();
-            auto frameDuration = frameEnd - frameStart;
+            if (startEng.mouse.Button1) {
+                WPARAM wp = 1;
+                LPARAM lp = 1;
 
-            if (frameDuration < targetFrameLength) {
-                std::this_thread::sleep_for(targetFrameLength - frameDuration);
+                startEng.networkManager.StartMessageThread((char*)"SetPlayerPosition:7:5:7:0:", 0);
+                //SendMessage(hWnd, Msgbox, wp, lp);
+            }
+
+            if (startEng.mouse.scrollWheel == 1.0f) {
+                WPARAM wp = 3;
+                LPARAM lp = 3;
+                SendMessage(hWnd, Msgbox, wp, lp);
+            }
+            if (startEng.mouse.scrollWheel == -1.0f) {
+                WPARAM wp = 4;
+                LPARAM lp = 4;
+                SendMessage(hWnd, Msgbox, wp, lp);
+            }
+
+
+            if (!startEng.mouse.inWindow) {
+                WPARAM wp = 5;
+                LPARAM lp = 5;
+                //SendMessage(hWnd, Msgbox, wp, lp);
+            }
+
+        }
+
+
+        startEng.RenderFrame();
+
+
+
+        if (isD3D) {
+            if (startEng.keyboard.GetKeyState(VK_ESCAPE)) {
+                startEng.mouse.mouseShown = true;
+            }
+
+
+
+            if (!startEng.mouse.mouseShown) {
+                startEng.mouse.D3DHideMouse();
+                startEng.mouse.D3DCenterMouse(hWnd);
+                startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+            }
+            else {
+                startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+                startEng.mouse.D3DShowMouse();
             }
         }
+        else {
+
+            if (startEng.keyboard.GetKeyState(GLFW_KEY_ESCAPE)) {
+                startEng.mouse.mouseShown = true;
+            }
+
+            if (!startEng.mouse.mouseShown) {
+                startEng.mouse.GLHideMouse(window);
+                startEng.mouse.GLCenterMouse(window);
+                startEng.mouse.UpdateMouse(); //updates scroll wheel and mouse move delta
+            }
+            else {
+                startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+                startEng.mouse.GLShowMouse(window);
+            }
+        }
+
+
+
+        auto frameEnd = std::chrono::high_resolution_clock::now();
+        auto frameDuration = frameEnd - frameStart;
+
+        if (frameDuration < targetFrameLength) {
+            std::this_thread::sleep_for(targetFrameLength - frameDuration);
+        }
+
 
 
 
         //use '[key letter]' for letters
         //use VK_[key name] for accelerator keys like [CTRL], [SPACE], and [ALT]
     }
+
+
+
     if (!isD3D) {
         //glfwDestroyWindow(window);
         glDeleteVertexArrays(1, &startEng.GLGfx().VAO);
@@ -311,7 +409,17 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 }
 
 void StartEngine::RenderFrame() {
-    
+
+
+    for (int i = 0; i < containers.size(); i++) {
+        for (int j = 0; j < containers[i]->scripts.size(); j++) {
+
+            containers[i]->scripts[j]->Update(timeManager._time, containers[i]);
+        }
+    }
+
+
+
     if (isD3D) {
         D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
         //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 19, 0.5f /*0.2f*/, Color(30, 30, 30, 255), hWnd);
@@ -328,57 +436,108 @@ void StartEngine::RenderFrame() {
 
 
         physics.Simulate();
+        physics.Simulate2D();
 
 
         //PxActor** actors;
         //physics.scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC,actors,1); //actors[0]->is<PxRigidDynamic>()->getGlobalPose().p.z
 
 
-        PxVec3 pos = physics.rigidbody->getGlobalPose().p;
-        PxQuat rotQuat = physics.rigidbody->getGlobalPose().q;
-        PxVec3 rot = rotQuat.getBasisVector1();
-
-
-        PxVec3 pos2 = physics.rigidbody2->getGlobalPose().p;
-        PxQuat rot2Quat = physics.rigidbody2->getGlobalPose().q;
-        PxVec3 rot2 = rot2Quat.getBasisVector1();
 
 
 
         //FPS camera
 
-        // Update rotations based on mouse delta
         camTransform.rotation.x += startEng.mouse.mouseDelta.y * sensitivity;
         camTransform.rotation.y += startEng.mouse.mouseDelta.x * sensitivity;
 
-        // Clamp the rotationY to prevent flipping over at the poles
         camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
 
         // Implement rotation around Z for VR
         // rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
 
         camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
+
+        if (!mouse.mouseShown) {
+
+            Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
+            camera.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+        }
+
+
+        //Text render loop
+        for (int i = 0; i < console.lines.size(); i++) {
+            D3DGfx().ShowText(console.lines[i]);
+        }
+        //D3DGfx().ShowText(newText);
+
+
+
+        PxVec3 pos;
+        PxQuat rotQuat;
+        PxVec3 rot;
+
+        b2Vec2 pos2D = rigidbody3.rb2D->GetPosition();
+        float rot2D = rigidbody3.rb2D->GetAngle();
         
-        Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
-        camera.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+
+        for (int i = 0; i < containers.size(); i++) {
+            if (containers[i]->rigidbody.rbDynamic != nullptr) {
+                pos = containers[i]->rigidbody.rbDynamic->getGlobalPose().p;
+                rotQuat = containers[i]->rigidbody.rbDynamic->getGlobalPose().q;
+                rot = rotQuat.getBasisVector1();
+
+                containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
+                containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
+            }
+            else if (containers[i]->rigidbody.rbStatic != nullptr) {
+                pos = containers[i]->rigidbody.rbStatic->getGlobalPose().p;
+                rotQuat = containers[i]->rigidbody.rbStatic->getGlobalPose().q;
+                rot = rotQuat.getBasisVector1();
+
+                containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
+                containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
+            }
+            else if (containers[i]->rigidbody.rb2D != nullptr) {
+                pos2D = rigidbody3.rb2D->GetPosition();
+                rot2D = rigidbody3.rb2D->GetAngle();
+
+                containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, 0.0f);
+                containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);
+            }
+        }
+        
+
+        //Model render loop
+        for (int i = 0; i < containers.size(); i++) {
+            
+            for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
+                D3DGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, camera, &modelImporter, hWnd);
+            }
+        }
 
 
+        //Sprites Rendering
+        for (int i = 0; i < containers.size(); i++) {
 
+            for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
+                D3DGfx().DrawSprite(camera, Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f), Vec2(1.0f, 1.0f), &containers[i]->sprites.sprites[k]->texture, hWnd);
+            }
+        }
 
         //Gfx().DrawTestCube(Color(10, 170, 170, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), hWnd);
-        D3DGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
+        ///D3DGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
         //D3DGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd);
 
-        D3DGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
+        ///D3DGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
 
         //Gfx().RenderModel(modelImporter.meshes[0], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
 
 
 
-        //D3DGfx().DrawSprite(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), &newTexture, hWnd);
+        //D3DGfx().DrawSprite(camera, Vec2(containers[2]->transform.position.x / 10.0f, containers[2]->transform.position.y / 10.0f), Vec2(1.0f, 1.0f), &sprite, hWnd);
 
 
-        D3DGfx().ShowText(newText/*Textbox("igiaiii", setupFace, Vec2(55.0f, 0.0f), Vec2(100.0f, 0.0f), 12, hWnd)*/);
 
         //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0, 0 /*0.2f*/, Color(30, 30, 30, 255), hWnd);
 
@@ -389,26 +548,20 @@ void StartEngine::RenderFrame() {
     }
     else {
         physics.Simulate();
+        physics.Simulate2D();
 
 
         //PxActor** actors;
         //physics.scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC,actors,1); //actors[0]->is<PxRigidDynamic>()->getGlobalPose().p.z
 
 
-        PxVec3 pos = physics.rigidbody->getGlobalPose().p;
-        PxQuat rotQuat = physics.rigidbody->getGlobalPose().q;
-        PxVec3 rot = rotQuat.getBasisVector1();
+        
 
-
-        PxVec3 pos2 = physics.rigidbody2->getGlobalPose().p;
-        PxQuat rot2Quat = physics.rigidbody2->getGlobalPose().q;
-        PxVec3 rot2 = rot2Quat.getBasisVector1();
 
         //rot2Quat.toRadiansAndUnitAxis(angle2, rot2);
         //radians to degrees conversion (57.2958 degrees is 1 radian)
         /*rot2 *= angle2;
         rot2 /= 57.2958f;*/
-
 
 
         //FPS camera
@@ -438,9 +591,53 @@ void StartEngine::RenderFrame() {
         //GLGfx().DrawTestTri();
         //GLGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, window);
         //GLGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, window);
-        GLGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), &camera, window);
+        
+        
+        
+        PxVec3 pos;
+        PxQuat rotQuat;
+        PxVec3 rot;
 
-        GLGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), &camera, window); //cube
+        b2Vec2 pos2D = rigidbody3.rb2D->GetPosition();
+        float rot2D = rigidbody3.rb2D->GetAngle();
+
+        for (int i = 0; i < containers.size(); i++) {
+            if (containers[i]->rigidbody.rbDynamic != nullptr) {
+                pos = containers[i]->rigidbody.rbDynamic->getGlobalPose().p;
+                rotQuat = containers[i]->rigidbody.rbDynamic->getGlobalPose().q;
+                rot = rotQuat.getBasisVector1();
+
+                containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
+                containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
+            }
+            else if (containers[i]->rigidbody.rbStatic != nullptr) {
+                pos = containers[i]->rigidbody.rbStatic->getGlobalPose().p;
+                rotQuat = containers[i]->rigidbody.rbStatic->getGlobalPose().q;
+                rot = rotQuat.getBasisVector1();
+
+                containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
+                containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
+            }
+            else if (containers[i]->rigidbody.rb2D != nullptr) {
+                pos2D = rigidbody3.rb2D->GetPosition();
+                rot2D = rigidbody3.rb2D->GetAngle();
+
+                containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, 0.0f);
+                containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);
+            }
+        }
+
+
+
+        for (int i = 0; i < containers.size(); i++) {
+            for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
+                GLGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, &camera, window);
+            }
+        }
+
+        ///GLGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), &camera, window);
+
+        ///GLGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), &camera, window); //cube
 
         // draw our first triangle
         glUseProgram(startEng.GLGfx().shaderProgram);
@@ -456,6 +653,268 @@ void StartEngine::RenderFrame() {
 
 
         //GLGfx().EndFrame();
+    }
+}
+
+void StartEngine::InputThread() {
+
+}
+
+
+
+void StartEngine::SaveEngine() {
+    std::string saveData;
+    //store all model paths, transforms connected to those, sprites, rigidbodies, colliders, container properties/objects,
+    
+    //Format: '{}' for a container separation, each object in the containers are formatted by specific names:
+    // 
+    //{Transform((Position), (Rotation), (Scale)),
+    // Rigidbody(isDynamic(t/f), hasCollision(t/f), gravity(float), is2D(t/f)),
+    // Model(path(std::string)),
+    // Sprite(path(std::string)),
+    // Collider(is2D(t/f), inheritFromModel(t/f), vertices[(p1x,p1y,p1z), (p2x,p2y,p2z), ect.], indices[i1,i2,i3,ect.])}, 
+    // {ect.}
+
+    for (int i = 0; i < containers.size(); i++) {
+
+        if (i != 0) {
+            saveData += ",";
+        }
+
+        saveData += "{";
+
+        //Transform
+        saveData += "Transform(";
+        //saveData += "[";
+        saveData += std::to_string(containers[i]->transform.position.x);
+        saveData += ",";
+        saveData += std::to_string(containers[i]->transform.position.y);
+        saveData += ",";
+        saveData += std::to_string(containers[i]->transform.position.z);
+        saveData += ",";
+        //saveData += "],[";
+        saveData += std::to_string(containers[i]->transform.rotation.x);
+        saveData += ",";
+        saveData += std::to_string(containers[i]->transform.rotation.y);
+        saveData += ",";
+        saveData += std::to_string(containers[i]->transform.rotation.z);
+        saveData += ",";
+        //saveData += "],[";
+        saveData += std::to_string(containers[i]->transform.scale.x);
+        saveData += ",";
+        saveData += std::to_string(containers[i]->transform.scale.y);
+        saveData += ",";
+        saveData += std::to_string(containers[i]->transform.scale.z);
+        saveData += ")";
+        //saveData += "])";
+
+
+        char dynamic;
+        char is2D;
+
+        if (containers[i]->rigidbody.isDynamic) {
+            dynamic = 't';
+        }
+        else {
+            dynamic = 'f';
+        }
+
+        if (containers[i]->rigidbody.rb2D != nullptr) {
+            is2D = 't';
+        }
+        else {
+            is2D = 'f';
+        }
+
+        saveData += ",Rigidbody(";
+        saveData += dynamic;
+        saveData += ",";
+        saveData += is2D;
+        saveData += ")";
+
+        for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
+            Model* curModel = &containers[i]->models.modelList[j];
+
+            if (curModel->modelPath != "") {
+                saveData += ",Model(";
+                saveData += "\"";
+                saveData += curModel->modelPath;
+                saveData += "\"";
+                saveData += ")";
+            }
+            /*else {
+                saveData += "[";
+
+                for (int k = 0; k <= curModel->vertices.size(); k++) {
+                    saveData += "(";
+
+                    if (k != 0) {
+                        saveData += ",";
+                    }
+
+
+                    saveData += "Color(";
+                    saveData += std::to_string(curModel->vertices[k].color.r);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].color.g);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].color.b);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].color.a);
+                    saveData += ")";
+
+
+                    saveData += ",Normal(";
+                    saveData += std::to_string(curModel->vertices[k].normal.x);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].normal.y);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].normal.z);
+                    saveData += ")";
+
+
+                    saveData += ",Position(";
+                    saveData += std::to_string(curModel->vertices[k].position.x);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].position.y);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].position.z);
+                    saveData += ")";
+
+
+                    saveData += ",UV(";
+                    saveData += std::to_string(curModel->vertices[k].uv.x);
+                    saveData += ",";
+                    saveData += std::to_string(curModel->vertices[k].uv.y);
+                    saveData += ")";
+
+
+                    saveData += ")";
+                }
+                saveData += "]";
+
+                saveData += ",[";
+
+                for (int l = 0; l <= curModel->indices.size(); l++) {
+                    if (l != 0) {
+                        saveData += ",";
+                    }
+
+                    saveData += std::to_string(curModel->indices[l]);
+
+                }
+                saveData += "]";
+            }*/
+        }
+
+        saveData += ",Name(\"";
+        saveData += containers[i]->name;
+        saveData += "\")";
+
+        //Format: '{}' for a container separation, each object in the containers are formatted by specific names:
+            // 
+            // Model(path(std::string)),
+            // Sprite(path(std::string)),
+            // Collider(is2D(t/f), inheritFromModel(t/f), vertices[(p1x,p1y,p1z), (p2x,p2y,p2z), ect.], indices[i1,i2,i3,ect.])}, 
+            // {ect.}
+        saveData += "}";
+    }
+
+    WriteDataToFile(engineDataPath, saveData);
+}
+
+void StartEngine::LoadEngine() {
+    std::string loadedData = ReadFromFile(engineDataPath);
+
+    std::istringstream iss(loadedData);
+    std::string token;
+
+    // Iterate over comma-separated object descriptions
+    while (std::getline(iss, token, ',')) {
+        std::istringstream obj_stream(token);
+        std::string segment;
+
+        Container container;
+
+        // Iterate over segments within each object description
+        while (std::getline(obj_stream, segment, ',')) {
+            // Check for each segment type and parse accordingly
+            // Transform segment
+            if (segment.find("Transform") != std::string::npos) {
+                std::istringstream transform_stream(segment);
+                char tmp;
+                transform_stream >> tmp; // Consume 'Transform'
+                transform_stream >> tmp; // Consume '('
+                transform_stream >> container.transform.position.x;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.position.y;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.position.z;
+                // Repeat for rotation and scale
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.rotation.x;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.rotation.y;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.rotation.z;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.scale.x;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.scale.y;
+                transform_stream >> tmp; // Consume ','
+                transform_stream >> container.transform.scale.z;
+            }
+            // Rigidbody segment
+            else if (segment.find("Rigidbody") != std::string::npos) {
+                std::istringstream rigidbody_stream(segment);
+                char tmp;
+                rigidbody_stream >> tmp; // Consume 'Rigidbody'
+                rigidbody_stream >> tmp; // Consume '('
+                std::string isDynamicStr;
+                rigidbody_stream >> isDynamicStr; // Read isDynamic
+                container.rigidbody.isDynamic = (isDynamicStr == "t");
+                rigidbody_stream >> tmp; // Consume ','
+                std::string is2DStr;
+                rigidbody_stream >> is2DStr; // Read is2D
+                if (is2DStr == "t") {
+
+                    container.rigidbody.NewRB2D();
+                }
+                else {
+
+                    container.rigidbody.NewRB();
+                }
+            }
+            // Model segment
+            else if (segment.find("Model") != std::string::npos) {
+                std::istringstream model_stream(segment);
+                char tmp;
+                model_stream >> tmp; // Consume 'Model'
+                model_stream >> tmp; // Consume '('
+                std::getline(model_stream, container.models.modelList[0].modelPath, '\"');
+            }
+            // Name segment
+            else if (segment.find("Name") != std::string::npos) {
+                std::istringstream name_stream(segment);
+                char tmp;
+                name_stream >> tmp; // Consume 'Name'
+                name_stream >> tmp; // Consume '('
+                std::getline(name_stream, container.name, '\"');
+            }
+        }
+
+        // Add populated container to the vector
+        containers.push_back(&container);
+    }
+}
+
+std::string RemoveQuotes(std::string& inString) {
+    int strLen = inString.length();
+    if (strLen >= 3) {
+        return inString.substr(1, inString.length() - 2);
+    }
+    else {
+        return inString;
     }
 }
 
@@ -679,6 +1138,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         startEng.keyboard.ClearKeyStates();
         startEng.mouse.ClearStates();
+
+        startEng.mouse.UpdateMouse(); //updates scroll wheel delta,   MAYBE: add a mouse movement delta, to add support for mouse movement per frame
+        startEng.mouse.D3DShowMouse();
         startEng.mouse.mouseShown = true;
         //reset all key states in app
     }

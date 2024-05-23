@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <freetype/ftglyph.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -53,7 +54,7 @@ public:
 				}
 				//FT_Set_Char_Size(face, 16*64, 16*32, 1920, 1080);
 				//FT_Set_Char_Size(face, 50*64, 0, 100, 0);
-				FT_Set_Pixel_Sizes(face, 0, 4 * 64);
+				FT_Set_Pixel_Sizes(face, 4 * 64, 4 * 64);
 				//16 * 64 is a 16 pt font
 			}
 

@@ -26,6 +26,13 @@ public:
 			DirectX::XMMatrixPerspectiveLH(1.0f, 5.0f / 5.0f, clippingNear, clippingFar); //from vector?
 	}
 
+
+	DirectX::XMMATRIX GetOrthographicMatrixD3D() {
+		return DirectX::XMMatrixTranslation(-position.x, -position.y, -position.z) * /*DirectX::XMMatrixRotationRollPitchYaw(-rotation.x, -rotation.y, -rotation.z) **/
+			DirectX::XMMatrixOrthographicLH(2.0f, 2.0f, clippingNear, clippingFar); //from vector?
+	}
+
+
 	glm::mat4 GetMatrixGL(Vec2 view) {
 		glm::mat4 rot = glm::mat4(1.0f);
 		glm::mat4 pos = glm::mat4(1.0f);
