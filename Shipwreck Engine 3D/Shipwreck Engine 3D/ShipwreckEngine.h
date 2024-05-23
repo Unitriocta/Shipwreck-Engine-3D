@@ -51,7 +51,7 @@ public:
 
 	void Update(float deltaTime, Container* container) override {} //Define later
 
-	std::vector<std::string> scriptObjects = {""};
+	std::vector<std::string> scriptObjects;
 };
 
 

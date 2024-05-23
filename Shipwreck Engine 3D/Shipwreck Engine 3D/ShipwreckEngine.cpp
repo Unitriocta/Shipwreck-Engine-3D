@@ -10,5 +10,6 @@ namespace GameScripting {
 
 	inline void AddScriptToGameObject(Container* scriptObject, std::string scriptName) {
 		scriptObject->scripts.push_back(nameToScript[scriptName]);
+		actualGameScript.scriptObjects.push_back(scriptObject->name);
 	}
 }

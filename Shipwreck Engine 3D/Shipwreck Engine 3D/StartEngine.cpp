@@ -73,11 +73,6 @@ Container container;
 Container container2;
 Container container3;
 
-Rigidbody rigidbody(&physics, true);   //dynamic
-Rigidbody rigidbody2(&physics, false); //static
-Rigidbody rigidbody3(&physics, true); //dynamic 2d
-
-
 std::vector<Rigidbody> loadedRigidbodies;
 std::vector<Model> loadedModels;
 std::vector<Container> loadedContainers;
@@ -163,9 +158,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         LPARAM lp = 1000;
         SendMessageA(hWnd, Msgbox, wp, lp);
     }
-    rigidbody.NewRB();
+    /*rigidbody.NewRB();
     rigidbody2.NewRB();
-    rigidbody3.NewRB2D();
+    rigidbody3.NewRB2D();*/
 
     /*button.CreateFixture(rigidbody3.rb2D);
     if (physics.RayCheck(button.fixture)) {
@@ -180,7 +175,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &loader);
 
-    /*modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &loader);
+    modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &loader);
     modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx", &loader);
 
 
@@ -196,27 +191,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     container2.name = "Ground";
     container3.name = "PlayerSprite";
 
-    container.models.AddModel(&modelImporter.meshes[0]);
-    container.models.modelList[0]->modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
+    container.models.AddModel(modelImporter.meshes[0]);
+    container.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
 
-    container2.models.AddModel(&modelImporter.meshes[1]);
-    container2.models.modelList[0]->modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx";
+    container2.models.AddModel(modelImporter.meshes[1]);
+    container2.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx";
 
     container3.sprites.AddSprite(&sprite);
     
-    container.rigidbody = &rigidbody;
-    container2.rigidbody = &rigidbody2;
-    container3.rigidbody = &rigidbody3;
+    container.rigidbody = Rigidbody(&physics, true);
+    container2.rigidbody = Rigidbody(&physics, false);
+    container3.rigidbody = Rigidbody(&physics, true);
+
+
+    container.rigidbody.NewRB();
+    container2.rigidbody.NewRB();
+    container3.rigidbody.NewRB2D();
     
 
-    container.models.modelList[0]->hasDiffuse = true;
+    container.models.modelList[0].hasDiffuse = true;
     
     std::string narrowString = "C:/Users/smsal/Downloads/slime-test-free-texture/textures/Depth_basecolor.png";
 
     ID3D11ShaderResourceView* srv = nullptr;
     loader.LoadTextureFromFile(startEng.D3DGfx().device, narrowString, &srv);
 
-    container.models.modelList[0]->textures.diffuseTex = srv;*/
+    container.models.modelList[0].textures.diffuseTex = srv;
 
 
 
@@ -235,6 +235,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
     startEng.RenderFrame();
+    
+    
+    
+    //{Transform(0.000000,-4.000000,5.000000,0.025306,0.974694,-0.222105,0.000000,0.000000,0.000000),Rigidbody(f,f),Model("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx"),Name("Ground")},{Transform(0.000000,16.000000,5.000000,0.000000,1.000000,0.000000,0.000000,0.000000,0.000000),Rigidbody(t,f),Model("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx"),Name("Ball")},{Transform(0.000000,9.997253,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000),Rigidbody(t,t),Name("PlayerSprite")}
     startEng.LoadEngine();
     startEng.SaveEngine();
     //startEng.LoadEngine();
@@ -411,12 +415,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 void StartEngine::RenderFrame() {
 
 
-    for (int i = 0; i < containers.size(); i++) {
+    /*for (int i = 0; i < containers.size(); i++) {
         for (int j = 0; j < containers[i]->scripts.size(); j++) {
 
             containers[i]->scripts[j]->Update(timeManager._time, containers[i]);
         }
-    }
+    }*/
 
 
 
@@ -477,8 +481,8 @@ void StartEngine::RenderFrame() {
         PxQuat rotQuat;
         PxVec3 rot;
 
-        b2Vec2 pos2D = rigidbody3.rb2D->GetPosition();
-        float rot2D = rigidbody3.rb2D->GetAngle();
+        b2Vec2 pos2D;
+        float rot2D;
         
 
         for (int i = 0; i < containers.size(); i++) {
@@ -499,8 +503,8 @@ void StartEngine::RenderFrame() {
                 containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
             }
             else if (containers[i]->rigidbody.rb2D != nullptr) {
-                pos2D = rigidbody3.rb2D->GetPosition();
-                rot2D = rigidbody3.rb2D->GetAngle();
+                pos2D = containers[i]->rigidbody.rb2D->GetPosition();
+                rot2D = containers[i]->rigidbody.rb2D->GetAngle();
 
                 containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, 0.0f);
                 containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);
@@ -598,8 +602,8 @@ void StartEngine::RenderFrame() {
         PxQuat rotQuat;
         PxVec3 rot;
 
-        b2Vec2 pos2D = rigidbody3.rb2D->GetPosition();
-        float rot2D = rigidbody3.rb2D->GetAngle();
+        b2Vec2 pos2D;
+        float rot2D;
 
         for (int i = 0; i < containers.size(); i++) {
             if (containers[i]->rigidbody.rbDynamic != nullptr) {
@@ -619,8 +623,8 @@ void StartEngine::RenderFrame() {
                 containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
             }
             else if (containers[i]->rigidbody.rb2D != nullptr) {
-                pos2D = rigidbody3.rb2D->GetPosition();
-                rot2D = rigidbody3.rb2D->GetAngle();
+                pos2D = containers[i]->rigidbody.rb2D->GetPosition();
+                rot2D = containers[i]->rigidbody.rb2D->GetAngle();
 
                 containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, 0.0f);
                 containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);
@@ -826,87 +830,297 @@ void StartEngine::SaveEngine() {
 void StartEngine::LoadEngine() {
     std::string loadedData = ReadFromFile(engineDataPath);
 
-    std::istringstream iss(loadedData);
-    std::string token;
+    std::string loadedClass;
+    std::string loadedSegment;
+    int curlyBracket = 0;
 
-    // Iterate over comma-separated object descriptions
-    while (std::getline(iss, token, ',')) {
-        std::istringstream obj_stream(token);
-        std::string segment;
+    bool inClassSetup = false;
+    int classParameters = 0;
 
-        Container container;
 
-        // Iterate over segments within each object description
-        while (std::getline(obj_stream, segment, ',')) {
-            // Check for each segment type and parse accordingly
-            // Transform segment
-            if (segment.find("Transform") != std::string::npos) {
-                std::istringstream transform_stream(segment);
-                char tmp;
-                transform_stream >> tmp; // Consume 'Transform'
-                transform_stream >> tmp; // Consume '('
-                transform_stream >> container.transform.position.x;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.position.y;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.position.z;
-                // Repeat for rotation and scale
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.rotation.x;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.rotation.y;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.rotation.z;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.scale.x;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.scale.y;
-                transform_stream >> tmp; // Consume ','
-                transform_stream >> container.transform.scale.z;
+    bool inSubClassSetup = false;
+    int subClassParameters = 0;
+    std::string loadedSubClass;
+
+
+    bool inQuote = false;
+
+    Container curContainer;
+
+    for (int i = 0; i < loadedData.size(); i++) {
+
+        char curChar = loadedData[i];
+
+        if (curChar == '{' && !inQuote) {
+            if (curlyBracket == 0) {
+                curContainer = Container();
+                //loadedContainers.emplace_back();
             }
-            // Rigidbody segment
-            else if (segment.find("Rigidbody") != std::string::npos) {
-                std::istringstream rigidbody_stream(segment);
-                char tmp;
-                rigidbody_stream >> tmp; // Consume 'Rigidbody'
-                rigidbody_stream >> tmp; // Consume '('
-                std::string isDynamicStr;
-                rigidbody_stream >> isDynamicStr; // Read isDynamic
-                container.rigidbody.isDynamic = (isDynamicStr == "t");
-                rigidbody_stream >> tmp; // Consume ','
-                std::string is2DStr;
-                rigidbody_stream >> is2DStr; // Read is2D
-                if (is2DStr == "t") {
-
-                    container.rigidbody.NewRB2D();
-                }
-                else {
-
-                    container.rigidbody.NewRB();
-                }
-            }
-            // Model segment
-            else if (segment.find("Model") != std::string::npos) {
-                std::istringstream model_stream(segment);
-                char tmp;
-                model_stream >> tmp; // Consume 'Model'
-                model_stream >> tmp; // Consume '('
-                std::getline(model_stream, container.models.modelList[0].modelPath, '\"');
-            }
-            // Name segment
-            else if (segment.find("Name") != std::string::npos) {
-                std::istringstream name_stream(segment);
-                char tmp;
-                name_stream >> tmp; // Consume 'Name'
-                name_stream >> tmp; // Consume '('
-                std::getline(name_stream, container.name, '\"');
-            }
+            curlyBracket++;
+            //create container and add the pointer to containers
         }
 
-        // Add populated container to the vector
-        containers.push_back(&container);
+        if (curChar == '}' && !inQuote) {
+            if (curlyBracket == 1) {
+                loadedContainers.push_back(curContainer);
+                containers.push_back(&loadedContainers.back());
+            }
+            curlyBracket--;
+            //create container and add the pointer to containers
+        }
+
+
+        if (curlyBracket > 0) {
+            loadedSegment += curChar;
+
+
+            if (loadedSegment == "Name" && !inClassSetup && !inQuote) {
+                loadedClass = loadedSegment;
+            }
+
+            if (loadedSegment == "Rigidbody" && !inClassSetup && !inQuote) {
+                curContainer.rigidbody.physicsManager = &physics;
+                loadedClass = loadedSegment;
+            }
+
+            if (loadedSegment == "Transform" && !inClassSetup && !inQuote) {
+                loadedClass = loadedSegment;
+            }
+
+            if (loadedSegment == "Model" && !inClassSetup && !inQuote) {
+                loadedClass = loadedSegment;
+            }
+
+
+
+
+
+            if (curChar == '\'' || curChar == '"') {
+                //DisplayNumAsTitle(i);
+                inQuote = !inQuote;
+            }
+            if (curChar == '(' && !inQuote) {
+                if (inClassSetup) {
+                    inSubClassSetup = true;
+                }
+
+                inClassSetup = true;
+                loadedSegment = "";
+                continue;
+            }
+            if (curChar == ')' && !inQuote) {
+                if (inClassSetup && !inSubClassSetup) {
+                    inClassSetup = false;
+                    loadedClass = "";
+                    classParameters = 0;
+                }
+                if (inSubClassSetup) {
+                    inSubClassSetup = false;
+                }
+                loadedSegment = "";
+
+
+                continue;
+            }
+            if (curChar == ',' && !inQuote) {
+                if (inClassSetup) {
+                    classParameters++;
+                }
+                loadedSegment = "";
+                continue;
+            }
+
+
+
+            if (loadedClass == "Name" && !inQuote) {
+
+                if (curChar == '\"' || curChar == '\'') {
+
+                    curContainer.name = RemoveQuotes(loadedSegment);
+                }
+            }
+
+
+            if (loadedClass == "Rigidbody" && inClassSetup && !inQuote) {
+
+                if (classParameters == 0) {
+                    if (loadedSegment == "t") {
+                        curContainer.rigidbody.isDynamic = true;
+                    }
+                    else if (loadedSegment == "f") {
+                        curContainer.rigidbody.isDynamic = false;
+                    }
+                }
+                else if (classParameters == 1) {
+                    if (loadedSegment == "t") {
+                        curContainer.rigidbody.NewRB2D();
+                    }
+                    else if (loadedSegment == "f") {
+                        curContainer.rigidbody.NewRB();
+                    }
+                }
+            }
+
+
+            if (loadedClass == "Transform" && inClassSetup && !inQuote) {
+
+                char nextChar = loadedData[i + 1];
+
+                if (classParameters == 0 && nextChar == ',') {
+                    curContainer.transform.position.x = stof(loadedSegment);
+                }
+                else if (classParameters == 1 && nextChar == ',') {
+                    curContainer.transform.position.y = stof(loadedSegment);
+                }
+                else if (classParameters == 2 && nextChar == ',') {
+                    curContainer.transform.position.z = stof(loadedSegment);
+                }
+
+                else if (classParameters == 3 && nextChar == ',') {
+                    curContainer.transform.rotation.x = stof(loadedSegment);
+                }
+                else if (classParameters == 4 && nextChar == ',') {
+                    curContainer.transform.rotation.y = stof(loadedSegment);
+                }
+                else if (classParameters == 5 && nextChar == ',') {
+                    curContainer.transform.rotation.z = stof(loadedSegment);
+                }
+
+                else if (classParameters == 6 && nextChar == ',') {
+                    curContainer.transform.scale.x = stof(loadedSegment);
+                }
+                else if (classParameters == 7 && nextChar == ',') {
+                    curContainer.transform.scale.y = stof(loadedSegment);
+                }
+                else if (classParameters == 8 && nextChar == ',') {
+                    curContainer.transform.scale.z = stof(loadedSegment);
+                }
+            }
+
+
+            if (loadedClass == "Model" && !inQuote) {
+
+                if (curChar == '\"' || curChar == '\'') {
+
+                    //DisplayStringAsTitle(RemoveQuotes(loadedSegment));
+                    //DisplayNumAsTitle(i);
+                    std::string modelPath = RemoveQuotes(loadedSegment);
+                    //DisplayStringAsTitle((char*)modelPath.c_str());
+                    modelImporter.ImportModel((char*)modelPath.c_str(), &texLoader);
+
+                    curContainer.models.modelList.push_back(modelImporter.meshes.back());
+                    curContainer.models.modelList.back().modelPath = modelPath;
+                    D3DGfx().RenderModel(curContainer.models.modelList.back(), curContainer.transform, camera, &modelImporter, hWnd);
+                }
+                //loadedSegment
+            }
+
+
+
+            //Format: '{}' for a container separation, each object in the containers are formatted by specific names:
+            // 
+            //{Transform((Position), (Rotation), (Scale)),
+            // Rigidbody(isDynamic(t/f), hasCollision(t/f), gravity(float), is2D(t/f)),
+            // Model(path(std::string)),
+            // Sprite(path(std::string)),
+            // Collider(is2D(t/f), inheritFromModel(t/f), vertices[(p1x,p1y,p1z), (p2x,p2y,p2z), ect.], indices[i1,i2,i3,ect.])}, 
+            // {ect.}
+        }
     }
+    //DisplayNumAsTitle(containers.size());
+    std::string newTitle;
+    newTitle += containers[0]->transform.position.x;
+    newTitle += ", ";
+    newTitle += containers[0]->transform.position.y;
+    newTitle += ", ";
+    newTitle += containers[0]->transform.position.z;
 }
+
+//void StartEngine::LoadEngine() {
+//    std::string loadedData = ReadFromFile(engineDataPath);
+//
+//    std::istringstream iss(loadedData);
+//    std::string token;
+//
+//    // Iterate over comma-separated object descriptions
+//    while (std::getline(iss, token, ',')) {
+//        std::istringstream obj_stream(token);
+//        std::string segment;
+//
+//        Container container;
+//
+//        // Iterate over segments within each object description
+//        while (std::getline(obj_stream, segment, ',')) {
+//            // Check for each segment type and parse accordingly
+//            // Transform segment
+//            if (segment.find("Transform") != std::string::npos) {
+//                std::istringstream transform_stream(segment);
+//                char tmp;
+//                transform_stream >> tmp; // Consume 'Transform'
+//                transform_stream >> tmp; // Consume '('
+//                transform_stream >> container.transform.position.x;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.position.y;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.position.z;
+//                // Repeat for rotation and scale
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.rotation.x;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.rotation.y;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.rotation.z;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.scale.x;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.scale.y;
+//                transform_stream >> tmp; // Consume ','
+//                transform_stream >> container.transform.scale.z;
+//            }
+//            // Rigidbody segment
+//            else if (segment.find("Rigidbody") != std::string::npos) {
+//                std::istringstream rigidbody_stream(segment);
+//                char tmp;
+//                rigidbody_stream >> tmp; // Consume 'Rigidbody'
+//                rigidbody_stream >> tmp; // Consume '('
+//                std::string isDynamicStr;
+//                rigidbody_stream >> isDynamicStr; // Read isDynamic
+//                container.rigidbody.physicsManager = &physics;
+//                container.rigidbody.isDynamic = (isDynamicStr == "t");
+//                rigidbody_stream >> tmp; // Consume ','
+//                std::string is2DStr;
+//                rigidbody_stream >> is2DStr; // Read is2D
+//                if (is2DStr == "t") {
+//
+//                    container.rigidbody.NewRB2D();
+//                }
+//                else {
+//
+//                    container.rigidbody.NewRB();
+//                }
+//            }
+//            // Model segment
+//            else if (segment.find("Model") != std::string::npos) {
+//                std::istringstream model_stream(segment);
+//                char tmp;
+//                model_stream >> tmp; // Consume 'Model'
+//                model_stream >> tmp; // Consume '('
+//                std::getline(model_stream, container.models.modelList[0].modelPath, '\"');
+//            }
+//            // Name segment
+//            else if (segment.find("Name") != std::string::npos) {
+//                std::istringstream name_stream(segment);
+//                char tmp;
+//                name_stream >> tmp; // Consume 'Name'
+//                name_stream >> tmp; // Consume '('
+//                std::getline(name_stream, container.name, '\"');
+//            }
+//        }
+//
+//        // Add populated container to the vector
+//        containers.push_back(&container);
+//    }
+//}
 
 std::string RemoveQuotes(std::string& inString) {
     int strLen = inString.length();

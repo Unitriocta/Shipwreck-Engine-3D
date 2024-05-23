@@ -185,7 +185,7 @@ public:
 
     //2D section
 
-    b2Body* rb2D;
+    b2Body* rb2D = nullptr;
 
 
 	bool isDynamic;
