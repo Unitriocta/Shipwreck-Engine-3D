@@ -14,5 +14,7 @@ public:
 	}
 
 	D3DTexture texture;
+
+	std::string spritePath;
 };
 

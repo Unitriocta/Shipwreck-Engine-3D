@@ -33,6 +33,8 @@ namespace EngineInstance {
 
     StartEngine startEng;
 
+    Physics physics;
+
     HWND hWnd;
 
     bool isD3D = true;
@@ -64,8 +66,6 @@ Camera camera;
 Transform camTransform;
 
 D3DTexture texLoader;
-
-Physics physics;
 
 Button button;
 
@@ -167,7 +167,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 1;
     }*/
 
-    sprite.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
+    //sprite.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
     //newTexture.LoadTexture("C:/Users/smsal/Downloads/slime-test-free-texture/textures/Depth_basecolor.png");
 
     D3DTexture loader;
@@ -175,8 +175,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
     //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &loader);
 
-    modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &loader);
-    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx", &loader);
+    /*modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &texLoader);
+    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx", &texLoader);
 
 
 
@@ -216,7 +216,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ID3D11ShaderResourceView* srv = nullptr;
     loader.LoadTextureFromFile(startEng.D3DGfx().device, narrowString, &srv);
 
-    container.models.modelList[0].textures.diffuseTex = srv;
+    container.models.modelList[0].textures.diffuseTex = srv;*/
 
 
 
@@ -225,23 +225,59 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //container.rigidbody->UpdateMesh(container.models.modelList[0]);
     //container2.rigidbody->UpdateMesh(container2.models.modelList[0]);
 
-
-    Connection sendAddr;
-    startEng.networkManager.AssignSendAddress(&sendAddr, "192.168.4.156");
+    
+    
+    //startEng.networkManager.AssignSendAddress(&sendAddr, "192.168.4.156");
+    
+    
     //sendAddr.SeparateFullAddress(startEng.networkManager.DomainToIP("0.tcp.ngrok.io") + ":18183");
     //sendAddr.SeparateFullAddress(startEng.networkManager.DomainToIP("smsaliou5935-35752.portmap.host") + ":35752");
-    startEng.networkManager.transformAddresses.insert({0, &container.transform});
-    startEng.networkManager.sendingAddresses.push_back(sendAddr);
+    
+    
+    //startEng.networkManager.transformAddresses.insert({0, &container.transform});
+    
+    
+    //startEng.networkManager.sendingAddresses.push_back(sendAddr);
 
+
+
+
+    Container container0;
+    container0.name = "Ball";
+    startEng.containers.push_back(&container0);
+
+
+    //Scripts Added to containers
+    for (int i = 0; i < gameScripts.size(); i++) {
+        for (int j = 0; j < gameScripts[i]->scriptObjects.size(); j++) {
+            for (int k = 0; k < startEng.containers.size(); k++) {
+                if (gameScripts[i]->scriptObjects[j] == startEng.containers[k]->name) {
+                    startEng.containers[k]->scripts.push_back(gameScripts[i]);
+                }
+            }
+        }
+    }
+
+
+    for (int i = 0; i < startEng.containers.size(); i++) {
+        for (int j = 0; j < startEng.containers[i]->scripts.size(); j++) {
+
+            startEng.containers[i]->scripts[j]->Start(startEng.containers[i]);
+        }
+    }
 
     startEng.RenderFrame();
     
     
     
     //{Transform(0.000000,-4.000000,5.000000,0.025306,0.974694,-0.222105,0.000000,0.000000,0.000000),Rigidbody(f,f),Model("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx"),Name("Ground")},{Transform(0.000000,16.000000,5.000000,0.000000,1.000000,0.000000,0.000000,0.000000,0.000000),Rigidbody(t,f),Model("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx"),Name("Ball")},{Transform(0.000000,9.997253,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000),Rigidbody(t,t),Name("PlayerSprite")}
-    startEng.LoadEngine();
-    startEng.SaveEngine();
     //startEng.LoadEngine();
+    //startEng.SaveEngine();
+    //startEng.LoadEngine();
+
+    
+
+   
 
 
 
@@ -287,7 +323,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (!isD3D) {
             glfwPollEvents();
         }
-        startEng.networkManager.StartRecieveThread(startEng.networkManager);
+        //startEng.networkManager.StartRecieveThread(startEng.networkManager);
+        
+        
         //container.rigidbody->rbDynamic->setGlobalPose(PxTransform(startEng.networkManager.transformAddresses[0]->position.x, startEng.networkManager.transformAddresses[0]->position.y, startEng.networkManager.transformAddresses[0]->position.z, PxQuat(0, 0, 0, 0)));
 
 
@@ -318,7 +356,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 WPARAM wp = 1;
                 LPARAM lp = 1;
 
-                startEng.networkManager.StartMessageThread((char*)"SetPlayerPosition:7:5:7:0:", 0);
+                //startEng.networkManager.client.StartSendThread((char*)"SetPlayerPosition:7:5:7:0:");
                 //SendMessage(hWnd, Msgbox, wp, lp);
             }
 
@@ -425,7 +463,7 @@ void StartEngine::RenderFrame() {
 
 
     if (isD3D) {
-        D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
+        startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
         //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 19, 0.5f /*0.2f*/, Color(30, 30, 30, 255), hWnd);
         float rotTimer = startEng.timeManager.GetTime() / 1000;
 
@@ -520,12 +558,14 @@ void StartEngine::RenderFrame() {
             }
         }
 
-
-        //Sprites Rendering
+            //Sprites Rendering
         for (int i = 0; i < containers.size(); i++) {
 
-            for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
-                D3DGfx().DrawSprite(camera, Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f), Vec2(1.0f, 1.0f), &containers[i]->sprites.sprites[k]->texture, hWnd);
+            if (containers[i]->sprites.sprites.size() > 0) {
+
+                for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
+                    D3DGfx().DrawSprite(camera, Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f), Vec2(1.0f, 1.0f), &containers[i]->sprites.sprites[k]->texture, hWnd);
+                }
             }
         }
 
@@ -853,15 +893,18 @@ void StartEngine::LoadEngine() {
 
         if (curChar == '{' && !inQuote) {
             if (curlyBracket == 0) {
+                loadedSegment = "";
                 curContainer = Container();
                 //loadedContainers.emplace_back();
             }
             curlyBracket++;
+            continue;
             //create container and add the pointer to containers
         }
 
         if (curChar == '}' && !inQuote) {
             if (curlyBracket == 1) {
+                loadedSegment = "";
                 loadedContainers.push_back(curContainer);
                 containers.push_back(&loadedContainers.back());
             }
@@ -891,7 +934,9 @@ void StartEngine::LoadEngine() {
                 loadedClass = loadedSegment;
             }
 
-
+            if (loadedSegment == "Sprite" && !inClassSetup && !inQuote) {
+                loadedClass = loadedSegment;
+            }
 
 
 
@@ -1002,19 +1047,30 @@ void StartEngine::LoadEngine() {
 
                 if (curChar == '\"' || curChar == '\'') {
 
-                    //DisplayStringAsTitle(RemoveQuotes(loadedSegment));
-                    //DisplayNumAsTitle(i);
                     std::string modelPath = RemoveQuotes(loadedSegment);
-                    //DisplayStringAsTitle((char*)modelPath.c_str());
-                    modelImporter.ImportModel((char*)modelPath.c_str(), &texLoader);
 
-                    curContainer.models.modelList.push_back(modelImporter.meshes.back());
+                    //modelImporter.ImportModel((char*)modelPath.c_str(), &texLoader);
+
+                    curContainer.models.modelList.emplace_back();
+                    curContainer.models.modelList.back().ImportModel((char*)modelPath.c_str(), &texLoader);
                     curContainer.models.modelList.back().modelPath = modelPath;
-                    D3DGfx().RenderModel(curContainer.models.modelList.back(), curContainer.transform, camera, &modelImporter, hWnd);
                 }
                 //loadedSegment
             }
 
+
+
+            //if (loadedClass == "Sprite" && !inQuote) {
+
+            //    if (curChar == '\"' || curChar == '\'') {
+
+            //        std::string spritePath = RemoveQuotes(loadedSegment);
+
+            //        curContainer.sprites.sprites.push_back();
+            //        curContainer.sprites.sprites.back().spritePath = spritePath;
+            //    }
+            //    //loadedSegment
+            //}
 
 
             //Format: '{}' for a container separation, each object in the containers are formatted by specific names:

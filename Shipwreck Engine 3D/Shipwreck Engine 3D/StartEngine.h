@@ -82,6 +82,8 @@ namespace EngineInstance {
 
 	extern StartEngine startEng;
 
+	extern Physics physics;
+
 	extern HWND hWnd;
 
 	extern bool isD3D;
