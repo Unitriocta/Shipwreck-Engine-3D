@@ -1650,7 +1650,7 @@ void GLGraphics::RenderModel(Model model, Transform transform, Camera* camera, G
 	// Set the uniform
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "cameraIn"), 1, GL_TRUE, glm::value_ptr(projection));
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transformIn"), 1, GL_FALSE, glm::value_ptr(_transform));
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "viewPosIn"), 1, GL_FALSE, (const GLfloat*)&camera->position);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "viewPosIn"), 1, GL_FALSE, (const GLfloat*)&camera->transform.position);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 

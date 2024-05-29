@@ -82,6 +82,14 @@ namespace EngineInstance {
 
 	extern StartEngine startEng;
 
+	extern Input input;
+
+	extern Camera camera;
+
+	extern ModelImporter modelImporter;
+
+	extern D3DTexture texLoader;
+
 	extern Physics physics;
 
 	extern HWND hWnd;

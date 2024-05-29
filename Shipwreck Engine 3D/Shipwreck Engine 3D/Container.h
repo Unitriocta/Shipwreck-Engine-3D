@@ -47,4 +47,5 @@ public:                      //Necessary:
 	Rigidbody rigidbody;            //N
 	Sprites sprites;
 	std::vector<GameScript*> scripts;
+	std::vector<std::string> scriptNames;
 };

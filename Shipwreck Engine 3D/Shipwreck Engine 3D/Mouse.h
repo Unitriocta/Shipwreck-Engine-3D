@@ -9,46 +9,52 @@
 #include <bitset>
 #include <queue>
 
+
+enum class MouseState
+{
+	Button0Down, //left button
+	Button0Up, //left button
+	Button1Down, //right button
+	Button1Up, //right button
+	WheelDown, //wheel
+	WheelUp, //wheel
+	MouseMove, //movement of the mouse
+	None
+};
+
+class Mouse;
+
+
+class MouseEvent {
+public:
+	
+public:
+	MouseState mouseState;
+	Vec2 mousePos;
+
+	bool button0;
+	bool button1;
+
+public:
+	MouseEvent() noexcept
+		: mouseState(MouseState::None), mousePos(0, 0), button0(false), button1(false)
+	{}
+
+	MouseEvent(MouseState _mouseState, Mouse& mouse) noexcept;
+
+public:
+	MouseState GetMouseState() const noexcept {
+		return mouseState;
+	}
+	bool LeftPressed() const noexcept {
+		return button0;
+	}
+};
+
+
+
 class Mouse
 {
-public:
-	class MouseEvent {
-	public:
-		enum class State
-		{
-			Button0Down, //left button
-			Button0Up, //left button
-			Button1Down, //right button
-			Button1Up, //right button
-			WheelDown, //wheel
-			WheelUp, //wheel
-			MouseMove, //movement of the mouse
-			None
-		};
-	public:
-		State mouseState;
-		Vec2 mousePos;
-		
-		bool button0;
-		bool button1;
-
-	public:
-		MouseEvent() noexcept
-			: mouseState(State::None), mousePos(0,0), button0(false), button1(false)
-		{}
-
-		MouseEvent(State _mouseState, Mouse& mouse) noexcept 
-			: mouseState(_mouseState), mousePos(mouse.mousePosition), button0(mouse.Button0), button1(mouse.Button1)
-		{}
-
-	public:
-		State GetMouseState() const noexcept {
-			return mouseState;
-		}
-		bool LeftPressed() const noexcept {
-			return button0;
-		}
-	};
 public:
 	Mouse() = default;
 	Mouse(const Mouse&) = delete;
@@ -85,7 +91,7 @@ public:
 
 
 	void ClearStates() noexcept;
-	MouseEvent ReadMouse() noexcept;
+	bool ReadMouse(MouseState mouseState) noexcept;
 
 
 
@@ -128,3 +134,7 @@ public:
 
 	std::queue<MouseEvent> mouseBuffer;
 };
+
+
+
+

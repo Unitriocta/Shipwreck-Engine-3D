@@ -144,6 +144,7 @@
     <ClCompile Include="Container.cpp" />
     <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="FontCreation.cpp" />
+    <ClCompile Include="GameGeneration.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Keyboard.cpp" />
@@ -152,17 +153,20 @@
     <ClCompile Include="Models.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Online.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Rigidbody.cpp" />
     <ClCompile Include="ShipwreckEngine.cpp" />
     <ClCompile Include="ShipwreckUI.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="Sprites.cpp" />
+    <ClCompile Include="StartupGame.cpp" />
     <ClCompile Include="testing.cpp" />
     <ClCompile Include="TextRenderer.cpp" />
     <ClCompile Include="StartEngine.cpp" />
     <ClCompile Include="TextureMaps.cpp" />
     <ClCompile Include="TimeManagement.cpp" />
+    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="UITypes.cpp" />
     <ClCompile Include="WindowStruct.cpp" />
   </ItemGroup>
@@ -173,6 +177,7 @@
     <ClInclude Include="Container.h" />
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="FontCreation.h" />
+    <ClInclude Include="GameGeneration.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Keyboard.h" />
@@ -182,6 +187,7 @@
     <ClInclude Include="Models.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="Online.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Rigidbody.h" />
     <ClInclude Include="Scripts.h" />
@@ -190,6 +196,7 @@
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="Sprites.h" />
     <ClInclude Include="StartEngine.h" />
+    <ClInclude Include="StartupGame.h" />
     <ClInclude Include="testing.h" />
     <ClInclude Include="TextRenderer.h" />
     <ClInclude Include="TextureMaps.h" />

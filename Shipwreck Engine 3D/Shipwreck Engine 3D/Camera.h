@@ -8,28 +8,54 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Transform.h"
+
 class Camera
 {
 public:
 	Camera()
 		: 
-		position(0, 0, 0), 
-		rotation(20 / 57.2958f, 0 / 57.2958f, 0 / 57.2958f), // in radians
 		clippingNear(0.5f),
-		clippingFar(500.0f)
-	{}
+		clippingFar(5000.0f)
+	{
+		transform = Transform(Vec3(0.0f, 0.0f, 0.0f), Vec3(20 / 57.2958f, 0 / 57.2958f, 0 / 57.2958f), Vec3(0.0f, 0.0f, 0.0f));
+	}
 
 
 
 	DirectX::XMMATRIX GetMatrixD3D() {
-		return DirectX::XMMatrixTranslation(-position.x, -position.y, -position.z) * DirectX::XMMatrixRotationRollPitchYaw(-rotation.x, -rotation.y, -rotation.z) *
-			DirectX::XMMatrixPerspectiveLH(1.0f, 5.0f / 5.0f, clippingNear, clippingFar); //from vector?
+		if (transform.parent != nullptr) {
+			return DirectX::XMMatrixTranslation(-transform.position.x - transform.parent->position.x, -transform.position.y - transform.parent->position.y, -transform.position.z - transform.parent->position.z) *
+				DirectX::XMMatrixRotationY(-transform.rotation.y - transform.parent->rotation.y) *
+				DirectX::XMMatrixRotationX(-transform.rotation.x - transform.parent->rotation.x) *
+				DirectX::XMMatrixRotationZ(-transform.rotation.z - transform.parent->rotation.z) *
+				DirectX::XMMatrixPerspectiveLH(1.0f, 5.0f / 5.0f, clippingNear, clippingFar);
+		}
+		else {
+			return DirectX::XMMatrixTranslation(-transform.position.x, -transform.position.y, -transform.position.z) *
+				DirectX::XMMatrixRotationY(-transform.rotation.y) *
+				DirectX::XMMatrixRotationX(-transform.rotation.x) *
+				DirectX::XMMatrixRotationZ(-transform.rotation.z) *
+				DirectX::XMMatrixPerspectiveLH(1.0f, 5.0f / 5.0f, clippingNear, clippingFar);
+		}
 	}
 
 
 	DirectX::XMMATRIX GetOrthographicMatrixD3D() {
-		return DirectX::XMMatrixTranslation(-position.x, -position.y, -position.z) * /*DirectX::XMMatrixRotationRollPitchYaw(-rotation.x, -rotation.y, -rotation.z) **/
-			DirectX::XMMatrixOrthographicLH(2.0f, 2.0f, clippingNear, clippingFar); //from vector?
+		if (transform.parent != nullptr) {
+			return DirectX::XMMatrixTranslation(-transform.position.x - transform.parent->position.x, -transform.position.y - transform.parent->position.y, -transform.position.z - transform.parent->position.z) *
+				DirectX::XMMatrixRotationY(-transform.rotation.y - transform.parent->rotation.y) *
+				DirectX::XMMatrixRotationX(-transform.rotation.x - transform.parent->rotation.x) *
+				DirectX::XMMatrixRotationZ(-transform.rotation.z - transform.parent->rotation.z) *
+				DirectX::XMMatrixOrthographicLH(2.0f, 2.0f, clippingNear, clippingFar);
+		}
+		else {
+			return DirectX::XMMatrixTranslation(-transform.position.x, -transform.position.y, -transform.position.z) *
+				DirectX::XMMatrixRotationY(-transform.rotation.y) *
+				DirectX::XMMatrixRotationX(-transform.rotation.x) *
+				DirectX::XMMatrixRotationZ(-transform.rotation.z) *
+				DirectX::XMMatrixOrthographicLH(2.0f, 2.0f, clippingNear, clippingFar);
+		}
 	}
 
 
@@ -38,11 +64,11 @@ public:
 		glm::mat4 pos = glm::mat4(1.0f);
 		glm::mat4 proj = glm::mat4(1.0f);
 
-		pos = glm::translate(pos, glm::vec3(-position.x, -position.y, -position.z));
+		pos = glm::translate(pos, glm::vec3(-transform.position.x, -transform.position.y, -transform.position.z));
 
-		rot = glm::rotate(rot, -rotation.x, glm::vec3(1.0f,0.0f,0.0f));
-		rot = glm::rotate(rot, -rotation.y, glm::vec3(0.0f,1.0f,0.0f));
-		rot = glm::rotate(rot, -rotation.z, glm::vec3(0.0f,0.0f,1.0f));
+		rot = glm::rotate(rot, -transform.rotation.x, glm::vec3(1.0f,0.0f,0.0f));
+		rot = glm::rotate(rot, -transform.rotation.y, glm::vec3(0.0f,1.0f,0.0f));
+		rot = glm::rotate(rot, -transform.rotation.z, glm::vec3(0.0f,0.0f,1.0f));
 
 		proj = glm::perspective(glm::radians(90.0f), (float)view.x / (float)view.y, clippingNear, clippingFar);
 
@@ -50,8 +76,7 @@ public:
 	}
 
 public:
-	Vec3 position;
-	Vec3 rotation; // in radians
+	Transform transform;
 
 	float clippingNear;
 	float clippingFar;

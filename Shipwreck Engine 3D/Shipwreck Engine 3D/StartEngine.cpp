@@ -33,6 +33,14 @@ namespace EngineInstance {
 
     StartEngine startEng;
 
+    Input input;
+
+    Camera camera;
+
+    ModelImporter modelImporter;
+
+    D3DTexture texLoader;
+
     Physics physics;
 
     HWND hWnd;
@@ -58,33 +66,23 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 
 FontCreation::SetupFace *setupFace;
-Sprite sprite;
 
 Textbox newText;
 
-Camera camera;
 Transform camTransform;
 
-D3DTexture texLoader;
-
 Button button;
-
-Container container;
-Container container2;
-Container container3;
 
 std::vector<Rigidbody> loadedRigidbodies;
 std::vector<Model> loadedModels;
 std::vector<Container> loadedContainers;
 
 
-ModelImporter modelImporter;
-
 GLFWwindow* window;
 
 bool exited = false;
 
-int targetFPS = 250;
+int targetFPS = 400;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 
 const float sensitivity = 0.1f;
@@ -242,18 +240,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 
-    Container container0;
-    container0.name = "Ball";
-    startEng.containers.push_back(&container0);
+    /*Container startupContainer;
+    startupContainer.name = "Ball";
+    startEng.containers.push_back(&startupContainer);*/
+
+
+
+    input.mouse = &startEng.mouse;
+    input.keyboard = &startEng.keyboard;
+
+
+    for (int i = 0; i < startupScripts.size(); i++) {
+        startupScripts[i]->Start(nullptr);
+    }
 
 
     //Scripts Added to containers
-    for (int i = 0; i < gameScripts.size(); i++) {
-        for (int j = 0; j < gameScripts[i]->scriptObjects.size(); j++) {
-            for (int k = 0; k < startEng.containers.size(); k++) {
-                if (gameScripts[i]->scriptObjects[j] == startEng.containers[k]->name) {
-                    startEng.containers[k]->scripts.push_back(gameScripts[i]);
-                }
+    for (int i = 0; i < startEng.containers.size(); i++) {
+        for (int j = 0; j < startEng.containers[i]->scriptNames.size(); j++) {
+            if (scriptFactories[startEng.containers[i]->scriptNames[j]] != nullptr) {
+                AddScriptToGameObject(startEng.containers[i], startEng.containers[i]->scriptNames[j]);
             }
         }
     }
@@ -265,8 +271,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             startEng.containers[i]->scripts[j]->Start(startEng.containers[i]);
         }
     }
-
-    startEng.RenderFrame();
     
     
     
@@ -452,13 +456,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 void StartEngine::RenderFrame() {
 
+    camera.transform.updateQuaternion();
+    camera.transform.update();
 
-    /*for (int i = 0; i < containers.size(); i++) {
+    for (int i = 0; i < containers.size(); i++) {
+        containers[i]->transform.updateQuaternion();
+        containers[i]->transform.update();
+    }
+
+
+    for (int i = 0; i < containers.size(); i++) {
         for (int j = 0; j < containers[i]->scripts.size(); j++) {
 
             containers[i]->scripts[j]->Update(timeManager._time, containers[i]);
         }
-    }*/
+    }
 
 
 
@@ -503,7 +515,10 @@ void StartEngine::RenderFrame() {
         if (!mouse.mouseShown) {
 
             Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
-            camera.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+            camera.transform.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+
+            camera.transform.updateQuaternion();
+            camera.transform.update();
         }
 
 
@@ -623,7 +638,7 @@ void StartEngine::RenderFrame() {
 
 
         Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
-        camera.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+        camera.transform.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
 
         /*char buffer[64];
         snprintf(buffer, sizeof(buffer), "%f", mouse.mouseDelta.x);

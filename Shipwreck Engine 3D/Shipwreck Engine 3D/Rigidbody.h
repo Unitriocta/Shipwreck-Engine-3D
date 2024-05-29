@@ -11,11 +11,9 @@ public:
         isDynamic = dynamic;
     }
 
-    Rigidbody()
-    {
-        physicsManager = nullptr;
-        isDynamic = false;
-    }
+    Rigidbody(bool isDynamic_);
+
+    Rigidbody();
 
 	void NewRB() {
         
@@ -94,16 +92,57 @@ public:
 		}
 	}
 
+    
+    void AddForce(Vec3 force) {
+
+        if (rbDynamic != nullptr) {
+            rbDynamic->addForce(PxVec3(force.x, force.y, force.z));
+        }
+        else if (rbStatic != nullptr) {
+
+        }/*
+        else if (rb2D != nullptr) {
+
+        }*/
+    }
+
 
 
     void UpdateMesh(Model* model) {
-        // Collect mesh points from the model's vertices
+
+        if (rbDynamic != nullptr) {
+
+            PxU32 shapeCount = rbDynamic->getNbShapes();
+
+            // Create an array to hold the shape pointers
+            PxShape** shapes = new PxShape*[shapeCount];
+
+            rbDynamic->getShapes(shapes, shapeCount);
+
+            rbDynamic->detachShape(*shapes[0]);
+
+            delete[] shapes;
+        }
+        else if (rbStatic != nullptr) {
+            
+            PxU32 shapeCount = rbStatic->getNbShapes();
+
+            // Create an array to hold the shape pointers
+            PxShape** shapes = new PxShape*[shapeCount];
+
+            rbStatic->getShapes(shapes, shapeCount);
+
+            rbStatic->detachShape(*shapes[0]);
+
+            delete[] shapes;
+        }
+
+
         std::vector<PxVec3> meshPoints;
         for (int i = 0; i < model->vertices.size(); i++) {
             meshPoints.push_back(PxVec3(model->vertices[i].position.x, model->vertices[i].position.y, model->vertices[i].position.z));
         }
 
-        // Create a mesh descriptor
         PxTriangleMeshDesc meshDesc;
         meshDesc.points.count = static_cast<PxU32>(meshPoints.size());
         meshDesc.points.stride = sizeof(PxVec3);
@@ -113,7 +152,6 @@ public:
         meshDesc.triangles.stride = sizeof(PxU32) * 3;
         meshDesc.triangles.data = model->indices.data();
 
-        // Cook the triangle mesh
         PxDefaultMemoryOutputStream writeBuffer;
         PxTriangleMeshCookingResult::Enum result;
         bool status = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);

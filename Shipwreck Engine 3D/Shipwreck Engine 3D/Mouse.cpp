@@ -1,18 +1,22 @@
 #include "Mouse.h"
 
 
+MouseEvent::MouseEvent(MouseState _mouseState, Mouse& mouse) noexcept
+	: mouseState(_mouseState), mousePos(mouse.mousePosition), button0(mouse.Button0), button1(mouse.Button1)
+{}
+
 
 
 void Mouse::OnButton0Down() noexcept {
 	Button0 = true;
 
-	mouseBuffer.push(MouseEvent(MouseEvent::State::Button0Down, *this));
+	mouseBuffer.push(MouseEvent(MouseState::Button0Down, *this));
 	ReleaseBuffer();
 }
 void Mouse::OnButton0Up() noexcept {
 	Button0 = false;
 
-	mouseBuffer.push(MouseEvent(MouseEvent::State::Button0Up, *this));
+	mouseBuffer.push(MouseEvent(MouseState::Button0Up, *this));
 	ReleaseBuffer();
 }
 
@@ -20,13 +24,13 @@ void Mouse::OnButton0Up() noexcept {
 void Mouse::OnButton1Down() noexcept {
 	Button1 = true;
 
-	mouseBuffer.push(Mouse::MouseEvent(Mouse::MouseEvent::State::Button1Down, *this));
+	mouseBuffer.push(MouseEvent(MouseState::Button1Down, *this));
 	ReleaseBuffer();
 }
 void Mouse::OnButton1Up() noexcept {
 	Button1 = false;
 
-	mouseBuffer.push(Mouse::MouseEvent(Mouse::MouseEvent::State::Button1Up, *this));
+	mouseBuffer.push(MouseEvent(MouseState::Button1Up, *this));
 	ReleaseBuffer();
 }
 
@@ -45,7 +49,7 @@ void Mouse::OnMouseMove(int x, int y, bool mouseCentered, Vec2 center) noexcept 
 	mousePosition.x = x;
 	mousePosition.y = y;
 
-	mouseBuffer.push(Mouse::MouseEvent(Mouse::MouseEvent::State::MouseMove, *this));
+	mouseBuffer.push(MouseEvent(MouseState::MouseMove, *this));
 	ReleaseBuffer();
 }
 
@@ -64,13 +68,20 @@ bool Mouse::IsEmpty() const noexcept {
 }
 
 
-Mouse::MouseEvent Mouse::ReadMouse() noexcept {
+bool Mouse::ReadMouse(MouseState mouseState) noexcept {
 	if (mouseBuffer.size() > 0u) {
-		Mouse::MouseEvent mouseEvent = mouseBuffer.front();
-		return mouseEvent;
+		for (int i = 0; i < mouseBuffer.size(); i++) {
+			if (mouseBuffer.front().GetMouseState() == mouseState) {
+				mouseBuffer.pop();
+				return true;
+			}
+		}
+		mouseBuffer.pop();
+		return false;
 	}
 	else {
-		return Mouse::MouseEvent();
+		mouseBuffer.pop();
+		return false;
 	}
 }
 
