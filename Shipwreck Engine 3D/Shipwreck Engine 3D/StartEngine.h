@@ -84,6 +84,8 @@ namespace EngineInstance {
 
 	extern Input input;
 
+	extern NetworkManager networkManager;
+
 	extern Camera camera;
 
 	extern ModelImporter modelImporter;
@@ -94,7 +96,17 @@ namespace EngineInstance {
 
 	extern HWND hWnd;
 
+	extern GLFWwindow* window;
+
+	extern bool exitedProgram;
+
 	extern bool isD3D;
+
+	extern std::mutex renderMutex;
+
+	void DisplayNumAsTitle(float newVar);
+
+	void DisplayNumIntAsTitle(int newVar);
 }
 
 
@@ -153,10 +165,8 @@ public:
 	}
 
 public:
-	Input input;
 	Keyboard keyboard;
 	Mouse mouse;
-	NetworkManager networkManager;
 
 	std::vector<Container*> containers; //Stores container's, which store models, camera's, position, rotation, ect.
 	//std::vector<GameScript*> scripts;

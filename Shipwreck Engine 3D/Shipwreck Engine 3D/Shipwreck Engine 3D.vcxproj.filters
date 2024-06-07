@@ -77,6 +77,15 @@
     <Filter Include="Engine Code\UI Resources\UI Load">
       <UniqueIdentifier>{4d7d1228-e469-47c0-8719-4cfdee7a1ec4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{a40e8044-2aa9-4026-b04b-dea340f6ebcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Connections">
+      <UniqueIdentifier>{8f43e37b-41b2-464f-98ba-8fe0b6ad3444}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Startup Scripts">
+      <UniqueIdentifier>{60eecd17-f7c4-4562-ac1f-395a2c90d2d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StartEngine.cpp">
@@ -160,6 +169,24 @@
     <ClCompile Include="ShipwreckEngine.cpp" />
     <ClCompile Include="MathExtras.cpp">
       <Filter>Engine Code\Resource Files\Resources\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="GameGeneration.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Engine Code\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectedPlayer.cpp">
+      <Filter>Game\Connections</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionHandler.cpp">
+      <Filter>Game\Connections</Filter>
+    </ClCompile>
+    <ClCompile Include="StartupGame.cpp">
+      <Filter>Game\Startup Scripts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -256,6 +283,21 @@
     <ClInclude Include="ShipwreckEngine.h" />
     <ClInclude Include="Scripts.h">
       <Filter>Engine Code\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="GameGeneration.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectedPlayer.h">
+      <Filter>Game\Connections</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionHandler.h">
+      <Filter>Game\Connections</Filter>
+    </ClInclude>
+    <ClInclude Include="StartupGame.h">
+      <Filter>Game\Startup Scripts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

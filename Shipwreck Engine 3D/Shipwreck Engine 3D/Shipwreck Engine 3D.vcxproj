@@ -140,6 +140,8 @@
     <ClCompile Include="..\Includes\glad\src\glad.c" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ConnectedPlayer.cpp" />
+    <ClCompile Include="ConnectionHandler.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="Container.cpp" />
     <ClCompile Include="FileManager.cpp" />
@@ -173,6 +175,8 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ConnectedPlayer.h" />
+    <ClInclude Include="ConnectionHandler.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="Container.h" />
     <ClInclude Include="FileManager.h" />

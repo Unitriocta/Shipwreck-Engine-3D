@@ -8,8 +8,11 @@
 
 
 #include "Player.h"
+#include "ConnectedPlayer.h"
 #include "GameGeneration.h"
+#include "ConnectionHandler.h"
 
+using namespace GameScripting;
 
 
 StartupGame startupGame;
@@ -20,8 +23,10 @@ StartupGame startupGame;
 //typedef GameGeneration* (*CreateGameGenerationFunc)();
 
 
-Player* CreatePlayer() { return new Player(); }
+Player* CreatePlayer() { /*playerInstance = new Player(); */return new Player(); }
+ConnectedPlayer* CreateConnectedPlayer() { /*playerInstance = new Player(); */return new ConnectedPlayer(); }
 GameGeneration* CreateGameGeneration() { return new GameGeneration(); }
+ConnectionHandler* CreateConnectionHandler() { return new ConnectionHandler(); }
 
 
 
@@ -33,7 +38,9 @@ namespace GameScripting {
 	std::map<std::string, std::function<GameScript*()>> scriptFactories =
 	{
 		{"Player",                CreatePlayer},
+		{"ConnectedPlayer",       CreateConnectedPlayer},
 		{"GameGeneration",        CreateGameGeneration},
+		{"ConnectionHandler",	  CreateConnectionHandler}
 		//{"StartupGame",   }
 	};
 
@@ -44,4 +51,13 @@ namespace GameScripting {
 			script->scriptObjects.push_back(scriptObject->name);
 		}
 	}
+
+	//Player* playerInstance;
+}
+
+
+namespace GameVariables {
+
+	std::mutex playerMutex;
+	std::vector<void*> connectionLoopFunctions;
 }

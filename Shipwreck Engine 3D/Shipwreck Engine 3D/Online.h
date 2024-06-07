@@ -17,7 +17,7 @@
 #include <type_traits>
 
 #include <thread>
-//#include <mutex>
+#include <mutex>
 
 #include <iostream>
 #include <map>
@@ -34,7 +34,7 @@ class Server;
 
 class Client;
 
-const int bufferSize = 100;
+const int bufferSize = 1024;
 
 
 
@@ -66,6 +66,14 @@ public:
 };
 
 
+struct BufferInfo {
+public:
+    BufferInfo() {
+    }
+
+    std::vector<MessageInfo> messageInfoList;
+};
+
 
 
 
@@ -82,44 +90,26 @@ class Client;
 
 class Server {
 public:
-    Server(boost::asio::io_service& io_service, int port)
-        : socket_(io_service, udp::endpoint(udp::v4(), port)) {
-        //ReceiveData();
-    }
+    Server(boost::asio::io_service& io_service, int port);
 
 public:
-    void SendData(std::string data) {
-        socket_.async_send_to(
-            boost::asio::buffer(data), remote_endpoint_,
-            [this](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
-            });
-    }
 
-    void ReceiveData() {
-        while (true) {
-            socket_.async_receive_from(
-                boost::asio::buffer(recv_buffer_), remote_endpoint_,
-                [this](boost::system::error_code ec, std::size_t bytes_recvd) {
-                    if (!ec && bytes_recvd > 0) {
-                        HandleMessage(recv_buffer_.data(), bytes_recvd);
+    void OpenServerSocket();
+    void CloseServerSocket();
 
-                        //echoes to client again
-                        socket_.async_send_to(
-                            boost::asio::buffer(recv_buffer_, bytes_recvd), remote_endpoint_,
-                            [this](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
-                            });
-                    }
-                });
-        }
-    }
+    void SetPort(int newPort);
+
+    void SendData(std::string data, bool echoToAll);
+
+    void ReceiveData();
 
     void StartReceiveThread() {
         std::thread receiveThread(&Server::ReceiveData, this);
         receiveThread.detach();
     }
 
-    void StartSendThread(std::string data) {
-        std::thread sendThread(&Server::SendData, this, data);
+    void StartSendThread(std::string data, bool echoToAll) {
+        std::thread sendThread(&Server::SendData, this, data, echoToAll);
         sendThread.detach();
     }
 
@@ -132,13 +122,21 @@ public:
 
 class Client {
 public:
-    Client(boost::asio::io_service& io_service, const std::string& host, const std::string& port)
-        : socket_(io_service, udp::endpoint(udp::v4(), 0)), resolver_(io_service) {
-        udp::resolver::query query(udp::v4(), host, port);
-        server_endpoint_ = *resolver_.resolve(query);
-    }
+    Client(boost::asio::io_service& io_service, const std::string& host, const std::string& port);
+
+    
+    int startPort = 7777;
+    int endPort = 65535;
 
 public:
+
+    void OpenClientSocket() {
+        socket_.open(udp::v4());
+    }
+    void CloseClientSocket() {
+        socket_.close();
+    }
+
     void SendData(std::string data) {
         socket_.async_send_to(
             boost::asio::buffer(data), server_endpoint_,
@@ -147,19 +145,24 @@ public:
     }
 
 
+    bool ConnectToServer() {
 
-    void ReceiveData() {
-        while (true) {
-            socket_.async_receive_from(
-                boost::asio::buffer(recv_buffer_), sender_endpoint_,
-                [this](boost::system::error_code ec, std::size_t bytes_recvd) {
-                    if (!ec && bytes_recvd > 0) {
+        boost::system::error_code ec;
 
-                        HandleMessage(recv_buffer_.data(), bytes_recvd);
-                    }
-                });
+        for (int i = 0; i < 4; i++) {
+
+            socket_.connect(server_endpoint_, ec);
+
+            if (!ec) {
+                return true;
+            }
         }
+
+        return false;
     }
+
+
+    void ReceiveData();
 
     void StartReceiveThread() {
         std::thread receiveThread(&Client::ReceiveData, this);
@@ -174,6 +177,13 @@ public:
     void HandleMessage(const char* data, std::size_t length);
 
 
+    void SetEndpoint(const std::string& endIP, const std::string& port) {
+
+        udp::resolver::query query(udp::v4(), endIP, port);
+        server_endpoint_ = *resolver_.resolve(query);
+    }
+
+
     udp::socket socket_;
     udp::endpoint server_endpoint_;
     udp::endpoint sender_endpoint_;
@@ -185,7 +195,7 @@ class NetworkManager {
 
 public:
     NetworkManager() :
-        work(io_service), server(io_service, 7777), client(io_service, "127.0.0.1", "7777")
+        work(io_service), server(io_service, 8000), client(io_service, "127.0.0.1", "8000")
     {
 
     }
@@ -207,6 +217,42 @@ public:
             return inString;
         }
     }
+
+    void StartServiceThread() {
+        std::thread serviceThread(&NetworkManager::IOServiceThread, this);
+        serviceThread.detach();
+    }
+
+
+    void IOServiceThread();
+
+
+    BufferInfo BufferToBufferInfo(std::string buffer) {
+
+        bool inQuote = false;
+        int messageStartChar = 0;
+        BufferInfo bufferInfo;
+
+        std::string curMessage;
+
+        for (int i = 0; i < buffer.length(); i++) {
+            if (buffer[i] == '{' && !inQuote) {
+                messageStartChar = i + 1;
+            }
+            else if (buffer[i] == '}' && !inQuote) {
+                curMessage = buffer.substr(messageStartChar, i - messageStartChar);
+                bufferInfo.messageInfoList.push_back(BufferToInfo(curMessage));
+            }
+
+            if (buffer[i] == '\"' || buffer[i] == '\'') {
+
+                inQuote = !inQuote;
+            }
+        }
+
+        return bufferInfo;
+    }
+
 
     MessageInfo BufferToInfo(std::string buffer) {
 
@@ -325,111 +371,17 @@ public:
             else if (areStrings[1] && areInts[2] && areInts[3] && areInts[4]) {
                 messageInfo.type = "NamedInt3";
             }
+            else if (areInts[1] && areFloats[2] && areFloats[3] && areFloats[4]) {
+                messageInfo.type = "NumberedFloat3";
+            }
         }
         else if (messageInfo.calls.size() == 6) {
             messageInfo.type = "PlayerFloat3";
         }
-
         return messageInfo;
     }
 
-    void HandleMessage(MessageInfo info) {
-        void* functionCall = MessageToFunctionCall(info);
-
-        if (functionCall == nullptr) {
-            return;
-        }
-
-        if (info.calls.size() >= 2) {
-            if (info.calls[1] == "t") {
-
-                return;
-            }
-        }
-
-        if (info.type == "NoInput") {
-            NoInFunctionCall func = reinterpret_cast<NoInFunctionCall>(functionCall);
-            func();
-        }
-        else if (info.type == "String") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            StringFunctionCall func = reinterpret_cast<StringFunctionCall>(functionCall);
-            func(info.calls[1]);
-        }
-        else if (info.type == "NamedString") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-            info.calls[2] = RemoveQuotes(info.calls[2]);
-
-            NamedStringFunctionCall func = reinterpret_cast<NamedStringFunctionCall>(functionCall);
-            func(info.calls[1], info.calls[2]);
-        }
-        else if (info.type == "Float") {
-            FloatFunctionCall func = reinterpret_cast<FloatFunctionCall>(functionCall);
-            func(stof(info.calls[1]));
-        }
-        else if (info.type == "NamedFloat") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            NamedFloatFunctionCall func = reinterpret_cast<NamedFloatFunctionCall>(functionCall);
-            func(info.calls[1], stof(info.calls[2]));
-        }
-        else if (info.type == "Float2") {
-            Float2FunctionCall func = reinterpret_cast<Float2FunctionCall>(functionCall);
-            func(stof(info.calls[1]), stof(info.calls[2]));
-        }
-        else if (info.type == "NamedFloat2") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            NamedFloat2FunctionCall func = reinterpret_cast<NamedFloat2FunctionCall>(functionCall);
-            func(info.calls[1], stof(info.calls[2]), stof(info.calls[3]));
-        }
-        else if (info.type == "Float3") {
-            Float3FunctionCall func = reinterpret_cast<Float3FunctionCall>(functionCall);
-            func(stof(info.calls[1]), stof(info.calls[2]), stof(info.calls[3]));
-        }
-        else if (info.type == "NamedFloat3") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            NamedFloat3FunctionCall func = reinterpret_cast<NamedFloat3FunctionCall>(functionCall);
-            func(info.calls[1], stof(info.calls[2]), stof(info.calls[3]), stof(info.calls[4]));
-        }
-        else if (info.type == "Int") {
-            IntFunctionCall func = reinterpret_cast<IntFunctionCall>(functionCall);
-            func(stoi(info.calls[1]));
-        }
-        else if (info.type == "NamedInt") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            NamedIntFunctionCall func = reinterpret_cast<NamedIntFunctionCall>(functionCall);
-            func(info.calls[1], stoi(info.calls[2]));
-        }
-        else if (info.type == "Int2") {
-            Int2FunctionCall func = reinterpret_cast<Int2FunctionCall>(functionCall);
-            func(stoi(info.calls[1]), stoi(info.calls[2]));
-        }
-        else if (info.type == "NamedInt2") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            NamedInt2FunctionCall func = reinterpret_cast<NamedInt2FunctionCall>(functionCall);
-            func(info.calls[1], stoi(info.calls[2]), stoi(info.calls[3]));
-        }
-        else if (info.type == "Int3") {
-            Int3FunctionCall func = reinterpret_cast<Int3FunctionCall>(functionCall);
-            func(stoi(info.calls[1]), stoi(info.calls[2]), stoi(info.calls[3]));
-        }
-        else if (info.type == "NamedInt3") {
-            info.calls[1] = RemoveQuotes(info.calls[1]);
-
-            NamedInt3FunctionCall func = reinterpret_cast<NamedInt3FunctionCall>(functionCall);
-            func(info.calls[1], stoi(info.calls[2]), stoi(info.calls[3]), stoi(info.calls[4]));
-        }
-        else if (info.type == "PlayerFloat3") {
-
-            PlayerFloat3FunctionCall func = reinterpret_cast<PlayerFloat3FunctionCall>(functionCall);
-            func(Vec3(stof(info.calls[1]), stof(info.calls[2]), stof(info.calls[3])), stoi(info.calls[4]), this);
-        }
-    }
+    void HandleMessage(MessageInfo info);
 
     void* MessageToFunctionCall(MessageInfo info) {
         if (info.calls.size() >= 1) {
@@ -463,6 +415,7 @@ public:
     typedef void (*NamedFloat2FunctionCall)(std::string, float, float);
     typedef void (*Float3FunctionCall)(float, float, float);
     typedef void (*NamedFloat3FunctionCall)(std::string, float, float, float);
+    typedef void (*NumberedFloat3FunctionCall)(int, float, float, float);
 
     typedef void (*StringFunctionCall)(std::string);
     typedef void (*NamedStringFunctionCall)(std::string, std::string);
@@ -471,22 +424,15 @@ public:
     typedef void (*PlayerFloat3FunctionCall)(Vec3, int, NetworkManager*);
 
 
-    std::map<std::string, void*> stringToVoid = {
-            {"PrintHi",      PrintHi},
-            {"PrintInt",      PrintInt},
-            {"PrintFloat",      PrintFloat},
-            {"PrintString",      PrintString},
-            {"SetPlayerPosition", SetPlayerPosition}
-    };
+    std::map<std::string, void*> stringToVoid;
 
 
     std::map<int, Transform*> transformAddresses;
 
 
-    char receiveBuffer_[bufferSize];
+    std::vector<udp::endpoint> allClients;
 
-    int startPort = 7777;
-    int endPort = 65535;
+    char receiveBuffer_[bufferSize];
 
 
     boost::asio::io_service io_service;
@@ -497,6 +443,10 @@ public:
     Client client;
 
     bool isClient = true;
+    bool isServer = false;
+
+    std::mutex receiveMutex;
+    std::mutex ioMutex;
 };
 
 

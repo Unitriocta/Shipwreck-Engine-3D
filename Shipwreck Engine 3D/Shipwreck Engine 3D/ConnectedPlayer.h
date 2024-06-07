@@ -2,15 +2,16 @@
 
 #include "ShipwreckEngine.h"
 
-class Player : public GameScript {
+class ConnectedPlayer : public GameScript {
 public:
-	Player() {
+	ConnectedPlayer() {
 	}
 
 	void Start(Container* container) override;
 
 	void Update(float deltaTime, Container* container) override;
 
-	Container player;
+	Container* playerConnection;
 
+	int connectedPlayerNum;
 };

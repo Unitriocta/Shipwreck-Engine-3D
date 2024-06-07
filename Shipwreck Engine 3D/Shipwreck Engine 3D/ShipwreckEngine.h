@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <mutex>
 #include <memory>
 #include <vector>
 
@@ -22,6 +23,13 @@ namespace GameScripting {
 	extern std::map<std::string, std::function<GameScript*()>> scriptFactories;
 
 	void AddScriptToGameObject(Container* scriptObject, std::string scriptName);
+}
+
+
+namespace GameVariables {
+
+	extern std::mutex playerMutex;
+	extern std::vector<void*> connectionLoopFunctions;
 }
 
 

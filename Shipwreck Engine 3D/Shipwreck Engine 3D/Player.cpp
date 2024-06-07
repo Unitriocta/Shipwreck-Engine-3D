@@ -3,17 +3,18 @@
 #include "StartEngine.h"
 using namespace EngineInstance;
 
+using namespace GameVariables;
 
 
-Container player;
+//Container player;
 
 bool isForce = false;
 
-//float speedMultiplier = 50000.0f;
+//float speedMultiplier = 500000.0f;
 float speedMultiplier = 0.1f;
 
 void Player::Start(Container* container) {
-	camera.transform.parent = &player.transform;
+	//camera.transform.parent = &player.transform;
 
 	player.name = "Player";
 
@@ -49,13 +50,17 @@ void Player::Start(Container* container) {
 
 void Player::Update(float deltaTime, Container* container) {
 
-	glm::vec2 forwardVec3 = glm::vec2(camera.transform.direction.x, camera.transform.direction.z);
-	glm::vec2 rightVec3 = glm::vec2(camera.transform.right.x, camera.transform.right.z);
+	glm::vec2 forwardVec3 = glm::radians(glm::vec2(camera.transform.direction.x, camera.transform.direction.z));
+	glm::vec2 rightVec3 = glm::radians(glm::vec2(camera.transform.right.x, camera.transform.right.z));
 
 	glm::vec2 forwardDirection = glm::normalize(glm::vec2(forwardVec3.x, forwardVec3.y)) * speedMultiplier;
 	glm::vec2 rightDirection = glm::normalize(glm::vec2(rightVec3.x, rightVec3.y)) * speedMultiplier;
 
+	player.transform.rotation = Vec3(0.0f, camera.transform.rotation.y, 0.0f);
+	camera.transform.position = player.transform.position;
+
 	if (isForce) {
+
 		if (input.GetKeyState('W')) {
 
 			player.rigidbody.AddForce(Vec3(forwardDirection.x, 0.0f, forwardDirection.y));

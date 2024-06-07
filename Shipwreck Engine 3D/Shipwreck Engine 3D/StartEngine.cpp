@@ -18,6 +18,8 @@
 #include "StartEngine.h"
 using namespace EngineInstance;
 
+using namespace GameVariables;
+
 #include <dxtex/DirectXTex.h>
 
 
@@ -35,6 +37,8 @@ namespace EngineInstance {
 
     Input input;
 
+    NetworkManager networkManager;
+
     Camera camera;
 
     ModelImporter modelImporter;
@@ -45,7 +49,37 @@ namespace EngineInstance {
 
     HWND hWnd;
 
+    GLFWwindow* window;
+
+    bool exitedProgram = false;
+
     bool isD3D = true;
+
+    std::mutex renderMutex;
+
+    void DisplayNumAsTitle(float newVar) {
+
+        std::ostringstream oss;
+        oss << "variable: " << newVar;
+
+
+        std::string widthStr = oss.str();
+
+        //MessageBoxA(hWnd, widthStr.c_str(), "Hey", 0);
+        SetWindowTextA(hWnd, widthStr.c_str());
+    }
+
+    void DisplayNumIntAsTitle(int newVar) {
+
+        std::ostringstream oss;
+        oss << "variable: " << newVar;
+
+
+        std::string widthStr = oss.str();
+
+        //MessageBoxA(hWnd, widthStr.c_str(), "Hey", 0);
+        SetWindowTextA(hWnd, widthStr.c_str());
+    }
 }
 
 
@@ -78,9 +112,7 @@ std::vector<Model> loadedModels;
 std::vector<Container> loadedContainers;
 
 
-GLFWwindow* window;
 
-bool exited = false;
 
 int targetFPS = 400;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
@@ -89,18 +121,6 @@ const float sensitivity = 0.1f;
 
 const std::string engineDataPath = "D:/Shipwreck Engine 3D/Shipwreck Engine 3D/data.json";
 
-void DisplayNumAsTitle(float newVar);
-void DisplayNumAsTitle(float newVar) {
-    
-    std::ostringstream oss;
-    oss << "variable: " << newVar;
-
-
-    std::string widthStr = oss.str();
-
-    //MessageBoxA(hWnd, widthStr.c_str(), "Hey", 0);
-    SetWindowTextA(hWnd, widthStr.c_str());
-}
 
 void DisplayStringAsTitle(std::string newVar);
 void DisplayStringAsTitle(std::string newVar) {
@@ -313,7 +333,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     inputThread.join();*/
 
     // Main message loop:
-    while (!exited && !glfwWindowShouldClose(window))
+    while (!exitedProgram && !glfwWindowShouldClose(window))
     {
         auto frameStart = std::chrono::high_resolution_clock::now();
         /*
@@ -455,6 +475,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 void StartEngine::RenderFrame() {
+
+    std::lock_guard<std::mutex> guard(renderMutex);
+    //std::lock_guard<std::mutex> guard(playerMutex);
+
 
     camera.transform.updateQuaternion();
     camera.transform.update();
@@ -1325,12 +1349,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize)
         glfwSetFramebufferSizeCallback(window, startEng.GLGfx().frameBufferCallback);
         glfwSetWindowCloseCallback(window, startEng.GLGfx().windowCloseCallback);
 
-        startEng.input.mouse = &startEng.GetMouse();
-        startEng.input.keyboard = &startEng.GetKeyboard();
+        input.mouse = &startEng.GetMouse();
+        input.keyboard = &startEng.GetKeyboard();
 
 
         //Mouse Section:
-        glfwSetWindowUserPointer(window, &startEng.input);
+        glfwSetWindowUserPointer(window, &input);
 
         glfwSetMouseButtonCallback(window, startEng.GLGfx().mouseClickCallback);
         glfwSetCursorPosCallback(window, startEng.GLGfx().mouseMoveCallback);
@@ -1338,7 +1362,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize)
         
         
         //Keyboard Section:
-        glfwSetWindowUserPointer(window, &startEng.input);
+        glfwSetWindowUserPointer(window, &input);
         
         glfwSetKeyCallback(window, startEng.GLGfx().keyCallback);
 
@@ -1413,7 +1437,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
     {
         if (isD3D) {
-            exited = true;
+            exitedProgram = true;
             PostQuitMessage(0);
         }
     }

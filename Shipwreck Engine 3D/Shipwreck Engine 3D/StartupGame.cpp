@@ -11,6 +11,7 @@ void StartupGame::Start(Container* container) {
 
 	startContainer.scriptNames.push_back("Player");
 	startContainer.scriptNames.push_back("GameGeneration");
+	startContainer.scriptNames.push_back("ConnectionHandler");
 }
 
 void StartupGame::Update(float deltaTime, Container* container) {
