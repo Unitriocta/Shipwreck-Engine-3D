@@ -97,7 +97,8 @@ public:
 	void ClearBuffer(float r, float g, float b) noexcept {
 		const float color[] = { r,g,b,1.0f }; //alpha
 		deviceContext->ClearRenderTargetView(target, color);
-		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH, 1.0f, 0u);
+		//deviceContext->ClearRenderTargetView(msaaRenderTargetView, color);
+		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	};
 	void DrawTestTri(HWND hWnd);
 	void RenderTriangles(std::vector<Vertice> vertices, HWND hWnd);
@@ -133,6 +134,8 @@ public:
 	ID3D11DeviceContext* deviceContext = nullptr;
 	IDXGISwapChain* swapChain = nullptr;
 	ID3D11RenderTargetView* target = nullptr;
+	ID3D11RenderTargetView* msaaRenderTargetView = nullptr;
+	ID3D11Texture2D* msaaRenderTarget = nullptr;
 
 	ID3D11DepthStencilView* depthView = nullptr;
 

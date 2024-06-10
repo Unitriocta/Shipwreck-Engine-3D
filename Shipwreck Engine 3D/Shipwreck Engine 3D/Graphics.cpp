@@ -9,26 +9,21 @@
 
 
 D3DGraphics::D3DGraphics( HWND hWnd) {
-	//reads and renders pixels on screen from layers in application
+	
 
 	RECT rect;
-
 	GetWindowRect(hWnd, &rect);
+	int width = rect.right - rect.left;
+	int height = rect.bottom - rect.top;
 
-
-	int width = (rect.right - rect.left);
-	int height = (rect.bottom - rect.top);
-
-
+	// Describe and create the swap chain, device, and device context
 	DXGI_SWAP_CHAIN_DESC sd = {};
-	sd.BufferDesc.Width = 0;
-	sd.BufferDesc.Height = 0;
+	sd.BufferDesc.Width = width;
+	sd.BufferDesc.Height = height;
 	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	sd.BufferDesc.RefreshRate.Numerator = 0;
-	sd.BufferDesc.RefreshRate.Denominator = 0;
-	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.SampleDesc.Count = 4;
+	sd.BufferDesc.RefreshRate.Numerator = 60;
+	sd.BufferDesc.RefreshRate.Denominator = 1;
+	sd.SampleDesc.Count = 4; // Enable 4x MSAA
 	sd.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = 1;
@@ -39,94 +34,92 @@ D3DGraphics::D3DGraphics( HWND hWnd) {
 
 	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &sd, &swapChain, &device, nullptr, &deviceContext);
 
-	InitRenderer();
+	// Get the back buffer from the swap chain
+	ID3D11Texture2D* backBuffer = nullptr;
+	swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+	device->CreateRenderTargetView(backBuffer, nullptr, &target);
 
-	//make transparent:
+	// Create MSAA render target
+	D3D11_TEXTURE2D_DESC msaaDesc = {};
+	msaaDesc.Width = width;
+	msaaDesc.Height = height;
+	msaaDesc.MipLevels = 1;
+	msaaDesc.ArraySize = 1;
+	msaaDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	msaaDesc.SampleDesc.Count = 4; // Match the swap chain's sample count
+	msaaDesc.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
+	msaaDesc.Usage = D3D11_USAGE_DEFAULT;
+	msaaDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	msaaDesc.CPUAccessFlags = 0;
+	msaaDesc.MiscFlags = 0;
 
-	//SetWindowLong(hWnd, GWL_EXSTYLE, GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-	//SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 0, LWA_COLORKEY);
+	device->CreateTexture2D(&msaaDesc, nullptr, &msaaRenderTarget);
 
-
-
-
-	//Anti-aliasing for smoother lines:
-	D3D11_TEXTURE2D_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-	desc.Width = width; // Your screen width
-	desc.Height = height; // Your screen height
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // Common swap chain format
-	desc.SampleDesc.Count = 4; // The number of multisamples per pixel
-	desc.SampleDesc.Quality = 0; // The image quality level. The higher, the better image quality
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	desc.CPUAccessFlags = 0;
-	desc.MiscFlags = 0;
-
-	ID3D11Texture2D* msaaRenderTarget = nullptr;
-	device->CreateTexture2D(&desc, nullptr, &msaaRenderTarget);
-
-	ID3D11RenderTargetView* msaaRenderTargetView = nullptr;
 	device->CreateRenderTargetView(msaaRenderTarget, nullptr, &msaaRenderTargetView);
 
-	// Set the render target for drawing
-	deviceContext->OMSetRenderTargets(1, &msaaRenderTargetView, nullptr);
+	// Create depth buffer
+	D3D11_TEXTURE2D_DESC dsDesc = {};
+	dsDesc.Width = width;
+	dsDesc.Height = height;
+	dsDesc.MipLevels = 1;
+	dsDesc.ArraySize = 1;
+	dsDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsDesc.SampleDesc.Count = 4; // Match the MSAA settings
+	dsDesc.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
+	dsDesc.Usage = D3D11_USAGE_DEFAULT;
+	dsDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	dsDesc.CPUAccessFlags = 0;
+	dsDesc.MiscFlags = 0;
 
+	ID3D11Texture2D* depthStencil = nullptr;
+	device->CreateTexture2D(&dsDesc, nullptr, &depthStencil);
 
-	// Resolve the MSAA render target to a non-MSAA texture to display
-	ID3D11Texture2D* resolvedRenderTarget = nullptr;
-	device->CreateTexture2D(&desc, nullptr, &resolvedRenderTarget); // desc should be adjusted for non-MSAA texture
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = dsDesc.Format;
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	dsvDesc.Texture2D.MipSlice = 0;
 
+	device->CreateDepthStencilView(depthStencil, &dsvDesc, &depthView);
+	depthStencil->Release();
 
+	// Set the render target and depth-stencil view
+	//deviceContext->OMSetRenderTargets(1, &msaaRenderTargetView, depthView);
+	deviceContext->OMSetRenderTargets(1, &target, depthView);
 
+	// Create and set the rasterizer state
+	D3D11_RASTERIZER_DESC rasterDesc = {};
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
+	rasterDesc.CullMode = D3D11_CULL_BACK;
+	rasterDesc.FrontCounterClockwise = false;
+	rasterDesc.DepthClipEnable = true;
 
+	ID3D11RasterizerState* rasterState = nullptr;
+	device->CreateRasterizerState(&rasterDesc, &rasterState);
+	deviceContext->RSSetState(rasterState);
+	rasterState->Release();
 
+	// Create and set the depth-stencil state
+	D3D11_DEPTH_STENCIL_DESC dsStateDesc = {};
+	dsStateDesc.DepthEnable = TRUE;
+	dsStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsStateDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	dsStateDesc.StencilEnable = FALSE;
 
-	//get texture from swap chain
-	ID3D11Resource* resource = nullptr;
-	swapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&resource));
-	device->CreateRenderTargetView(resource, nullptr, &target);
+	ID3D11DepthStencilState* depthStencilState = nullptr;
+	device->CreateDepthStencilState(&dsStateDesc, &depthStencilState);
+	deviceContext->OMSetDepthStencilState(depthStencilState, 1);
+	depthStencilState->Release();
 
+	// Set the viewport
+	D3D11_VIEWPORT viewport = {};
+	viewport.Width = static_cast<float>(width);
+	viewport.Height = static_cast<float>(height);
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	deviceContext->RSSetViewports(1, &viewport);
 
-
-	//Depth buffer
-	D3D11_DEPTH_STENCIL_DESC depthDesc = {}; //dsDesc
-	depthDesc.DepthEnable = true;
-	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-	ID3D11DepthStencilState* depthState;
-	device->CreateDepthStencilState(&depthDesc, &depthState);
-
-
-	deviceContext->OMSetDepthStencilState(depthState, 1u);
-
-	ID3D11Texture2D* depthStencil; //pDepthStencil
-	D3D11_TEXTURE2D_DESC dsTexDesc = {}; //descDepth
-	dsTexDesc.Width = width;
-	dsTexDesc.Height = height;
-	dsTexDesc.MipLevels = 1u;
-	dsTexDesc.ArraySize = 1u;
-	dsTexDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsTexDesc.SampleDesc.Count = 4;
-	dsTexDesc.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
-	dsTexDesc.Usage = D3D11_USAGE_DEFAULT;
-	dsTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-
-	device->CreateTexture2D(&dsTexDesc, nullptr, &depthStencil);
-
-
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc = {}; //descDSV
-	depthViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	depthViewDesc.Texture2D.MipSlice = 0u;
-
-	device->CreateDepthStencilView(depthStencil, &depthViewDesc, &depthView);
-
-	deviceContext->OMSetRenderTargets( 1u, &target, depthView );
-
-
+	// Release back buffer
+	backBuffer->Release();
 }
 
 void D3DGraphics::DrawTestTri(HWND hWnd) {
@@ -248,13 +241,30 @@ D3DGraphics::~D3DGraphics() {
 	if (target != nullptr) {
 		target->Release();
 	}
+	if (msaaRenderTarget != nullptr) {
+		msaaRenderTarget->Release();
+	}
+	if (msaaRenderTargetView != nullptr) {
+		msaaRenderTargetView->Release();
+	}
 	if (depthView != nullptr) {
 		depthView->Release();
 	}
 }
 
 void D3DGraphics::EndFrame() {
-	swapChain->Present(1u,0u);
+
+	//ID3D11Texture2D* backBuffer = nullptr;
+	//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+
+	// Resolve the MSAA render target to the back buffer
+	//deviceContext->ResolveSubresource(backBuffer, 0, msaaRenderTarget, 0, DXGI_FORMAT_B8G8R8A8_UNORM);
+
+	// Present the back buffer to the screen
+	swapChain->Present(1, 0);
+
+	// Release back buffer
+	//backBuffer->Release();
 }
 
 

@@ -49,6 +49,9 @@ namespace EngineInstance {
 
     HWND hWnd;
 
+    float windowWidth;
+    float windowHeight;
+
     GLFWwindow* window;
 
     bool exitedProgram = false;
@@ -56,6 +59,8 @@ namespace EngineInstance {
     bool isD3D = true;
 
     std::mutex renderMutex;
+
+
 
     void DisplayNumAsTitle(float newVar) {
 
@@ -120,6 +125,9 @@ std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 const std::string engineDataPath = "D:/Shipwreck Engine 3D/Shipwreck Engine 3D/data.json";
 
 
+void UpdateWindowSize();
+
+
 void DisplayStringAsTitle(std::string newVar);
 void DisplayStringAsTitle(std::string newVar) {
 
@@ -174,93 +182,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         LPARAM lp = 1000;
         SendMessageA(hWnd, Msgbox, wp, lp);
     }
-    /*rigidbody.NewRB();
-    rigidbody2.NewRB();
-    rigidbody3.NewRB2D();*/
-
-    /*button.CreateFixture(rigidbody3.rb2D);
-    if (physics.RayCheck(button.fixture)) {
-        return 1;
-    }*/
-
-    //sprite.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
-    //newTexture.LoadTexture("C:/Users/smsal/Downloads/slime-test-free-texture/textures/Depth_basecolor.png");
-
-    D3DTexture loader;
-
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphere.obj");
-    //modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &loader);
-
-    /*modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &texLoader);
-    modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx", &texLoader);
-
-
-
-
-
-    startEng.containers.push_back(&container2);
-    startEng.containers.push_back(&container);
-    startEng.containers.push_back(&container3);
-
-
-    container.name  = "Ball";
-    container2.name = "Ground";
-    container3.name = "PlayerSprite";
-
-    container.models.AddModel(modelImporter.meshes[0]);
-    container.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
-
-    container2.models.AddModel(modelImporter.meshes[1]);
-    container2.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx";
-
-    container3.sprites.AddSprite(&sprite);
-    
-    container.rigidbody = Rigidbody(&physics, true);
-    container2.rigidbody = Rigidbody(&physics, false);
-    container3.rigidbody = Rigidbody(&physics, true);
-
-
-    container.rigidbody.NewRB();
-    container2.rigidbody.NewRB();
-    container3.rigidbody.NewRB2D();
-    
-
-    container.models.modelList[0].hasDiffuse = true;
-    
-    std::string narrowString = "C:/Users/smsal/Downloads/slime-test-free-texture/textures/Depth_basecolor.png";
-
-    ID3D11ShaderResourceView* srv = nullptr;
-    loader.LoadTextureFromFile(startEng.D3DGfx().device, narrowString, &srv);
-
-    container.models.modelList[0].textures.diffuseTex = srv;*/
-
-
-
-
-
-    //container.rigidbody->UpdateMesh(container.models.modelList[0]);
-    //container2.rigidbody->UpdateMesh(container2.models.modelList[0]);
-
-    
-    
-    //startEng.networkManager.AssignSendAddress(&sendAddr, "192.168.4.156");
-    
-    
-    //sendAddr.SeparateFullAddress(startEng.networkManager.DomainToIP("0.tcp.ngrok.io") + ":18183");
-    //sendAddr.SeparateFullAddress(startEng.networkManager.DomainToIP("smsaliou5935-35752.portmap.host") + ":35752");
-    
-    
-    //startEng.networkManager.transformAddresses.insert({0, &container.transform});
-    
-    
-    //startEng.networkManager.sendingAddresses.push_back(sendAddr);
-
-
-
-
-    /*Container startupContainer;
-    startupContainer.name = "Ball";
-    startEng.containers.push_back(&startupContainer);*/
 
 
 
@@ -346,7 +267,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             glfwPollEvents();
         }
         //startEng.networkManager.StartRecieveThread(startEng.networkManager);
-        
+        UpdateWindowSize();
         
         //container.rigidbody->rbDynamic->setGlobalPose(PxTransform(startEng.networkManager.transformAddresses[0]->position.x, startEng.networkManager.transformAddresses[0]->position.y, startEng.networkManager.transformAddresses[0]->position.z, PxQuat(0, 0, 0, 0)));
 
@@ -568,7 +489,8 @@ void StartEngine::RenderFrame() {
                 containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);
             }
         }
-        
+
+        //D3DGfx().deviceContext->ClearDepthStencilView(D3DGfx().depthView, D3D11_CLEAR_DEPTH, 1.0f, 0u);
 
         //Model render loop
         for (int i = 0; i < containers.size(); i++) {
@@ -1142,6 +1064,18 @@ FontCreation& StartEngine::Font() {
 
 Vec3 StartEngine::NormalizeAngles(Vec3 input) {
     return Vec3(fmod(input.x, 360.0f), fmod(input.y, 360.0f), fmod(input.z, 360.0f));
+}
+
+
+void UpdateWindowSize() {
+
+    RECT rect;
+
+    GetWindowRect(hWnd, &rect);
+
+
+    windowWidth = (rect.right - rect.left);
+    windowHeight = (rect.bottom - rect.top);
 }
 
 

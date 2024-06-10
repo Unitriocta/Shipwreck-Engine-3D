@@ -96,6 +96,9 @@ namespace EngineInstance {
 
 	extern HWND hWnd;
 
+	extern float windowWidth;
+	extern float windowHeight;
+
 	extern GLFWwindow* window;
 
 	extern bool exitedProgram;
