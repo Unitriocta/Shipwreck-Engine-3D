@@ -13,8 +13,14 @@ bool isForce = false;
 //float speedMultiplier = 500000.0f;
 float speedMultiplier = 0.1f;
 
+const float sensitivity = 0.1f;
+
+
+Transform camTransform;
+
+
 void Player::Start(Container* container) {
-	//camera.transform.parent = &player.transform;
+	camera.transform.parent = &player.transform;
 
 	player.name = "Player";
 
@@ -50,14 +56,34 @@ void Player::Start(Container* container) {
 
 void Player::Update(float deltaTime, Container* container) {
 
-	glm::vec2 forwardVec3 = glm::radians(glm::vec2(camera.transform.direction.x, camera.transform.direction.z));
-	glm::vec2 rightVec3 = glm::radians(glm::vec2(camera.transform.right.x, camera.transform.right.z));
+
+	//FPS camera
+
+	if (!input.mouse->mouseShown) {
+		camTransform.rotation.x += input.mouse->mouseDelta.y * sensitivity;
+		camTransform.rotation.y += input.mouse->mouseDelta.x * sensitivity;
+
+		camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
+
+
+		camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
+
+		Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
+		camera.transform.rotation = Vec3(radianRot.x, 0.0f/*radianRot.y*/, radianRot.z);
+
+		player.transform.rotation.y = radianRot.y;
+	}
+
+
+
+	glm::vec2 forwardVec3 = glm::radians(glm::vec2(player.transform.direction.x, player.transform.direction.z));
+	glm::vec2 rightVec3 = glm::radians(glm::vec2(player.transform.right.x, player.transform.right.z));
 
 	glm::vec2 forwardDirection = glm::normalize(glm::vec2(forwardVec3.x, forwardVec3.y)) * speedMultiplier;
 	glm::vec2 rightDirection = glm::normalize(glm::vec2(rightVec3.x, rightVec3.y)) * speedMultiplier;
 
-	player.transform.rotation = Vec3(0.0f, camera.transform.rotation.y, 0.0f);
-	camera.transform.position = player.transform.position;
+	//player.transform.rotation = Vec3(0.0f, camera.transform.rotation.y, 0.0f);
+	//camera.transform.position = player.transform.position;
 
 	if (isForce) {
 

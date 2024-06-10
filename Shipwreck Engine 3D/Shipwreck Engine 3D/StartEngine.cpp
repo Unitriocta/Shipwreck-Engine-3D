@@ -103,7 +103,7 @@ FontCreation::SetupFace *setupFace;
 
 Textbox newText;
 
-Transform camTransform;
+//Transform camTransform;
 
 Button button;
 
@@ -116,8 +116,6 @@ std::vector<Container> loadedContainers;
 
 int targetFPS = 400;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
-
-const float sensitivity = 0.1f;
 
 const std::string engineDataPath = "D:/Shipwreck Engine 3D/Shipwreck Engine 3D/data.json";
 
@@ -522,28 +520,11 @@ void StartEngine::RenderFrame() {
 
 
 
-
-
-        //FPS camera
-
-        camTransform.rotation.x += startEng.mouse.mouseDelta.y * sensitivity;
-        camTransform.rotation.y += startEng.mouse.mouseDelta.x * sensitivity;
-
-        camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
-
         // Implement rotation around Z for VR
         // rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
 
-        camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
 
-        if (!mouse.mouseShown) {
-
-            Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
-            camera.transform.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
-
-            camera.transform.updateQuaternion();
-            camera.transform.update();
-        }
+        //FPS camera
 
 
         //Text render loop
@@ -650,19 +631,19 @@ void StartEngine::RenderFrame() {
         //FPS camera
 
         // Update rotations based on mouse delta
-        camTransform.rotation.x += startEng.mouse.mouseDelta.y * sensitivity;
-        camTransform.rotation.y += startEng.mouse.mouseDelta.x * sensitivity;
+        //camTransform.rotation.x += startEng.mouse.mouseDelta.y * sensitivity;
+        //camTransform.rotation.y += startEng.mouse.mouseDelta.x * sensitivity;
 
-        // Clamp the rotationY to prevent flipping over at the poles
-        camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
+        //// Clamp the rotationY to prevent flipping over at the poles
+        //camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
 
-        camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
-        // Implement rotation around Z for VR
-        // rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
+        //camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
+        //// Implement rotation around Z for VR
+        //// rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
 
 
-        Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
-        camera.transform.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
+        //Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
+        //camera.transform.rotation = Vec3(radianRot.x, radianRot.y, radianRot.z);
 
         /*char buffer[64];
         snprintf(buffer, sizeof(buffer), "%f", mouse.mouseDelta.x);

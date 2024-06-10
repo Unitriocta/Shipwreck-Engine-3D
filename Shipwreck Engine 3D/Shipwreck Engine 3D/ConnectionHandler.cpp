@@ -349,7 +349,7 @@ void ConnectionHandler::Start(Container* container) {
 	networkManager.StartServiceThread();
 
 	connectionLoopFunctions.push_back(&SendLocalPosition);
-	connectionLoopFunctions.push_back(&SendLocalRotation); //PERFORMANCE ERROR: The last object in connectionLoopFunctions runs very smoothly and performs very well, whereas the first ones run very badly and update randomly, usually once every few seconds
+	connectionLoopFunctions.push_back(&SendLocalRotation); //MODIFICATION ERROR: THIS CHANGES THE LOCAL CLIENTS ROTATION
 	//Change how it's parsed and instead of creating multiple send threads per frame, do one that has all the data needed in that frame, like "{SendPosition:1:5.5:2.6:7.3:}{SendRotation:1:0.0:60.5:0.0:}{Animation:"Run"}"
 
 	refHandler = this;
