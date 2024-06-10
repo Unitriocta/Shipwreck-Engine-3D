@@ -16,6 +16,15 @@ struct VS_Out
 };
 
 
+struct PS_Out
+{
+    float4 color : SV_TARGET;
+    //float depth : SV_Depth;
+};
+
+
+
+
 cbuffer CBuffer : register(b0)
 {
     int hasRegular;
@@ -42,8 +51,10 @@ static float attLin = 0.045f;
 static float attQuad = 0.0075f;
 
 
-float4 main(VS_Out input) : SV_TARGET
+PS_Out main(VS_Out input) : SV_TARGET
 {
+    PS_Out psout;
+    
     //return min(float4(diffuseTex.Sample(samplerState, input.uv).rgba), float4(1.0f, 1.0f, 1.0f, 1.0f));
     if (isLit == true)
     {
@@ -99,17 +110,21 @@ float4 main(VS_Out input) : SV_TARGET
     
         float3 finalColor = textureColor.rgb * (diffuse + ambient) + specular;
 
-        return float4(finalColor, textureColor.a);
+        psout.color = float4(finalColor, textureColor.a);
     }
     else
     {
         if (hasDiffuse == true)
         {
-            return min(float4(diffuseTex.Sample(samplerState, input.uv).rgba), float4(1.0f, 1.0f, 1.0f, 1.0f));
+            psout.color = min(float4(diffuseTex.Sample(samplerState, input.uv).rgba), float4(1.0f, 1.0f, 1.0f, 1.0f));
         }
         else
         {
-            return float4(1.0f, 1.0f, 1.0f, 1.0f);
+            psout.color = float4(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
+    
+    //psout.depth = input.pos.z / input.pos.w;
+    
+    return psout;
 }

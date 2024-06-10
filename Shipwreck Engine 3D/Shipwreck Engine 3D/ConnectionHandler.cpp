@@ -326,14 +326,12 @@ void SendRotation(int playerNum_, float newX, float newY, float newZ) {
 void ConnectionHandler::Start(Container* container) {
 	networkManager.client.SetEndpoint("192.168.4.156", "8000"); //Server port
 
-	networkManager.stringToVoid =
-	{
-		{"SendPosition", SendPosition},
-		{"SendRotation", SendRotation},
-		{"AddConnection", AddConnection},
-		{"RequestPlayerNum", RequestPlayerNum},
-		{"SendPlayerNum", SendPlayerNum}
-	};
+
+	networkManager.stringToVoid["SendPosition"] = SendPosition;
+	networkManager.stringToVoid["SendRotation"] = SendRotation;
+	networkManager.stringToVoid["AddConnection"] = AddConnection;
+	networkManager.stringToVoid["RequestPlayerNum"] = RequestPlayerNum;
+	networkManager.stringToVoid["SendPlayerNum"] = SendPlayerNum;
 
 
 	if (networkManager.isServer) {
