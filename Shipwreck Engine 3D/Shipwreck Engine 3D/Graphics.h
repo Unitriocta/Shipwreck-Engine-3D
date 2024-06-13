@@ -137,10 +137,13 @@ public:
 	ID3D11RenderTargetView* msaaRenderTargetView = nullptr;
 	ID3D11Texture2D* msaaRenderTarget = nullptr;
 
+	ID3D11Texture2D* depthStencil = nullptr;
 	ID3D11DepthStencilView* depthView = nullptr;
 
 
 	D3DRenderer* renderer;
+
+	int msaaSamples = 8;
 };
 
 

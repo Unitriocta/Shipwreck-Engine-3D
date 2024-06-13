@@ -14,8 +14,6 @@ void GameGeneration::Start(Container* container) {
 
 	sprite.LoadTexture("C:/Users/smsal/OneDrive/Documents/Game Art/Mask Game/Character/Character-1.png");
 
-	//modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &texLoader);
-
 
 
 
@@ -30,6 +28,10 @@ void GameGeneration::Start(Container* container) {
 	container3.name = "PlayerSprite";
 
 
+	//modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &texLoader);
+	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx", &texLoader);
+	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx", &texLoader);
+	//modelImporter.ImportModel("D:/Downloads/Cute_Demon.fbx", &texLoader);
 	modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &texLoader);
 	container1.models.AddModel(modelImporter.meshes.back());
 	container1.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
