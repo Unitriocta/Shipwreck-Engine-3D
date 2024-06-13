@@ -1,11 +1,14 @@
 #include "ModelImporter.h"
 
+
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+
 #include "StartEngine.h"
 using namespace EngineInstance;
 
 
-
-void ModelImporter::ImportModel(const char* filename, D3DTexture* textureLoader) {
+void ModelImporter::ImportModel(Container* rootContainer, const char* filename) {
 	//clear mesh
 
 	Assimp::Importer importer;
@@ -30,22 +33,25 @@ void ModelImporter::ImportModel(const char* filename, D3DTexture* textureLoader)
 	}
 
 	if (isD3D) {
-		LoadScene(scene, filename, textureLoader, startEng.D3DGfx().device);
+		LoadScene(rootContainer, scene, filename, startEng.D3DGfx().device);
 	}
 	else {
-		LoadScene(scene, filename, textureLoader, nullptr);
+		LoadScene(rootContainer, scene, filename, nullptr);
 	}
 
 }
 
 
-void ModelImporter::LoadScene(const aiScene* scene, const char* filename, D3DTexture* textureLoader, ID3D11Device* device) {
-	for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+void ModelImporter::LoadScene(Container* rootContainer, const aiScene* scene, const char* filename, ID3D11Device* device) {
+	
+	fs::path filepath = filename;
+	std::string modelDirectory = filepath.parent_path().string();
+	LoadHierarchy(scene->mRootNode, rootContainer);
+	/*for (unsigned int i = 0; i < scene->mNumMeshes; i++)
 	{
-		Model mesh; // Create a new mesh for each scene mesh
+		Model mesh;
 		mesh.vertices.resize(scene->mMeshes[i]->mNumVertices);
 
-		// Populate vertex data
 		for (unsigned int j = 0; j < scene->mMeshes[i]->mNumVertices; j++)
 		{
 			if (scene->mMeshes[i]->HasPositions())
@@ -53,6 +59,10 @@ void ModelImporter::LoadScene(const aiScene* scene, const char* filename, D3DTex
 				mesh.vertices[j].position.x = scene->mMeshes[i]->mVertices[j].x;
 				mesh.vertices[j].position.y = scene->mMeshes[i]->mVertices[j].y;
 				mesh.vertices[j].position.z = scene->mMeshes[i]->mVertices[j].z;
+			}
+			if (scene->mMeshes[i]->HasBones())
+			{
+				
 			}
 			if (scene->mMeshes[i]->HasNormals())
 			{
@@ -69,19 +79,19 @@ void ModelImporter::LoadScene(const aiScene* scene, const char* filename, D3DTex
 		if (scene->mMeshes[i]->mMaterialIndex >= 0) {
 			const aiMaterial* material = scene->mMaterials[scene->mMeshes[i]->mMaterialIndex];
 
-			// Check for diffuse textures (use aiTextureType_SPECULAR for specular textures, etc.)
 			aiString path;
+			fs::path fullPath;
+			std::string fullPathStr;
 
 			if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS) {
-				//load path
 				mesh.hasDiffuse = true;
 
 				std::string narrowString = path.C_Str();
+				fullPath = fs::path(modelDirectory) / narrowString;
+				fullPathStr = fullPath.string();
+				std::replace(fullPathStr.begin(), fullPathStr.end(), '\\', '/');
 
-				ID3D11ShaderResourceView* srv = nullptr;
-				textureLoader->LoadTextureFromFile(device, narrowString, &srv);
-
-				mesh.textures.diffuseTex = srv;
+				texLoader.LoadTextureFromFile(device, fullPathStr, &mesh.textures.diffuseTex);
 			}
 			else {
 				mesh.hasDiffuse = false;
@@ -90,15 +100,14 @@ void ModelImporter::LoadScene(const aiScene* scene, const char* filename, D3DTex
 
 			if (material->GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS) {
 
-				//load path
 				mesh.hasSpecular = true;
 
 				std::string narrowString = path.C_Str();
+				fullPath = fs::path(modelDirectory) / narrowString;
+				fullPathStr = fullPath.string();
+				std::replace(fullPathStr.begin(), fullPathStr.end(), '\\', '/');
 
-				ID3D11ShaderResourceView* srv = nullptr;
-				textureLoader->LoadTextureFromFile(device, narrowString, &srv);
-
-				mesh.textures.specularTex = srv;
+				texLoader.LoadTextureFromFile(device, fullPathStr, &mesh.textures.specularTex);
 			}
 			else {
 				mesh.hasSpecular = false;
@@ -114,6 +123,50 @@ void ModelImporter::LoadScene(const aiScene* scene, const char* filename, D3DTex
 			}
 		}
 
-		meshes.push_back(mesh);
+		rootContainer->models.AddModel(mesh);
+	}*/
+}
+
+
+void ModelImporter::LoadHierarchy(aiNode* node, Container* parentContainer) {
+	
+	Container* curContainer = new Container();
+	startEng.containers.push_back(curContainer);
+	
+	//load actual model
+	
+
+
+
+	//load transform and store it in curContainer
+	glm::mat4 nodeMat = AssimpMatToGlmMat(node->mTransformation);
+
+	glm::vec3 position;
+	glm::quat rotation;
+	glm::vec3 scale;
+
+	
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(nodeMat, scale, rotation, position, skew, perspective);
+	rotation = glm::conjugate(rotation);
+	
+	
+	glm::vec3 eulerAngles = glm::eulerAngles(rotation);
+	eulerAngles = glm::degrees(eulerAngles);
+	
+	
+	curContainer->transform.position = Vec3(position.x, position.y, position.z);
+	curContainer->transform.rotation = Vec3(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+	curContainer->transform.scale= Vec3(scale.x, scale.y, scale.z);
+
+
+
+
+	curContainer->name = node->mName.C_Str();
+
+
+	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+		LoadHierarchy(node->mChildren[i], curContainer);
 	}
 }

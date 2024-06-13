@@ -31,14 +31,18 @@ void GameGeneration::Start(Container* container) {
 	//modelImporter.ImportModel("C:/Users/smsal/Downloads/slime-test-free-texture/source/Scene 3/Scene 3.obj", &texLoader);
 	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx", &texLoader);
 	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx", &texLoader);
-	//modelImporter.ImportModel("D:/Downloads/Cute_Demon.fbx", &texLoader);
-	modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &texLoader);
-	container1.models.AddModel(modelImporter.meshes.back());
-	container1.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
+	//modelImporter.ImportModel("D:/Downloads/Vase_Clay.fbx", &texLoader);
+	modelImporter.ImportModel(&container1, "D:/Downloads/shooting-building-sci-fi-low-poly/source/3D.fbx");
+	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &texLoader);
+	
+	////Test Texture Load: Works correctly!
+	//std::string newTexPath = "D:/Downloads/shooting-building-sci-fi-low-poly/textures/w (2).jpeg";
+	//texLoader.LoadTextureFromFile(startEng.D3DGfx().device, newTexPath, &container1.models.modelList[0].textures.diffuseTex);
+	
+	//container1.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
 
-	modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx", &texLoader);
-	container2.models.AddModel(modelImporter.meshes.back());
-	container2.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx";
+	modelImporter.ImportModel(&container2, "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
+	//container2.models.AddModel(modelImporter.meshes.back());
 
 	container3.sprites.AddSprite(&sprite);
 

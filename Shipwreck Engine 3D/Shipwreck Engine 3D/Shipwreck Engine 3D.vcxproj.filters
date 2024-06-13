@@ -188,6 +188,9 @@
     <ClCompile Include="StartupGame.cpp">
       <Filter>Game\Startup Scripts</Filter>
     </ClCompile>
+    <ClCompile Include="GameScript.cpp">
+      <Filter>Engine Code\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StartEngine.h">
@@ -299,6 +302,9 @@
     <ClInclude Include="StartupGame.h">
       <Filter>Game\Startup Scripts</Filter>
     </ClInclude>
+    <ClInclude Include="GameScript.h">
+      <Filter>Engine Code\Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico">
@@ -358,5 +364,8 @@
     <None Include="3DGLShader.vert">
       <Filter>Engine Code\Rendering\Shaders\GL\3D Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ToDo.txt" />
   </ItemGroup>
 </Project>

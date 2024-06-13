@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics.h"
+#include "MathExtras.h"
 
 class Sprite
 {

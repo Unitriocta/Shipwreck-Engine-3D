@@ -11,12 +11,12 @@
 
 #include "Rigidbody.h"
 
-#include "Sprite.h"
+class Sprites;
 #include "Sprites.h"
 
+//#include "ShipwreckEngine.h"
 class GameScript;
-#include "ShipwreckEngine.h"
-
+#include "GameScript.h"
 
 
 class Container

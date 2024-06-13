@@ -123,6 +123,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -147,6 +148,7 @@
     <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="FontCreation.cpp" />
     <ClCompile Include="GameGeneration.cpp" />
+    <ClCompile Include="GameScript.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Keyboard.cpp" />
@@ -182,6 +184,7 @@
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="FontCreation.h" />
     <ClInclude Include="GameGeneration.h" />
+    <ClInclude Include="GameScript.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Keyboard.h" />
@@ -286,6 +289,9 @@
     <None Include="3DGLShader.vert" />
     <None Include="GLPS.frag" />
     <None Include="GLVS.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ToDo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

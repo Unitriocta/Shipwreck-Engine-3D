@@ -175,7 +175,7 @@ struct TexturedVertex;
 
 		void LoadTexture(std::string _textPath);
 
-		void LoadTextureFromFile(ID3D11Device* device, std::string path, ID3D11ShaderResourceView** textureView);
+		void LoadTextureFromFile(ID3D11Device* device, std::string& path, ID3D11ShaderResourceView** textureView);
 
 	public:
 

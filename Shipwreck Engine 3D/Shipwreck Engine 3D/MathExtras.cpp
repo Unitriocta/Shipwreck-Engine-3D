@@ -3,6 +3,8 @@
 #include "Console.h"
 using namespace Console;
 
+#include "StartEngine.h"
+using namespace EngineInstance;
 
 
 
@@ -37,31 +39,58 @@ void D3DTexture::LoadTexture(std::string _textPath)
 
 
 
-void D3DTexture::LoadTextureFromFile(ID3D11Device* device, std::string path, ID3D11ShaderResourceView** textureView) {
-	/*std::string textNowaodks = "HIiSJidjaijd";
-	ConsolePrint(textNowaodks);*/
-	wchar_t texPath[512];
-	mbstowcs_s(nullptr, texPath, path.c_str(), _TRUNCATE);
+void D3DTexture::LoadTextureFromFile(ID3D11Device* device, std::string& path, ID3D11ShaderResourceView** textureView) {
+    //SetWindowTextA(hWnd, path.c_str());
+    wchar_t texPath[512];
+    mbstowcs_s(nullptr, texPath, path.c_str(), _TRUNCATE);
 
-	DirectX::ScratchImage image;
-	DirectX::LoadFromWICFile(texPath, DirectX::WIC_FLAGS_NONE, nullptr, image);
+    // Load the image using DirectX::ScratchImage
+    DirectX::ScratchImage image;
+    HRESULT hr = DirectX::LoadFromWICFile(texPath, DirectX::WIC_FLAGS_NONE, nullptr, image);
+    if (FAILED(hr)) {
+        // Handle error (logging, return error code, etc.)
+        return;
+    }
 
+    ID3D11ShaderResourceView* srv = nullptr;
 
-	ID3D11Resource* resource = nullptr;
-	ID3D11Texture2D* texture = nullptr;
-	DirectX::CreateTexture(device, image.GetImages(), image.GetImageCount(), image.GetMetadata(), &resource);
+    ID3D11Resource* texture = nullptr;
+    hr = DirectX::CreateTexture(device, image.GetImages(), image.GetImageCount(), image.GetMetadata(), &texture);
+    if (FAILED(hr)) {
+        image.Release();
+        return;
+    }
 
-	resource->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture));
+    ID3D11Texture2D* texture2D = nullptr;
+    hr = texture->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture2D));
+    if (FAILED(hr)) {
+        image.Release();
+        texture->Release();
+        return;
+    }
 
+    // Create the shader resource view
+    D3D11_TEXTURE2D_DESC desc;
+    texture2D->GetDesc(&desc);
 
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    srvDesc.Format = desc.Format;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = image.GetMetadata().format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = -1;
+    hr = device->CreateShaderResourceView(texture, &srvDesc, &srv);
+    if (FAILED(hr)) {
+        texture2D->Release();
+        image.Release();
+        texture->Release();
+        return;
+    }
 
-	device->CreateShaderResourceView(texture, &srvDesc, textureView);
+    *textureView = srv;
 
-	texture->Release();
+    // Clean up resources
+    texture2D->Release();
+    image.Release();
+    texture->Release();
 }
