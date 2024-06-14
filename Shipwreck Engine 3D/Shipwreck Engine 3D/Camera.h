@@ -16,7 +16,7 @@ public:
 	Camera()
 		: 
 		clippingNear(0.5f),
-		clippingFar(5000.0f)
+		clippingFar(500000.0f)
 	{
 		transform = Transform(/*Vec3(0.0f, 0.0f, 0.0f), Vec3(0 / 57.2958f, 0 / 57.2958f, 0 / 57.2958f), Vec3(0.0f, 0.0f, 0.0f)*/);
 	}

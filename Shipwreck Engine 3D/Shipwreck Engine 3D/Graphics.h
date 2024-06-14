@@ -67,7 +67,7 @@ public:
 
 	void SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
-	void SetConstantBuffers(bool is2D, Camera camera, Vec3 position, Rotation rotation, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
+	void SetConstantBuffers(bool is2D, Camera camera, Transform* transform, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
 	void SetViewports(HWND hWnd, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 

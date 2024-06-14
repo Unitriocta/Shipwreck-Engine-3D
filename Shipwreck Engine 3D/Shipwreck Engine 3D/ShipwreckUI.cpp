@@ -471,7 +471,8 @@ void D3DGraphics::RenderTexTris(std::vector<TexturedVertex> vertices, Camera cam
 	device->CreateBuffer(&constBufferDesc, &constSd, &constBuffer);
 	deviceContext->VSSetConstantBuffers(0u, 1u, &constBuffer);
 	constBuffer->Release();*/
-	renderer->SetConstantBuffers(true, camera, Vec3(texPos.x, texPos.y, 3.0f), Rotation(0.0f,0.0f,0.0f), device, deviceContext);
+	Transform newTransform = Transform();
+	renderer->SetConstantBuffers(true, camera, &newTransform, device, deviceContext);
 
 
 
@@ -799,7 +800,7 @@ void D3DGraphics::RenderModel(Model model, Transform transform, Camera camera, M
 	renderer->SetIndexBuffer(indexSize, indexSd, device, deviceContext);
 
 
-	renderer->SetConstantBuffers(false, camera, transform.position, Rotation(transform.rotation), device, deviceContext);
+	renderer->SetConstantBuffers(false, camera, &transform, device, deviceContext);
 
 
 	renderer->SetTextures(&model.textures, device, deviceContext);
@@ -1241,19 +1242,38 @@ void D3DRenderer::SetIndexBuffer(int indexSize, D3D11_SUBRESOURCE_DATA indexSd, 
 }
 
 
-void D3DRenderer::SetConstantBuffers(bool is2D, Camera camera, Vec3 position, Rotation rotation, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
+void D3DRenderer::SetConstantBuffers(bool is2D, Camera camera, Transform* transform, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
 
 	struct ConstBuffer {
 		DirectX::XMMATRIX transform;
 	};
+	
+	Transform* curTransform = transform;
+	Vec3 finalPos;
+	Vec3 finalRot;
+	Vec3 finalScale;
+	while (true) {
+		if (curTransform != nullptr) {
+
+			finalPos += curTransform->position;
+			finalRot += curTransform->rotation;
+			finalScale += curTransform->scale;
+
+			curTransform = curTransform->parent;
+		}
+		else {
+			break;
+		}
+	}
 
 	const ConstBuffer transformBuffer = {
 		{
 		DirectX::XMMatrixTranspose(
-			DirectX::XMMatrixRotationX(rotation.x) *
-			DirectX::XMMatrixRotationY(rotation.y) *
-			DirectX::XMMatrixRotationZ(rotation.z) *
-			DirectX::XMMatrixTranslation(position.x, position.y, position.z)
+			DirectX::XMMatrixRotationX(finalRot.x) *
+			DirectX::XMMatrixRotationY(finalRot.y) *
+			DirectX::XMMatrixRotationZ(finalRot.z) *
+			DirectX::XMMatrixTranslation(finalPos.x, finalPos.y, finalPos.z) *
+			DirectX::XMMatrixScaling(finalScale.x, finalScale.y, finalScale.z)
 		)
 		}
 	};

@@ -7,10 +7,27 @@ using namespace EngineInstance;
 
 DirectX::XMMATRIX Camera::GetMatrixD3D() {
 	if (transform.parent != nullptr) {
-		return DirectX::XMMatrixTranslation(-transform.position.x - transform.parent->position.x, -transform.position.y - transform.parent->position.y, -transform.position.z - transform.parent->position.z) *
-			DirectX::XMMatrixRotationY(-transform.rotation.y - transform.parent->rotation.y) *
-			DirectX::XMMatrixRotationX(-transform.rotation.x - transform.parent->rotation.x) *
-			DirectX::XMMatrixRotationZ(-transform.rotation.z - transform.parent->rotation.z) *
+		Transform* curTransform = &transform;
+		Vec3 finalPos;
+		Vec3 finalRot;
+
+		while (true) {
+
+			if (curTransform != nullptr) {
+
+				finalPos += curTransform->position;
+				finalRot += curTransform->rotation;
+
+				curTransform = curTransform->parent;
+			}
+			else {
+				break;
+			}
+		}
+		return DirectX::XMMatrixTranslation(-finalPos.x, -finalPos.y, -finalPos.z) *
+			DirectX::XMMatrixRotationY(-finalRot.y) *
+			DirectX::XMMatrixRotationX(-finalRot.x) *
+			DirectX::XMMatrixRotationZ(-finalRot.z) *
 			DirectX::XMMatrixPerspectiveLH(windowWidth / windowHeight, windowHeight / windowWidth, clippingNear, clippingFar);
 	}
 	else {

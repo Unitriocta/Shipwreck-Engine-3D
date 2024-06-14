@@ -55,7 +55,7 @@ PS_Out main(VS_Out input) : SV_TARGET
 {
     PS_Out psout;
     //return min(float4(diffuseTex.Sample(samplerState, input.uv).rgba), float4(1.0f, 1.0f, 1.0f, 1.0f));
-    if (isLit == true)
+    if (false)//isLit == true)
     {
         float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
         float3 specularColor = float3(1.0f, 1.0f, 1.0f);

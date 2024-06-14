@@ -36,7 +36,9 @@ public:
 
 	void LoadScene(Container* rootContainer, const aiScene* scene, const char* filename, ID3D11Device* device);
 
-	void LoadHierarchy(aiNode* node, Container* parentContainer);
+	void LoadHierarchy(aiNode* node, Container* parentContainer, const aiScene* scene, std::string& modelDir);
+    
+    void StoreModels(Models* models, aiNode* node, const aiScene* scene, std::string& modelDir);
 
     glm::mat4 AssimpMatToGlmMat(const aiMatrix4x4& from) {
         glm::mat4 to;
