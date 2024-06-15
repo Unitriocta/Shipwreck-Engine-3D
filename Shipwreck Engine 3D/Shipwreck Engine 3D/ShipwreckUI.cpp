@@ -4,6 +4,8 @@
 
 #include "Graphics.h"
 
+#include "StartEngine.h"
+using namespace EngineInstance;
 
 #include <d3dcompiler.h>
 
@@ -1251,19 +1253,17 @@ void D3DRenderer::SetConstantBuffers(bool is2D, Camera camera, Transform* transf
 	Transform* curTransform = transform;
 	Vec3 finalPos;
 	Vec3 finalRot;
-	Vec3 finalScale;
-	while (true) {
-		if (curTransform != nullptr) {
+	Vec3 finalScale = Vec3(1, 1, 1);
 
-			finalPos += curTransform->position;
-			finalRot += curTransform->rotation;
-			finalScale += curTransform->scale;
+	while (curTransform != nullptr) {
 
-			curTransform = curTransform->parent;
-		}
-		else {
-			break;
-		}
+		Vec3 rotatedPos = startEng.Math().RotatePoint(finalPos, curTransform->rotation);
+
+		finalPos += rotatedPos + curTransform->position;
+		finalRot += curTransform->rotation;
+		finalScale *= curTransform->scale;
+
+		curTransform = curTransform->parent;
 	}
 
 	const ConstBuffer transformBuffer = {
@@ -1382,9 +1382,9 @@ void D3DRenderer::SetTextures(ModelTextureMaps* textures, ID3D11Device* device, 
 	D3D11_SAMPLER_DESC imgSamplerDesc = {};
 
 	imgSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	imgSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	imgSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	imgSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	imgSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP; //D3D11_TEXTURE_ADDRESS_CLAMP
+	imgSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	imgSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	imgSamplerDesc.MipLODBias = 0.0f;
 	imgSamplerDesc.MaxAnisotropy = 1;
 	imgSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;

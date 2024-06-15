@@ -1266,6 +1266,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     break;
 
+    case WM_SIZE:
+    {
+        if (isD3D) {
+            if (startEng.postD3DGraphics) {
+
+                if (startEng.D3DGfx().target != nullptr) {
+
+                    windowWidth = LOWORD(lParam);
+                    windowHeight = HIWORD(lParam);
+
+                    // Release all references to the swap chain's buffers
+                    startEng.D3DGfx().deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+                    startEng.D3DGfx().target->Release();
+                    startEng.D3DGfx().depthView->Release();
+
+                    // Resize the swap chain
+                    startEng.D3DGfx().swapChain->ResizeBuffers(0, windowWidth, windowHeight, DXGI_FORMAT_UNKNOWN, 0);
+
+                    // Recreate the render target view
+                    ID3D11Texture2D* backBuffer = nullptr;
+                    startEng.D3DGfx().swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+                    startEng.D3DGfx().device->CreateRenderTargetView(backBuffer, nullptr, &startEng.D3DGfx().target);
+                    backBuffer->Release();
+
+                    // Recreate the depth-stencil view with the new dimensions
+                    // (You'll need to recreate the depth-stencil texture similar to how it's done in the initialization code)
+
+                    // Set the new render target and depth-stencil view
+                    startEng.D3DGfx().deviceContext->OMSetRenderTargets(1, &startEng.D3DGfx().target, startEng.D3DGfx().depthView);
+
+                    // Update the viewport
+                    D3D11_VIEWPORT viewport = {};
+                    viewport.Width = static_cast<float>(windowWidth);
+                    viewport.Height = static_cast<float>(windowHeight);
+                    viewport.MinDepth = 0.0f;
+                    viewport.MaxDepth = 1.0f;
+                    startEng.D3DGfx().deviceContext->RSSetViewports(1, &viewport);
+                }
+            }
+        }
+    }
+    break;
+
     case WM_DESTROY:
     {
         if (isD3D) {

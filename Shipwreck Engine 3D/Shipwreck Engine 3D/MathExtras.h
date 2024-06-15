@@ -42,7 +42,6 @@ struct ColorVertex;
 struct TexturedVertex;
 
 
-
 	struct Vec3 {
 	public:
 		float x;
@@ -67,6 +66,10 @@ struct TexturedVertex;
 			z += other.z;
 			return *this;
 		}
+		Vec3& operator+(const Vec3& other) {
+			Vec3 addOperation = Vec3(x + other.x, y + other.y, z + other.z);
+			return addOperation;
+		}
 		Vec3& operator-=(const Vec3& other) {
 			x -= other.x;
 			y -= other.y;
@@ -76,10 +79,26 @@ struct TexturedVertex;
 
 
 		Vec3& operator*(float other) {
+			Vec3 timesOperation = Vec3(x * other, y * other, z * other);
+			return timesOperation;
+		}
+		Vec3& operator*=(float other) {
 			x *= other;
 			y *= other;
 			z *= other;
 			return *this;
+		}
+		Vec3& operator*=(Vec3 other) {
+			x *= other.x;
+			y *= other.y;
+			z *= other.z;
+			return *this;
+		}
+
+
+		Vec3& operator/(float other) {
+			Vec3 divideOperation = Vec3(x / other, y / other, z / other);
+			return divideOperation;
 		}
 	};
 
@@ -127,6 +146,9 @@ struct TexturedVertex;
 		Color NormalizedColor(int r, int g, int b, int a) {
 			return Color{ (float)r / 255, (float)g / 255, (float)b / 255, (float)a / 255};
 		};
+
+
+		Vec3 RotatePoint(const Vec3& point, const Vec3& rotation);
 	};
 
 	struct Vec2 {

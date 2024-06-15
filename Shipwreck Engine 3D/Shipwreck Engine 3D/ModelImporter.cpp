@@ -211,9 +211,18 @@ void ModelImporter::StoreModels(Models* models, aiNode* node, const aiScene* sce
 }
 
 void ModelImporter::LoadHierarchy(aiNode* node, Container* parentContainer, const aiScene* scene, std::string& modelDir) {
-	
-	Container* curContainer = new Container();
-	startEng.containers.push_back(curContainer);
+
+	Container* curContainer;
+		
+	if (node != scene->mRootNode) {
+
+		curContainer = new Container();
+		startEng.containers.push_back(curContainer);
+		curContainer->transform.parent = &parentContainer->transform;
+	}
+	else {
+		curContainer = parentContainer;
+	}
 	
 	//load actual model
 	StoreModels(&curContainer->models, node, scene, modelDir);
@@ -234,7 +243,7 @@ void ModelImporter::LoadHierarchy(aiNode* node, Container* parentContainer, cons
 	
 	
 	glm::vec3 eulerAngles = glm::eulerAngles(rotation);
-	//eulerAngles = glm::degrees(eulerAngles);
+	eulerAngles = glm::degrees(eulerAngles);
 	
 	
 	curContainer->transform.position = Vec3(position.x, position.y, position.z);

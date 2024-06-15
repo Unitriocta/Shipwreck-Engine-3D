@@ -11,7 +11,7 @@ using namespace GameVariables;
 bool isForce = false;
 
 //float speedMultiplier = 500000.0f;
-float speedMultiplier = 110.1f;
+float speedMultiplier = 100.1f;
 
 const float sensitivity = 0.1f;
 

@@ -4,26 +4,25 @@
 using namespace EngineInstance;
 
 
-
 DirectX::XMMATRIX Camera::GetMatrixD3D() {
 	if (transform.parent != nullptr) {
+		
 		Transform* curTransform = &transform;
 		Vec3 finalPos;
 		Vec3 finalRot;
+		Vec3 finalScale = Vec3(1, 1, 1);
 
-		while (true) {
+		while (curTransform != nullptr) {
 
-			if (curTransform != nullptr) {
+			Vec3 rotatedPos = startEng.Math().RotatePoint(finalPos, curTransform->rotation);
 
-				finalPos += curTransform->position;
-				finalRot += curTransform->rotation;
+			finalPos += rotatedPos + curTransform->position;
+			finalRot += curTransform->rotation;
+			finalScale *= curTransform->scale;
 
-				curTransform = curTransform->parent;
-			}
-			else {
-				break;
-			}
+			curTransform = curTransform->parent;
 		}
+
 		return DirectX::XMMatrixTranslation(-finalPos.x, -finalPos.y, -finalPos.z) *
 			DirectX::XMMatrixRotationY(-finalRot.y) *
 			DirectX::XMMatrixRotationX(-finalRot.x) *
