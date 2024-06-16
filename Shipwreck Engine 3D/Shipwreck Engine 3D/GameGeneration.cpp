@@ -32,8 +32,8 @@ void GameGeneration::Start(Container* container) {
 	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx", &texLoader);
 	//modelImporter.ImportModel(&container1, "C:/Users/smsal/OneDrive/Documents/Blender Modules/bow.fbx");
 	//modelImporter.ImportModel(&container1, "D:/Downloads/Vase_Clay.fbx");
-	modelImporter.ImportModel(&container1, "D:/Downloads/shooting-building-sci-fi-low-poly/source/3D.fbx");
-	//modelImporter.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx", &texLoader);
+	//modelImporter.ImportModel(&container1, "D:/Downloads/shooting-building-sci-fi-low-poly/source/3D.fbx");
+	modelImporter.ImportModel(&container1, "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx");
 	
 	////Test Texture Load: Works correctly!
 	//std::string newTexPath = "D:/Downloads/shooting-building-sci-fi-low-poly/textures/w (2).jpeg";

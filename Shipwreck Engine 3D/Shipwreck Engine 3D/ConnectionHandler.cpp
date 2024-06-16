@@ -113,8 +113,7 @@ void AddConnection(int newPlayerNum) {
 		Container* newPlayer = new Container();
 		startEng.containers.push_back(newPlayer);
 
-		newPlayer->models.AddModel(modelImporter.meshes.back());
-		newPlayer->models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx";
+		modelImporter.ImportModel(newPlayer, "C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
 
 		newPlayer->scriptNames.push_back("ConnectedPlayer");
 
@@ -366,13 +365,6 @@ void ConnectionHandler::Update(float deltaTime, Container* container) {
 			}
 		}
 	}
-
-	//Successful rotation test:
-	/*if (networkManager.isServer) {
-		if (allClientNums.size() > 0) {
-			refHandler->playerNumToTransform[allClientNums[0]]->rotation.z = 40.0f;
-		}
-	}*/
 
 	{
 		std::lock_guard<std::mutex> guard(networkManager.receiveMutex);
