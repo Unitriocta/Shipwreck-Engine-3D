@@ -7,33 +7,39 @@ using namespace Console;
 using namespace EngineInstance;
 
 
-Vec3 MathFunctions::RotatePoint(const Vec3& point, const Vec3& rotation) {
-
+Vec3 MathFunctions::RotatePoint(Vec3& point, Vec3& rotation) {
+    //rotation = Vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z)); //rm this line and camera works 
     Vec3 result = point;
-    float cosX = cos(rotation.x);
-    float sinX = sin(rotation.x);
+    float cosX = cos(glm::radians(rotation.x));
+    float sinX = sin(glm::radians(rotation.x));
     float y = result.y * cosX - result.z * sinX;
     float z = result.y * sinX + result.z * cosX;
     result.y = y;
     result.z = z;
 
     // Rotate around the Y axis
-    float cosY = cos(rotation.y);
-    float sinY = sin(rotation.y);
+    float cosY = cos(glm::radians(rotation.y));
+    float sinY = sin(glm::radians(rotation.y));
     float x = result.x * cosY + result.z * sinY;
     z = result.z * cosY - result.x * sinY;
     result.x = x;
     result.z = z;
 
     // Rotate around the Z axis
-    float cosZ = cos(rotation.z);
-    float sinZ = sin(rotation.z);
+    float cosZ = cos(glm::radians(rotation.z));
+    float sinZ = sin(glm::radians(rotation.z));
     x = result.x * cosZ - result.y * sinZ;
     y = result.x * sinZ + result.y * cosZ;
     result.x = x;
     result.y = y;
 
     return result;
+}
+
+
+Vec3 MathFunctions::NormalizeRotation(Vec3 eulerAngles) {
+
+    return Vec3(fmod(eulerAngles.x, 360.0f), fmod(eulerAngles.y, 360.0f), fmod(eulerAngles.z, 360.0f));
 }
 
 

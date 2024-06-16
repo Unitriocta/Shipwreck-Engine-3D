@@ -1266,14 +1266,16 @@ void D3DRenderer::SetConstantBuffers(bool is2D, Camera camera, Transform* transf
 		curTransform = curTransform->parent;
 	}
 
+	finalRot = startEng.Math().NormalizeRotation(finalRot);
+
 	const ConstBuffer transformBuffer = {
 		{
 		DirectX::XMMatrixTranspose(
-			DirectX::XMMatrixRotationX(finalRot.x) *
-			DirectX::XMMatrixRotationY(finalRot.y) *
-			DirectX::XMMatrixRotationZ(finalRot.z) *
-			DirectX::XMMatrixTranslation(finalPos.x, finalPos.y, finalPos.z) *
-			DirectX::XMMatrixScaling(finalScale.x, finalScale.y, finalScale.z)
+			DirectX::XMMatrixScaling(finalScale.x, finalScale.y, finalScale.z) *
+			DirectX::XMMatrixRotationX(glm::radians(finalRot.x)) *
+			DirectX::XMMatrixRotationY(glm::radians(finalRot.y)) *
+			DirectX::XMMatrixRotationZ(glm::radians(finalRot.z)) *
+			DirectX::XMMatrixTranslation(finalPos.x, finalPos.y, finalPos.z)
 		)
 		}
 	};

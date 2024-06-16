@@ -54,7 +54,7 @@ public:
 
 
 	void updateQuaternion() {
-		glm::vec3 rotationRadians = glm::vec3(rotation.x, rotation.y, rotation.z);
+		glm::vec3 rotationRadians = glm::vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z));
 		quaternionRotation = glm::quat(rotationRadians);
 	}
 

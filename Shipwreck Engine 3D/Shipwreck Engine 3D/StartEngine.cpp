@@ -471,7 +471,7 @@ void StartEngine::RenderFrame() {
                 rot = rotQuat.getBasisVector1();
 
                 containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
-                containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
+                containers[i]->transform.rotation = Vec3(glm::degrees(rot.x), glm::degrees(rot.y), glm::degrees(rot.z));
             }
             else if (containers[i]->rigidbody.rbStatic != nullptr) {
                 pos = containers[i]->rigidbody.rbStatic->getGlobalPose().p;
@@ -479,11 +479,11 @@ void StartEngine::RenderFrame() {
                 rot = rotQuat.getBasisVector1();
 
                 containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
-                containers[i]->transform.rotation = Vec3(rot.x, rot.y, rot.z);
+                containers[i]->transform.rotation = Vec3(glm::degrees(rot.x), glm::degrees(rot.y), glm::degrees(rot.z));
             }
             else if (containers[i]->rigidbody.rb2D != nullptr) {
                 pos2D = containers[i]->rigidbody.rb2D->GetPosition();
-                rot2D = containers[i]->rigidbody.rb2D->GetAngle();
+                rot2D = glm::degrees(containers[i]->rigidbody.rb2D->GetAngle());
 
                 containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, 0.0f);
                 containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);

@@ -23,17 +23,19 @@ DirectX::XMMATRIX Camera::GetMatrixD3D() {
 			curTransform = curTransform->parent;
 		}
 
+		finalRot = startEng.Math().NormalizeRotation(finalRot);
+
 		return DirectX::XMMatrixTranslation(-finalPos.x, -finalPos.y, -finalPos.z) *
-			DirectX::XMMatrixRotationY(-finalRot.y) *
-			DirectX::XMMatrixRotationX(-finalRot.x) *
-			DirectX::XMMatrixRotationZ(-finalRot.z) *
+			DirectX::XMMatrixRotationY(glm::radians(-finalRot.y)) *
+			DirectX::XMMatrixRotationX(glm::radians(-finalRot.x)) *
+			DirectX::XMMatrixRotationZ(glm::radians(-finalRot.z)) *
 			DirectX::XMMatrixPerspectiveLH(windowWidth / windowHeight, windowHeight / windowWidth, clippingNear, clippingFar);
 	}
 	else {
 		return DirectX::XMMatrixTranslation(-transform.position.x, -transform.position.y, -transform.position.z) *
-			DirectX::XMMatrixRotationY(-transform.rotation.y) *
-			DirectX::XMMatrixRotationX(-transform.rotation.x) *
-			DirectX::XMMatrixRotationZ(-transform.rotation.z) *
+			DirectX::XMMatrixRotationY(glm::radians(-transform.rotation.y)) *
+			DirectX::XMMatrixRotationX(glm::radians(-transform.rotation.x)) *
+			DirectX::XMMatrixRotationZ(glm::radians(-transform.rotation.z)) *
 			DirectX::XMMatrixPerspectiveLH(windowWidth / windowHeight, windowHeight / windowWidth, clippingNear, clippingFar);
 	}
 }

@@ -148,7 +148,9 @@ struct TexturedVertex;
 		};
 
 
-		Vec3 RotatePoint(const Vec3& point, const Vec3& rotation);
+		Vec3 RotatePoint(Vec3& point, Vec3& rotation);
+
+		Vec3 NormalizeRotation(Vec3 eulerAngles);
 	};
 
 	struct Vec2 {

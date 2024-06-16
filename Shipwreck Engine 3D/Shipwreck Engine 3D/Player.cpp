@@ -68,7 +68,7 @@ void Player::Update(float deltaTime, Container* container) {
 
 		camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
 
-		Vec3 radianRot = Vec3(glm::radians(camTransform.rotation.x), glm::radians(camTransform.rotation.y), glm::radians(camTransform.rotation.z));
+		Vec3 radianRot = Vec3(camTransform.rotation.x, camTransform.rotation.y, camTransform.rotation.z);
 		camera.transform.rotation = Vec3(radianRot.x, 0.0f/*radianRot.y*/, radianRot.z);
 
 		player.transform.rotation.y = radianRot.y;
@@ -76,11 +76,11 @@ void Player::Update(float deltaTime, Container* container) {
 
 
 
-	glm::vec2 forwardVec3 = glm::radians(glm::vec2(player.transform.direction.x, player.transform.direction.z));
-	glm::vec2 rightVec3 = glm::radians(glm::vec2(player.transform.right.x, player.transform.right.z));
+	glm::vec2 forwardVec3 = glm::vec2(player.transform.direction.x, player.transform.direction.z);
+	glm::vec2 rightVec3 = glm::vec2(player.transform.right.x, player.transform.right.z);
 
-	glm::vec2 forwardDirection = glm::normalize(glm::vec2(forwardVec3.x, forwardVec3.y)) * speedMultiplier;
-	glm::vec2 rightDirection = glm::normalize(glm::vec2(rightVec3.x, rightVec3.y)) * speedMultiplier;
+	glm::vec2 forwardDirection = glm::vec2(forwardVec3.x, forwardVec3.y) * speedMultiplier;
+	glm::vec2 rightDirection = glm::vec2(rightVec3.x, rightVec3.y) * speedMultiplier;
 
 	//player.transform.rotation = Vec3(0.0f, camera.transform.rotation.y, 0.0f);
 	//camera.transform.position = player.transform.position;
