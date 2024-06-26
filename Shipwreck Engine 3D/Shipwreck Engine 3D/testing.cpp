@@ -1,5 +1,7 @@
 #include "testing.h"
 
+#include "StartEngine.h"
+using namespace EngineInstance;
 
 
 //3D Physics from PhysX
@@ -72,7 +74,11 @@ bool Physics::SetupPhysics()
     scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
     scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 
-
+    material = physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
+    if (!material) {
+        //error
+        return false;
+    }
 
 
     bool selfCollisions = true;
@@ -81,15 +87,6 @@ bool Physics::SetupPhysics()
 
     PxU32 maxActors = 30;
     PxAggregate* aggregate = physics->createAggregate(maxActors, maxActors, hint);
-
-
-
-
-
-    mat = physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
-    if (!mat) {
-        return false;
-    }
 
 
 
@@ -146,6 +143,12 @@ void Physics::Simulate() {
     std::chrono::high_resolution_clock::time_point currentFrameTime = std::chrono::high_resolution_clock::now();
 
     float deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentFrameTime - lastFrameTime).count();
+
+    //for (int i = 0; i < startEng.containers.size(); i++) {
+    //    if (startEng.containers[i]->rigidbody.rbDynamic != nullptr/* && startEng.containers[i]->rigidbody.hasGravity*/) {
+    //        startEng.containers[i]->rigidbody.applyGravityForce();
+    //    }
+    //}
 
     scene->simulate(deltaTime * 1.4f);
     scene->fetchResults();

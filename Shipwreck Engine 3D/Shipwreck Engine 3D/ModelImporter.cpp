@@ -218,7 +218,9 @@ void ModelImporter::LoadHierarchy(aiNode* node, Container* parentContainer, cons
 
 		curContainer = new Container();
 		startEng.containers.push_back(curContainer);
+		curContainer->transform.container = curContainer;
 		curContainer->transform.parent = &parentContainer->transform;
+		parentContainer->transform.children.push_back(&curContainer->transform);
 	}
 	else {
 		curContainer = parentContainer;
@@ -233,23 +235,24 @@ void ModelImporter::LoadHierarchy(aiNode* node, Container* parentContainer, cons
 
 	glm::vec3 position;
 	glm::quat rotation;
+	//glm::vec3 rotation;
 	glm::vec3 scale;
 
 	
 	glm::vec3 skew;
 	glm::vec4 perspective;
+
 	glm::decompose(nodeMat, scale, rotation, position, skew, perspective);
-	rotation = glm::conjugate(rotation);
+
+	//rotation = glm::conjugate(rotation);
 	
 	
-	glm::vec3 eulerAngles = glm::eulerAngles(rotation);
-	eulerAngles = glm::degrees(eulerAngles);
+	glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(rotation));
 	
 	
 	curContainer->transform.position = Vec3(position.x, position.y, position.z);
 	curContainer->transform.rotation = Vec3(eulerAngles.x, eulerAngles.y, eulerAngles.z);
-	curContainer->transform.scale = Vec3(scale.x, scale.y, scale.z);
-
+	curContainer->transform.scale = Vec3(scale.x, scale.y, scale.z); //Vec3(1.0f, 1.0f, 1.0f);
 
 
 
@@ -257,6 +260,7 @@ void ModelImporter::LoadHierarchy(aiNode* node, Container* parentContainer, cons
 
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+
 		LoadHierarchy(node->mChildren[i], curContainer, scene, modelDir);
 	}
 }

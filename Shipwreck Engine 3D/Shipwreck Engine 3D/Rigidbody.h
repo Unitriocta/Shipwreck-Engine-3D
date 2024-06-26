@@ -1,15 +1,15 @@
 #pragma once
 
 #include "testing.h"
+#include "Transform.h"
+
+#include "glm/glm.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 class Rigidbody
 {
 public:
-    Rigidbody(Physics* _physics, bool dynamic)
-    {
-        physicsManager = _physics;
-        isDynamic = dynamic;
-    }
 
     Rigidbody(bool isDynamic_);
 
@@ -29,10 +29,16 @@ public:
         shapeFlags = PxShapeFlag::eSCENE_QUERY_SHAPE | PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eVISUALIZATION;
 		
         if (isDynamic) {    
+            //material = physicsManager->material;
+            material = physicsManager->physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
+            if (!material) {
+                //error
+                return;
+            }
 
             PxReal angle = 0/*40 / 57.2958f*/;
             PxVec3 rot(0.0f, 0.0f, 0.0f);
-            rbDynamic = physicsManager->physics->createRigidDynamic(PxTransform(PxVec3(0.0f, 16.0f, 5.0f), PxQuat(angle, rot)));
+            rbDynamic = physicsManager->physics->createRigidDynamic(PxTransform(PxVec3(0.0f, 9.0f, 5.0f), PxQuat(angle, rot)));
             rbDynamic->setLinearDamping(0.2f);
             rbDynamic->setAngularDamping(0.1f);
             
@@ -44,7 +50,7 @@ public:
 
 
 
-           PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbDynamic, PxSphereGeometry(1), *physicsManager->mat, shapeFlags);
+           PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbDynamic, PxSphereGeometry(1), *material, shapeFlags);
             triMeshShape->setContactOffset(0.1f);
             triMeshShape->setRestOffset(0.02f);
 
@@ -54,14 +60,20 @@ public:
             PxReal density = 100.0f;
             PxRigidBodyExt::updateMassAndInertia(*rbDynamic, density);
 
-            //physicsManager->dynamicRbs.push_back(rbDynamic);
-
             physicsManager->scene->addActor(*rbDynamic);
 
             rbDynamic->setSolverIterationCounts(50, 1);
             rbDynamic->setMaxDepenetrationVelocity(5.0f);
+            //rbDynamic->setMass(1000);
 		}
 		else {
+            //material = physicsManager->material;
+            material = physicsManager->physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
+            if (!material) {
+                //error
+                return;
+            }
+
             PxReal angle2 = 13 / 57.2958f; //in radians
             PxVec3 rot2(-1.0f, -1.0f, 0.0f); //normalized
             rbStatic = physicsManager->physics->createRigidStatic(PxTransform(PxVec3(0.0f, -4.0f, 5.0f), PxQuat(angle2, rot2)));
@@ -79,7 +91,7 @@ public:
             geom2.scale = PxVec3(1.0f, 1.0f, 1.0f);*/
 
 
-            PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbStatic, PxBoxGeometry(1, 1, 1), *physicsManager->mat, shapeFlags);
+            PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbStatic, PxBoxGeometry(1, 1, 1), *material, shapeFlags);
             triMeshShape->setContactOffset(0.1f);
             triMeshShape->setRestOffset(0.02f);
 
@@ -100,10 +112,10 @@ public:
         }
         else if (rbStatic != nullptr) {
 
-        }/*
+        }
         else if (rb2D != nullptr) {
 
-        }*/
+        }
     }
 
 
@@ -139,8 +151,22 @@ public:
 
 
         std::vector<PxVec3> meshPoints;
+
+
+        PxVec3 pxScale;
+
+        if (transform != nullptr) {
+            transform->updateGlobalProperties();
+
+            pxScale = PxVec3(transform->globalScale.x, transform->globalScale.y, transform->globalScale.z) * 2.0f;
+        }
+        else {
+            pxScale = PxVec3(1.0f, 1.0f, 1.0f);
+        }
+
+        //pxScale = PxVec3(1.0f, 1.0f, 1.0f);
         for (int i = 0; i < model->vertices.size(); i++) {
-            meshPoints.push_back(PxVec3(model->vertices[i].position.x, model->vertices[i].position.y, model->vertices[i].position.z));
+            meshPoints.push_back(PxVec3(model->vertices[i].position.x * pxScale.x, model->vertices[i].position.y * pxScale.y, model->vertices[i].position.z * pxScale.z));
         }
 
         PxTriangleMeshDesc meshDesc;
@@ -163,7 +189,7 @@ public:
         PxTriangleMesh* triangleMesh = physicsManager->physics->createTriangleMesh(readBuffer);
 
         PxTriangleMeshGeometry geom(triangleMesh);
-        PxShape* triMeshShape = physicsManager->physics->createShape(geom, *physicsManager->mat, true, shapeFlags);
+        PxShape* triMeshShape = physicsManager->physics->createShape(geom, *material, true, shapeFlags);
 
         if (isDynamic) {
             rbDynamic->attachShape(*triMeshShape);
@@ -175,7 +201,328 @@ public:
         triMeshShape->release();
     }
 
-    
+
+
+    void SetPosition(Vec3 newPosition) {
+
+        if (rbDynamic != nullptr) {
+            rbDynamic->setGlobalPose(PxTransform(PxVec3(newPosition.x, newPosition.y, newPosition.z), rbDynamic->getGlobalPose().q));
+        }
+        else if (rbStatic != nullptr) {
+            rbStatic->setGlobalPose(PxTransform(PxVec3(newPosition.x, newPosition.y, newPosition.z), rbDynamic->getGlobalPose().q));
+        }
+        else if (rb2D != nullptr) {
+            rb2D->SetTransform(b2Vec2(newPosition.x, newPosition.y), rb2D->GetAngle());
+        }
+    }
+    void SetRotation(Vec3 newRotation) {
+
+        if (rbDynamic != nullptr) {
+            glm::quat newQuat = glm::quat(glm::radians(glm::vec3(newRotation.x, newRotation.y, newRotation.z)));
+            rbDynamic->setGlobalPose(PxTransform(rbDynamic->getGlobalPose().p, PxQuat(newQuat.x, newQuat.y, newQuat.z, newQuat.w)));
+        }
+        else if (rbStatic != nullptr) {
+            glm::quat newQuat = glm::quat(glm::radians(glm::vec3(newRotation.x, newRotation.y, newRotation.z)));
+            rbStatic->setGlobalPose(PxTransform(rbStatic->getGlobalPose().p, PxQuat(newQuat.x, newQuat.y, newQuat.z, newQuat.w)));
+        }
+        else if (rb2D != nullptr) {
+            rb2D->SetTransform(b2Vec2(rb2D->GetPosition().x, rb2D->GetPosition().y), newRotation.z);
+        }
+    }
+    void SetScale(Vec3 newScale) {
+
+        if (rbDynamic != nullptr) {
+            
+            PxShape* shapes[1];
+            rbDynamic->getShapes(shapes, 1);
+            PxShape* oldShape = shapes[0];
+
+            // Get the geometry of the old shape
+            PxGeometryHolder geometryHolder = oldShape->getGeometry();
+
+            // Remove the old shape from the rigidbody
+            rbDynamic->detachShape(*oldShape);
+
+            // Create a new shape with the scaled geometry
+            PxShape* newShape = nullptr;
+            switch (geometryHolder.getType()) {
+            case PxGeometryType::eBOX:
+            {
+                PxBoxGeometry boxGeom = geometryHolder.box();
+                boxGeom.halfExtents = boxGeom.halfExtents.multiply(PxVec3(newScale.x, newScale.y, newScale.z));
+                newShape = physicsManager->physics->createShape(boxGeom, *material);
+                break;
+            }
+            case PxGeometryType::eSPHERE:
+            {
+                PxSphereGeometry sphereGeom = geometryHolder.sphere();
+                sphereGeom.radius *= newScale.x; // Assuming uniform scale
+                newShape = physicsManager->physics->createShape(sphereGeom, *material);
+                break;
+            }
+            case PxGeometryType::eCAPSULE:
+            {
+                PxCapsuleGeometry capsuleGeom = geometryHolder.capsule();
+                capsuleGeom.radius *= newScale.x; // Assuming uniform scale
+                capsuleGeom.halfHeight *= newScale.y; // Assuming non-uniform scale for height
+                newShape = physicsManager->physics->createShape(capsuleGeom, *material);
+                break;
+            }
+            case PxGeometryType::eCONVEXMESH:
+            {
+                PxShape* shapes[1];
+                rbDynamic->getShapes(shapes, 1);
+                PxShape* oldShape = shapes[0];
+
+                // Get the geometry of the old shape
+                PxConvexMeshGeometry oldGeom;
+                bool status = oldShape;
+                if (!status) return; // Ensure the shape is indeed a convex mesh
+
+                PxConvexMesh* oldConvexMesh = oldGeom.convexMesh;
+                
+                // Retrieve the vertices from the old convex mesh
+                PxU32 vertexCount = oldConvexMesh->getNbVertices();
+                const PxVec3* vertices = oldConvexMesh->getVertices();
+
+                // Scale the vertices
+                std::vector<PxVec3> scaledVertices(vertexCount);
+
+                PxVec3 pxScale = PxVec3(newScale.x, newScale.y, newScale.z);
+                for (PxU32 i = 0; i < vertexCount; ++i) {
+                    scaledVertices[i] = vertices[i].multiply(pxScale);
+                }
+
+                // Create a new convex mesh with the scaled vertices
+                PxConvexMeshDesc convexDesc;
+                convexDesc.points.count = vertexCount;
+                convexDesc.points.stride = sizeof(PxVec3);
+                convexDesc.points.data = scaledVertices.data();
+                convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+               
+                PxDefaultMemoryOutputStream writeBuffer;
+                PxConvexMeshCookingResult::Enum result;
+                bool cookStatus = PxCookConvexMesh(params, convexDesc, writeBuffer, &result);
+                if (!cookStatus) {
+                    return; // Handle error appropriately
+                }
+
+                PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+                PxConvexMesh* newConvexMesh = physicsManager->physics->createConvexMesh(readBuffer);
+
+                // Create a new shape with the new convex mesh
+                PxShape* newShape = physicsManager->physics->createShape(PxConvexMeshGeometry(newConvexMesh), *material);
+
+                // Replace the old shape with the new shape
+                rbDynamic->detachShape(*oldShape);
+                rbDynamic->attachShape(*newShape);
+
+                // Release the old shape and convex mesh
+                oldShape->release();
+                oldConvexMesh->release();
+                break;
+            }
+            case PxGeometryType::eTRIANGLEMESH:
+            {
+                PxShape* shapes[1];
+                rbDynamic->getShapes(shapes, 1);
+                PxShape* oldShape = shapes[0];
+
+                // Get the geometry of the old shape
+                PxTriangleMeshGeometry oldGeom;
+                bool status = oldShape;
+                if (!status) return; // Ensure the shape is indeed a triangle mesh
+
+                PxTriangleMesh* oldTriangleMesh = oldGeom.triangleMesh;
+
+                // Retrieve the vertices from the old triangle mesh
+                PxU32 vertexCount = oldTriangleMesh->getNbVertices();
+                const PxVec3* vertices = oldTriangleMesh->getVertices();
+                PxU32 indexCount = oldTriangleMesh->getNbTriangles();
+                const void* indices = oldTriangleMesh->getTriangles();
+                bool has16BitIndices = oldTriangleMesh->getTriangleMeshFlags() & PxTriangleMeshFlag::e16_BIT_INDICES;
+
+                // Scale the vertices
+                std::vector<PxVec3> scaledVertices(vertexCount);
+                PxVec3 pxScale = PxVec3(newScale.x, newScale.y, newScale.z);
+                for (PxU32 i = 0; i < vertexCount; ++i) {
+                    scaledVertices[i] = vertices[i].multiply(pxScale);
+                }
+
+                // Create a new triangle mesh with the scaled vertices
+                PxTriangleMeshDesc meshDesc;
+                meshDesc.points.count = vertexCount;
+                meshDesc.points.stride = sizeof(PxVec3);
+                meshDesc.points.data = scaledVertices.data();
+                meshDesc.triangles.count = indexCount;
+                meshDesc.triangles.stride = has16BitIndices ? sizeof(PxU16) * 3 : sizeof(PxU32) * 3;
+                meshDesc.triangles.data = indices;
+
+                PxDefaultMemoryOutputStream writeBuffer;
+                PxTriangleMeshCookingResult::Enum result;
+
+                bool cookStatus = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);
+                if (!cookStatus) {
+                    return; // Handle error appropriately
+                }
+
+                PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+                PxTriangleMesh* newTriangleMesh = physicsManager->physics->createTriangleMesh(readBuffer);
+
+                // Create a new shape with the new triangle mesh
+                PxShape* newShape = physicsManager->physics->createShape(PxTriangleMeshGeometry(newTriangleMesh), *material);
+
+                // Replace the old shape with the new shape
+                rbDynamic->detachShape(*oldShape);
+                rbDynamic->attachShape(*newShape);
+
+                // Release the old shape and triangle mesh
+                oldShape->release();
+                oldTriangleMesh->release();
+                break;
+            }
+            // Handle other geometry types as necessary
+            default:
+                break;
+            }
+
+            if (newShape) {
+                rbDynamic->attachShape(*newShape);
+
+                oldShape->release();
+            }
+        }
+        else if (rbStatic != nullptr) {
+            PxShape* shapes[1];
+            rbStatic->getShapes(shapes, 1);
+            PxShape* oldShape = shapes[0];
+
+            PxGeometryHolder geometryHolder = oldShape->getGeometry();
+
+            rbStatic->detachShape(*oldShape);
+
+            PxShape* newShape = nullptr;
+            switch (geometryHolder.getType()) {
+            case PxGeometryType::eBOX:
+            {
+                PxBoxGeometry boxGeom = geometryHolder.box();
+                boxGeom.halfExtents = boxGeom.halfExtents.multiply(PxVec3(newScale.x, newScale.y, newScale.z));
+                newShape = physicsManager->physics->createShape(boxGeom, *material);
+                break;
+            }
+            case PxGeometryType::eSPHERE:
+            {
+                PxSphereGeometry sphereGeom = geometryHolder.sphere();
+                sphereGeom.radius *= newScale.x;
+                newShape = physicsManager->physics->createShape(sphereGeom, *material);
+                break;
+            }
+            case PxGeometryType::eCAPSULE:
+            {
+                PxCapsuleGeometry capsuleGeom = geometryHolder.capsule();
+                capsuleGeom.radius *= newScale.x;
+                capsuleGeom.halfHeight *= newScale.y;
+                newShape = physicsManager->physics->createShape(capsuleGeom, *material);
+                break;
+            }
+            case PxGeometryType::eCONVEXMESH:
+            {
+                PxConvexMesh* oldConvexMesh = geometryHolder.convexMesh().convexMesh;
+
+                PxU32 vertexCount = oldConvexMesh->getNbVertices();
+                const PxVec3* vertices = oldConvexMesh->getVertices();
+
+                std::vector<PxVec3> scaledVertices(vertexCount);
+
+                PxVec3 pxScale = PxVec3(newScale.x, newScale.y, newScale.z);
+                for (PxU32 i = 0; i < vertexCount; ++i) {
+                    scaledVertices[i] = vertices[i].multiply(pxScale);
+                }
+
+                PxConvexMeshDesc convexDesc;
+                convexDesc.points.count = vertexCount;
+                convexDesc.points.stride = sizeof(PxVec3);
+                convexDesc.points.data = scaledVertices.data();
+                convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+
+                PxDefaultMemoryOutputStream writeBuffer;
+                PxConvexMeshCookingResult::Enum result;
+                bool cookStatus = PxCookConvexMesh(params, convexDesc, writeBuffer, &result);
+                if (!cookStatus) {
+                    return;
+                }
+
+                PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+                PxConvexMesh* newConvexMesh = physicsManager->physics->createConvexMesh(readBuffer);
+
+                PxShape* newShape = physicsManager->physics->createShape(PxConvexMeshGeometry(newConvexMesh), *material);
+
+                rbStatic->detachShape(*oldShape);
+                rbStatic->attachShape(*newShape);
+
+                oldShape->release();
+                oldConvexMesh->release();
+                break;
+            }
+            case PxGeometryType::eTRIANGLEMESH:
+            {
+                PxTriangleMesh* oldTriangleMesh = geometryHolder.triangleMesh().triangleMesh;
+
+                PxU32 vertexCount = oldTriangleMesh->getNbVertices();
+                const PxVec3* vertices = oldTriangleMesh->getVertices();
+                PxU32 indexCount = oldTriangleMesh->getNbTriangles();
+                const void* indices = oldTriangleMesh->getTriangles();
+                bool has16BitIndices = oldTriangleMesh->getTriangleMeshFlags() & PxTriangleMeshFlag::e16_BIT_INDICES;
+
+                std::vector<PxVec3> scaledVertices(vertexCount);
+                PxVec3 pxScale = PxVec3(newScale.x, newScale.y, newScale.z);
+                for (PxU32 i = 0; i < vertexCount; ++i) {
+                    scaledVertices[i] = vertices[i].multiply(pxScale);
+                }
+
+                PxTriangleMeshDesc meshDesc;
+                meshDesc.points.count = vertexCount;
+                meshDesc.points.stride = sizeof(PxVec3);
+                meshDesc.points.data = scaledVertices.data();
+                meshDesc.triangles.count = indexCount;
+                meshDesc.triangles.stride = has16BitIndices ? sizeof(PxU16) * 3 : sizeof(PxU32) * 3;
+                meshDesc.triangles.data = indices;
+
+                PxDefaultMemoryOutputStream writeBuffer;
+                PxTriangleMeshCookingResult::Enum result;
+
+                bool cookStatus = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);
+                if (!cookStatus) {
+                    return;
+                }
+
+                PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+                PxTriangleMesh* newTriangleMesh = physicsManager->physics->createTriangleMesh(readBuffer);
+
+                newShape = physicsManager->physics->createShape(PxTriangleMeshGeometry(newTriangleMesh), *material);
+
+
+                oldShape->release();
+                oldTriangleMesh->release();
+                break;
+            }
+            default:
+                break;
+            }
+
+            if (newShape) {
+                rbStatic->attachShape(*newShape);
+
+                oldShape->release();
+            }
+        }
+        else if (rb2D != nullptr) {
+
+        }
+    }
+
+
+
 
     void NewRB2D() {
 
@@ -211,6 +558,9 @@ public:
     }
 
 
+
+
+
     Physics* physicsManager;
 
 	PxRigidStatic* rbStatic = nullptr;
@@ -225,7 +575,24 @@ public:
 
     b2Body* rb2D = nullptr;
 
+    PxMaterial* material;
 
 	bool isDynamic;
+
+    Transform* transform = nullptr;
+
+    PxVec3 customGravityForce = PxVec3(0.0f, -10.0f, 0.0f);
+
+    bool hasGravity = true;
+    
+    // Set actual scene gravity to PxVec3(0.0f, 0.0f, 0.0f), 
+    // Update all rigidbody's using startEng.containers[i].rigidbody.rbDynamic.applyCustomGravity(), right before we simualte
+    void applyGravityForce() {
+        
+        // F = m * g
+        PxVec3 gravityForce = rbDynamic->getMass() * customGravityForce;
+
+        rbDynamic->addForce(gravityForce, PxForceMode::eACCELERATION);
+    }
 };
 

@@ -87,6 +87,13 @@ public:
 	D3DGraphics& operator = (const D3DGraphics&) = delete;
 	~D3DGraphics();
 
+
+	void Initialize(HWND hWnd);
+
+
+	void ReleaseResources();
+	void RefreshWindow(HWND hWnd);
+
 	void InitRenderer() {
 		D3DRenderer _renderer = D3DRenderer();
 		renderer = &_renderer;
@@ -97,8 +104,7 @@ public:
 	void ClearBuffer(float r, float g, float b) noexcept {
 		const float color[] = { r,g,b,1.0f }; //alpha
 		deviceContext->ClearRenderTargetView(target, color);
-		//deviceContext->ClearRenderTargetView(msaaRenderTargetView, color);
-		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	};
 	void DrawTestTri(HWND hWnd);
 	void RenderTriangles(std::vector<Vertice> vertices, HWND hWnd);
@@ -137,13 +143,17 @@ public:
 	ID3D11RenderTargetView* msaaRenderTargetView = nullptr;
 	ID3D11Texture2D* msaaRenderTarget = nullptr;
 
+	ID3D11RasterizerState* rasterState;
+
 	ID3D11Texture2D* depthStencil = nullptr;
+	ID3D11DepthStencilState* depthStencilState = nullptr;
+
 	ID3D11DepthStencilView* depthView = nullptr;
 
 
 	D3DRenderer* renderer;
 
-	int msaaSamples = 8;
+	int msaaSamples = 4;
 };
 
 

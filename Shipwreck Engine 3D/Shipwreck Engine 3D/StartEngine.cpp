@@ -49,8 +49,12 @@ namespace EngineInstance {
 
     HWND hWnd;
 
+    int windowState = 0; //0: Windowed, 1: Maximized, 2: Fullscreen  //maybe change to 2 later
     float windowWidth;
     float windowHeight;
+
+    float defaultWindowWidth = 900; //set to monitor size
+    float defaultWindowHeight = 900;
 
     GLFWwindow* window;
 
@@ -85,18 +89,80 @@ namespace EngineInstance {
         //MessageBoxA(hWnd, widthStr.c_str(), "Hey", 0);
         SetWindowTextA(hWnd, widthStr.c_str());
     }
+
+
+    struct MonitorInfo {
+        RECT monitorRect; // Coordinates of the monitor in virtual screen coordinates
+        RECT workRect;    // Coordinates of the monitor's work area (excluding taskbar)
+    };
+
+    BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+        std::vector<MonitorInfo>* monitorInfoList = reinterpret_cast<std::vector<MonitorInfo>*>(dwData);
+
+        MONITORINFOEX monitorInfo;
+        monitorInfo.cbSize = sizeof(MONITORINFOEX);
+        if (GetMonitorInfo(hMonitor, &monitorInfo)) {
+            MonitorInfo info;
+            info.monitorRect = monitorInfo.rcMonitor;
+            info.workRect = monitorInfo.rcWork;
+            monitorInfoList->push_back(info);
+        }
+        return TRUE;
+    }
+
+    std::vector<MonitorInfo> GetMonitorsInfo() {
+        std::vector<MonitorInfo> monitorInfoList;
+        EnumDisplayMonitors(nullptr, nullptr, MonitorEnumProc, reinterpret_cast<LPARAM>(&monitorInfoList));
+        return monitorInfoList;
+    }
+
+    void ToggleFullscreen() {
+
+        std::vector<MonitorInfo> monitors = GetMonitorsInfo();
+        for (size_t i = 0; i < monitors.size(); i++) {
+            MonitorInfo& info = monitors[i];
+        }
+
+
+        BOOL fullscreen;
+        startEng.D3DGfx().swapChain->GetFullscreenState(&fullscreen, nullptr);
+        if (fullscreen) {
+            windowState = 0; //or 1, we'll add a bool later to check if
+
+            windowWidth = defaultWindowWidth;
+            windowHeight = defaultWindowHeight;
+
+            //startEng.D3DGfx().swapChain->SetFullscreenState(!fullscreen, nullptr);
+            //SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+            //SetWindowPos(hWnd, HWND_TOP, (monitors[0].workRect.right - monitors[0].workRect.left) / 2, (monitors[0].workRect.bottom - monitors[0].workRect.top) / 2, defaultWindowWidth, defaultWindowHeight, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+            //windowWidth = defaultWindowWidth;
+            //windowHeight = defaultWindowHeight;
+        }
+        else {
+            windowState = 2; //or 1, we'll add a bool later to check if
+
+            //startEng.D3DGfx().swapChain->SetFullscreenState(!fullscreen, nullptr);
+            //SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP);
+            //windowWidth = monitors[0].monitorRect.right - monitors[0].monitorRect.left;
+            //windowHeight = monitors[0].monitorRect.bottom - monitors[0].monitorRect.top;
+
+            windowWidth = monitors[0].monitorRect.right - monitors[0].monitorRect.left;
+            windowHeight = monitors[0].monitorRect.bottom - monitors[0].monitorRect.top;
+            //SetWindowPos(hWnd, HWND_TOP, 0, 0, windowWidth, windowHeight, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+        }
+
+        startEng.D3DGfx().RefreshWindow(hWnd);
+    }
 }
 
 
 
 #define MAX_LOADSTRING 100
 
-// Global Variables:
-HINSTANCE hInst;                                // Current instance of the app opened
+HINSTANCE hInst;
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // The main window class name
+WCHAR szWindowClass[MAX_LOADSTRING];
 
-// Forward declarations of functions included in this code module:
 ATOM         MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE hInstance, int nCmdShow, Vec2 windSize);
 LRESULT CALLBACK      WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -119,7 +185,7 @@ std::vector<Container> loadedContainers;
 
 
 
-int targetFPS = 400;
+int targetFPS = 240;
 std::chrono::milliseconds targetFrameLength(1000 / targetFPS);
 
 const std::string engineDataPath = "D:/Shipwreck Engine 3D/Shipwreck Engine 3D/data.json";
@@ -143,6 +209,9 @@ void DisplayStringAsTitle(std::string newVar) {
 
 
 std::string RemoveQuotes(std::string& inString);
+
+
+
 
 
 //WM_KEYDOWN
@@ -399,8 +468,10 @@ void StartEngine::RenderFrame() {
     //std::lock_guard<std::mutex> guard(playerMutex);
 
 
-    camera.transform.updateQuaternion();
+
     camera.transform.update();
+    camera.transform.updateGlobalProperties();
+
 
     for (int i = 0; i < containers.size(); i++) {
         containers[i]->transform.updateQuaternion();
@@ -410,19 +481,13 @@ void StartEngine::RenderFrame() {
 
     for (int i = 0; i < containers.size(); i++) {
         for (int j = 0; j < containers[i]->scripts.size(); j++) {
-
             containers[i]->scripts[j]->Update(timeManager._time, containers[i]);
         }
     }
 
 
-
     if (isD3D) {
         startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
-        //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 19, 0.5f /*0.2f*/, Color(30, 30, 30, 255), hWnd);
-        float rotTimer = startEng.timeManager.GetTime() / 1000;
-
-
 
 
         RECT rect;
@@ -431,44 +496,23 @@ void StartEngine::RenderFrame() {
         int height = (rect.bottom - rect.top);
 
 
-
         physics.Simulate();
         physics.Simulate2D();
 
 
-        //PxActor** actors;
-        //physics.scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC,actors,1); //actors[0]->is<PxRigidDynamic>()->getGlobalPose().p.z
-
-
-
-        // Implement rotation around Z for VR
-        // rotationZ += mouse.deltaZ * sensitivity; // Uncomment if you have deltaZ
-
-
-        //FPS camera
-
-
-        //Text render loop
-        for (int i = 0; i < console.lines.size(); i++) {
-            D3DGfx().ShowText(console.lines[i]);
-        }
-        //D3DGfx().ShowText(newText);
-
-
-
         PxVec3 pos;
         PxQuat rotQuat;
-        PxVec3 rot;
+        glm::vec3 rot;
 
         b2Vec2 pos2D;
         float rot2D;
-        
+
 
         for (int i = 0; i < containers.size(); i++) {
             if (containers[i]->rigidbody.rbDynamic != nullptr) {
                 pos = containers[i]->rigidbody.rbDynamic->getGlobalPose().p;
                 rotQuat = containers[i]->rigidbody.rbDynamic->getGlobalPose().q;
-                rot = rotQuat.getBasisVector1();
+                rot = glm::eulerAngles(glm::quat(rotQuat.w, rotQuat.x, rotQuat.y, rotQuat.z));
 
                 containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
                 containers[i]->transform.rotation = Vec3(glm::degrees(rot.x), glm::degrees(rot.y), glm::degrees(rot.z));
@@ -476,7 +520,7 @@ void StartEngine::RenderFrame() {
             else if (containers[i]->rigidbody.rbStatic != nullptr) {
                 pos = containers[i]->rigidbody.rbStatic->getGlobalPose().p;
                 rotQuat = containers[i]->rigidbody.rbStatic->getGlobalPose().q;
-                rot = rotQuat.getBasisVector1();
+                rot = glm::eulerAngles(glm::quat(rotQuat.w, rotQuat.x, rotQuat.y, rotQuat.z));
 
                 containers[i]->transform.position = Vec3(pos.x, pos.y, pos.z);
                 containers[i]->transform.rotation = Vec3(glm::degrees(rot.x), glm::degrees(rot.y), glm::degrees(rot.z));
@@ -490,45 +534,30 @@ void StartEngine::RenderFrame() {
             }
         }
 
-        //D3DGfx().deviceContext->ClearDepthStencilView(D3DGfx().depthView, D3D11_CLEAR_DEPTH, 1.0f, 0u);
 
-        //Model render loop
+        for (int i = 0; i < startEng.containers.size(); i++) {
+            startEng.containers[i]->transform.updateGlobalProperties();
+        }
+
+
         for (int i = 0; i < containers.size(); i++) {
-            
             for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
                 D3DGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, camera, &modelImporter, hWnd);
             }
         }
 
-            //Sprites Rendering
+
         for (int i = 0; i < containers.size(); i++) {
-
             if (containers[i]->sprites.sprites.size() > 0) {
-
                 for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
-                    D3DGfx().DrawSprite(camera, Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f), Vec2(1.0f, 1.0f), &containers[i]->sprites.sprites[k]->texture, hWnd);
+                    D3DGfx().DrawSprite(camera,
+                        Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f),
+                        Vec2(1.0f, 1.0f),
+                        &containers[i]->sprites.sprites[k]->texture,
+                        hWnd);
                 }
             }
         }
-
-        //Gfx().DrawTestCube(Color(10, 170, 170, 255), Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), hWnd);
-        ///D3DGfx().RenderModel(modelImporter.meshes[1], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
-        //D3DGfx().DrawTestCube(Color(40, 170, 70, 255), Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), camera, hWnd);
-
-        ///D3DGfx().RenderModel(modelImporter.meshes[0], Vec3(pos.x, pos.y, pos.z), Rotation(rot.x, rot.y, rot.z), camera, hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
-
-        //Gfx().RenderModel(modelImporter.meshes[0], Vec3(pos2.x, pos2.y, pos2.z), Rotation(rot2.x, rot2.y, rot2.z), hWnd); //Rotation(-mouse.mousePosition.y / 100, -mouse.mousePosition.x / 100,0.0f)
-
-
-
-        //D3DGfx().DrawSprite(camera, Vec2(containers[2]->transform.position.x / 10.0f, containers[2]->transform.position.y / 10.0f), Vec2(1.0f, 1.0f), &sprite, hWnd);
-
-
-
-        //Gfx().DrawRect(Vec2(0.0f, 0.0f), Vec2(1.0f, 1.0f), 0, 0 /*0.2f*/, Color(30, 30, 30, 255), hWnd);
-
-        //Gfx().DrawTestCube(Color(255, 0, 0, 255), Rotation(rotTimer,rotTimer,rotTimer), hWnd);
-        //Gfx().DrawTestCube(Color(255, 0, 0, 255), Rotation(rotTimer + 50,rotTimer + 50,rotTimer + 50), hWnd);
 
         D3DGfx().EndFrame();
     }
@@ -1266,49 +1295,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     break;
 
-    case WM_SIZE:
-    {
-        if (isD3D) {
-            if (startEng.postD3DGraphics) {
-
-                if (startEng.D3DGfx().target != nullptr) {
-
-                    windowWidth = LOWORD(lParam);
-                    windowHeight = HIWORD(lParam);
-
-                    // Release all references to the swap chain's buffers
-                    startEng.D3DGfx().deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-                    startEng.D3DGfx().target->Release();
-                    startEng.D3DGfx().depthView->Release();
-
-                    // Resize the swap chain
-                    startEng.D3DGfx().swapChain->ResizeBuffers(0, windowWidth, windowHeight, DXGI_FORMAT_UNKNOWN, 0);
-
-                    // Recreate the render target view
-                    ID3D11Texture2D* backBuffer = nullptr;
-                    startEng.D3DGfx().swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
-                    startEng.D3DGfx().device->CreateRenderTargetView(backBuffer, nullptr, &startEng.D3DGfx().target);
-                    backBuffer->Release();
-
-                    // Recreate the depth-stencil view with the new dimensions
-                    // (You'll need to recreate the depth-stencil texture similar to how it's done in the initialization code)
-
-                    // Set the new render target and depth-stencil view
-                    startEng.D3DGfx().deviceContext->OMSetRenderTargets(1, &startEng.D3DGfx().target, startEng.D3DGfx().depthView);
-
-                    // Update the viewport
-                    D3D11_VIEWPORT viewport = {};
-                    viewport.Width = static_cast<float>(windowWidth);
-                    viewport.Height = static_cast<float>(windowHeight);
-                    viewport.MinDepth = 0.0f;
-                    viewport.MaxDepth = 1.0f;
-                    startEng.D3DGfx().deviceContext->RSSetViewports(1, &viewport);
-                }
-            }
-        }
-    }
-    break;
-
     case WM_DESTROY:
     {
         if (isD3D) {
@@ -1338,7 +1324,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // * Use WM_SYSKEYDOWN and WM_SYSKEYUP for ctrl, alt, window key, ext, Not Visual Keys; same logic.
 
 
-
+        switch (wParam) {
+        case VK_F11:
+            ToggleFullscreen();
+        }
 
 
         /*static WindowsMessageMap mm;
@@ -1350,6 +1339,69 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         startEng.keyboard.OnKeyDown(wParam);
     }
+    case WM_SIZE:
+    {
+        if (isD3D) {
+            //if (startEng.postD3DGraphics) {
+
+            //    if (startEng.D3DGfx().target != nullptr) {
+
+            //        windowWidth = LOWORD(lParam);
+            //        windowHeight = HIWORD(lParam);
+
+            //        // Release all references to the swap chain's buffers
+            //        startEng.D3DGfx().deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+            //        startEng.D3DGfx().target->Release();
+            //        startEng.D3DGfx().depthView->Release();
+
+            //        // Resize the swap chain
+            //        startEng.D3DGfx().swapChain->ResizeBuffers(0, windowWidth, windowHeight, DXGI_FORMAT_UNKNOWN, 0);
+
+            //        // Recreate the render target view
+            //        ID3D11Texture2D* backBuffer = nullptr;
+            //        startEng.D3DGfx().swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+            //        startEng.D3DGfx().device->CreateRenderTargetView(backBuffer, nullptr, &startEng.D3DGfx().target);
+            //        backBuffer->Release();
+
+            //        // Recreate the depth-stencil view with the new dimensions
+            //        // (You'll need to recreate the depth-stencil texture similar to how it's done in the initialization code)
+
+            //        // Set the new render target and depth-stencil view
+            //        startEng.D3DGfx().deviceContext->OMSetRenderTargets(1, &startEng.D3DGfx().target, startEng.D3DGfx().depthView);
+
+            //        // Update the viewport
+            //        D3D11_VIEWPORT viewport = {};
+            //        viewport.Width = static_cast<float>(windowWidth);
+            //        viewport.Height = static_cast<float>(windowHeight);
+            //        viewport.MinDepth = 0.0f;
+            //        viewport.MaxDepth = 1.0f;
+            //        startEng.D3DGfx().deviceContext->RSSetViewports(1, &viewport);
+            //    }
+            //}
+
+            if (startEng.postD3DGraphics) {
+                if (startEng.D3DGfx().target != nullptr) {
+                    windowWidth = LOWORD(lParam);
+                    windowHeight = HIWORD(lParam);
+
+                    switch (wParam) {
+                    case SIZE_RESTORED:
+                    case SIZE_MAXIMIZED:
+                        startEng.D3DGfx().RefreshWindow(hWnd);
+                        break;
+                    case SIZE_MINIMIZED:
+
+                        break;
+                    default:
+                        break;
+                    }
+                    //startEng.D3DGfx().RefreshWindow(hWnd);
+                }
+            }
+        }
+    }
+    break;
+
     break;
 
     //WM_CHAR for text
@@ -1368,6 +1420,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_SYSKEYDOWN:
     {
+
         startEng.keyboard.OnKeyDown(wParam);
     }
     break;

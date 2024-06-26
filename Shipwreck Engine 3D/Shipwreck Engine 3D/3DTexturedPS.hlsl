@@ -55,7 +55,7 @@ PS_Out main(VS_Out input) : SV_TARGET
 {
     PS_Out psout;
     //return min(float4(diffuseTex.Sample(samplerState, input.uv).rgba), float4(1.0f, 1.0f, 1.0f, 1.0f));
-    if (false)//isLit == true)
+    if (isLit == true)
     {
         float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
         float3 specularColor = float3(1.0f, 1.0f, 1.0f);
@@ -92,12 +92,12 @@ PS_Out main(VS_Out input) : SV_TARGET
         {
             normalMap = normalTex.Sample(samplerState, input.uv).rgb * 2.0f - 1.0f;
             reflectDir = reflect(-lightDir, normalMap);
-            diff = max(dot(normalMap, lightDir), 0.0f);
+            diff = max(dot(normalMap, lightDir), 0.2f);
         }
         else
         {
             //reflectDir = reflect(-lightDir, input.normal);
-            diff = max(dot(input.normal, lightDir), 0.0f);
+            diff = max(dot(input.normal, lightDir), 0.2f);
         }
     
     

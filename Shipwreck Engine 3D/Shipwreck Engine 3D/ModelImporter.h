@@ -48,8 +48,5 @@ public:
         to[3][0] = from.a4; to[3][1] = from.b4; to[3][2] = from.c4; to[3][3] = from.d4;
         return to;
     }
-
-public:
-	std::vector<Model> meshes;
 };
 

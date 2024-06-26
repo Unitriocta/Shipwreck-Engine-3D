@@ -24,7 +24,9 @@ class Container
 public:
 	Container() :
 		models(Models()),transform(Transform()), camera(Camera()), rigidbody(Rigidbody())
-	{}
+	{
+		rigidbody.transform = &transform;
+	}
 	template <typename Element>
 	void AddElement(Element element) {
 		if (typeid(element) == typeid(Camera)) {
@@ -44,7 +46,7 @@ public:                      //Necessary:
 	Models models;            //N
 	Transform transform;      //Y
 	Camera camera;            //N
-	Rigidbody rigidbody;            //N
+	Rigidbody rigidbody;      //N
 	Sprites sprites;
 	std::vector<GameScript*> scripts;
 	std::vector<std::string> scriptNames;

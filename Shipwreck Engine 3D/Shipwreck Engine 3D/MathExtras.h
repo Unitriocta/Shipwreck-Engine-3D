@@ -5,7 +5,13 @@
 #include <string>
 #include <memory>
 
+#include "glm/glm.hpp" //Math
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
+
+//#include "Transform.h"
+class Transform;
 
 struct Vec3;
 
@@ -42,65 +48,89 @@ struct ColorVertex;
 struct TexturedVertex;
 
 
-	struct Vec3 {
-	public:
-		float x;
-		float y;
-		float z;
+struct Vec3 {
+public:
+	float x;
+	float y;
+	float z;
 
-		Vec3 Zero() {
-			return Vec3{ 0.0f, 0.0f, 0.0f };
-		};
-
-
-		Vec3(float _x, float _y, float _z)
-			: x(_x), y(_y), z(_z)
-		{}
-		Vec3()
-			: x(0.0f), y(0.0f), z(0.0f)
-		{}
-
-		Vec3& operator+=(const Vec3& other) {
-			x += other.x;
-			y += other.y;
-			z += other.z;
-			return *this;
-		}
-		Vec3& operator+(const Vec3& other) {
-			Vec3 addOperation = Vec3(x + other.x, y + other.y, z + other.z);
-			return addOperation;
-		}
-		Vec3& operator-=(const Vec3& other) {
-			x -= other.x;
-			y -= other.y;
-			z -= other.z;
-			return *this;
-		}
-
-
-		Vec3& operator*(float other) {
-			Vec3 timesOperation = Vec3(x * other, y * other, z * other);
-			return timesOperation;
-		}
-		Vec3& operator*=(float other) {
-			x *= other;
-			y *= other;
-			z *= other;
-			return *this;
-		}
-		Vec3& operator*=(Vec3 other) {
-			x *= other.x;
-			y *= other.y;
-			z *= other.z;
-			return *this;
-		}
-
-
-		Vec3& operator/(float other) {
-			Vec3 divideOperation = Vec3(x / other, y / other, z / other);
-			return divideOperation;
-		}
+	Vec3 Zero() {
+		return Vec3{ 0.0f, 0.0f, 0.0f };
 	};
+
+
+	Vec3(float _x, float _y, float _z)
+		: x(_x), y(_y), z(_z)
+	{}
+	Vec3()
+		: x(0.0f), y(0.0f), z(0.0f)
+	{}
+
+	Vec3& operator=(Vec3 other) {
+
+		x = other.x;
+		y = other.y;
+		z = other.z;
+
+		/*if (transform != nullptr) {
+			transform->updateGlobalProperties();
+		}*/
+		return *this;
+	}
+
+	Vec3& operator+=(const Vec3& other) {
+		x += other.x;
+		y += other.y;
+		z += other.z;
+		return *this;
+	}
+	Vec3& operator+(const Vec3& other) {
+		Vec3 addOperation = Vec3(x + other.x, y + other.y, z + other.z);
+		return addOperation;
+	}
+	Vec3& operator-=(const Vec3& other) {
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
+		return *this;
+	}
+	Vec3& operator-(const Vec3& other) {
+		Vec3 subtractOperation = Vec3(x - other.x, y - other.y, z - other.z);
+		return subtractOperation;
+	}
+
+
+	Vec3& operator*(float other) {
+		Vec3 timesOperation = Vec3(x * other, y * other, z * other);
+		return timesOperation;
+	}
+	Vec3& operator*=(float other) {
+		x *= other;
+		y *= other;
+		z *= other;
+		return *this;
+	}
+	Vec3& operator*=(Vec3 other) {
+		x *= other.x;
+		y *= other.y;
+		z *= other.z;
+		return *this;
+	}
+	Vec3& operator*(Vec3 other) {
+		Vec3 multiplyOperation = Vec3(x * other.x, y * other.y, z * other.z);
+		return multiplyOperation;
+	}
+
+
+	Vec3& operator/(float other) {
+		Vec3 divideOperation = Vec3(x / other, y / other, z / other);
+		return divideOperation;
+	}
+
+	friend class Transform;
+private:
+	//Transform* transform = nullptr;
+};
 
 
 	struct Rotation {
@@ -151,6 +181,8 @@ struct TexturedVertex;
 		Vec3 RotatePoint(Vec3& point, Vec3& rotation);
 
 		Vec3 NormalizeRotation(Vec3 eulerAngles);
+
+		float NormalizeRotationFloat(float eulerAngle);
 	};
 
 	struct Vec2 {

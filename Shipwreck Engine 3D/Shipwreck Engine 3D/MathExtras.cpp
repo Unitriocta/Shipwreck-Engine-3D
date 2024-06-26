@@ -36,10 +36,30 @@ Vec3 MathFunctions::RotatePoint(Vec3& point, Vec3& rotation) {
     return result;
 }
 
+/*
+Vec3 MathFunctions::RotatePoint(Vec3& point, glm::quat& rotation) {
+    // Convert the point to a glm::vec3
+    glm::vec3 glmPoint(point.x, point.y, point.z);
+
+    rotation = glm::normalize(rotation);
+
+    // Apply the rotation
+    glm::vec3 rotatedPoint = rotation * glmPoint;
+
+    // Convert the result back to Vec3
+    return Vec3(rotatedPoint.x, rotatedPoint.y, rotatedPoint.z);
+}
+*/
+
 
 Vec3 MathFunctions::NormalizeRotation(Vec3 eulerAngles) {
 
     return Vec3(fmod(eulerAngles.x, 360.0f), fmod(eulerAngles.y, 360.0f), fmod(eulerAngles.z, 360.0f));
+}
+
+float MathFunctions::NormalizeRotationFloat(float eulerAngle) {
+
+    return fmod(eulerAngle, 360.0f);
 }
 
 

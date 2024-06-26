@@ -1250,7 +1250,7 @@ void D3DRenderer::SetConstantBuffers(bool is2D, Camera camera, Transform* transf
 		DirectX::XMMATRIX transform;
 	};
 	
-	Transform* curTransform = transform;
+	/*Transform* curTransform = transform;
 	Vec3 finalPos;
 	Vec3 finalRot;
 	Vec3 finalScale = Vec3(1, 1, 1);
@@ -1268,14 +1268,27 @@ void D3DRenderer::SetConstantBuffers(bool is2D, Camera camera, Transform* transf
 
 	finalRot = startEng.Math().NormalizeRotation(finalRot);
 
+
+	transform->globalPosition = finalPos;
+	transform->globalRotation = finalRot;
+	transform->globalScale = finalScale;*/
+
+	DirectX::XMVECTOR dxQuaternion = DirectX::XMVectorSet(transform->globalQuaternionRotation.x, transform->globalQuaternionRotation.y, transform->globalQuaternionRotation.z, transform->globalQuaternionRotation.w);
+
 	const ConstBuffer transformBuffer = {
 		{
 		DirectX::XMMatrixTranspose(
-			DirectX::XMMatrixScaling(finalScale.x, finalScale.y, finalScale.z) *
+			/*DirectX::XMMatrixScaling(finalScale.x, finalScale.y, finalScale.z) *
 			DirectX::XMMatrixRotationX(glm::radians(finalRot.x)) *
 			DirectX::XMMatrixRotationY(glm::radians(finalRot.y)) *
 			DirectX::XMMatrixRotationZ(glm::radians(finalRot.z)) *
-			DirectX::XMMatrixTranslation(finalPos.x, finalPos.y, finalPos.z)
+			DirectX::XMMatrixTranslation(finalPos.x, finalPos.y, finalPos.z)*/
+			DirectX::XMMatrixScaling(transform->globalScale.x, transform->globalScale.y, transform->globalScale.z) *
+			DirectX::XMMatrixRotationQuaternion(dxQuaternion) * /*
+			DirectX::XMMatrixRotationX(glm::radians(transform->globalRotation.x))*
+			DirectX::XMMatrixRotationY(glm::radians(transform->globalRotation.y))*
+			DirectX::XMMatrixRotationZ(glm::radians(transform->globalRotation.z))**/
+			DirectX::XMMatrixTranslation(transform->globalPosition.x, transform->globalPosition.y, transform->globalPosition.z)
 		)
 		}
 	};

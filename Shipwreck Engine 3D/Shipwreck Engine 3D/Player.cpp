@@ -11,7 +11,7 @@ using namespace GameVariables;
 bool isForce = false;
 
 //float speedMultiplier = 500000.0f;
-float speedMultiplier = 100.1f;
+float speedMultiplier = 30.1f;
 
 const float sensitivity = 0.1f;
 
@@ -20,7 +20,7 @@ Transform camTransform;
 
 
 void Player::Start(Container* container) {
-	camera.transform.parent = &player.transform;
+	//camera.transform.parent = &player.transform;
 
 	player.name = "Player";
 
@@ -60,20 +60,34 @@ void Player::Update(float deltaTime, Container* container) {
 	//FPS camera
 
 	if (!input.mouse->mouseShown) {
-		camTransform.rotation.x += input.mouse->mouseDelta.y * sensitivity;
-		camTransform.rotation.y += input.mouse->mouseDelta.x * sensitivity;
+		float pitchDelta = input.mouse->mouseDelta.y * sensitivity;
+		float yawDelta = input.mouse->mouseDelta.x * sensitivity;
 
-		camTransform.rotation.x = std::max(std::min(camTransform.rotation.x, 89.0f), -89.0f);
+		glm::vec3 currentEulerAngles = glm::vec3(camTransform.rotation.x, camTransform.rotation.y, camTransform.rotation.z);
+
+		currentEulerAngles.x += pitchDelta;
+		currentEulerAngles.x = std::max(std::min(currentEulerAngles.x, 90.0f), -90.0f);
+
+		currentEulerAngles.y += yawDelta;
+
+		camTransform.rotation = Vec3(currentEulerAngles.x, currentEulerAngles.y, currentEulerAngles.z);
+
+		camTransform.quaternionRotation = glm::quat(glm::radians(currentEulerAngles));
+
+		camera.transform.rotation = camTransform.rotation;
+		camera.transform.quaternionRotation = camTransform.quaternionRotation;
+
+		player.transform.rotation.y = currentEulerAngles.y;
 
 
-		camTransform.rotation = startEng.NormalizeAngles(camTransform.rotation);
-
-		Vec3 radianRot = Vec3(camTransform.rotation.x, camTransform.rotation.y, camTransform.rotation.z);
-		camera.transform.rotation = Vec3(radianRot.x, 0.0f/*radianRot.y*/, radianRot.z);
-
-		player.transform.rotation.y = radianRot.y;
+		camera.transform.updateQuaternion();
+		camera.transform.update();
+		
+		player.transform.updateQuaternion();
+		player.transform.update();
 	}
 
+	camera.transform.position = player.transform.position;
 
 
 	glm::vec2 forwardVec3 = glm::vec2(player.transform.direction.x, player.transform.direction.z);

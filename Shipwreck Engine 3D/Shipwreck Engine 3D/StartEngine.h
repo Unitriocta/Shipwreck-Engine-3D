@@ -4,10 +4,19 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+//#ifndef __builtin_FUNCSIG
+//#define __builtin_FUNCSIG
+//#endif
+#include "MathExtras.h"
+
+#include "Transform.h"
+
+
 #include "Online.h"
 
 #include <windows.h>
 
+#include <algorithm>
 #include <iostream>
 
 #include <chrono> //fps limit/timer
@@ -57,8 +66,6 @@
 #include "TimeManagement.h"
 
 
-#include "MathExtras.h"
-
 #include "UITypes.h"
 
 #include "ModelImporter.h"
@@ -66,7 +73,6 @@
 
 #include "Rigidbody.h"
 
-#include "Transform.h"
 
 #include "Console.h"
 using namespace Console;
@@ -96,8 +102,12 @@ namespace EngineInstance {
 
 	extern HWND hWnd;
 
+	extern int windowState;
 	extern float windowWidth;
 	extern float windowHeight;
+
+	extern float defaultWindowWidth;
+	extern float defaultWindowHeight;
 
 	extern GLFWwindow* window;
 
@@ -110,6 +120,14 @@ namespace EngineInstance {
 	void DisplayNumAsTitle(float newVar);
 
 	void DisplayNumIntAsTitle(int newVar);
+
+	struct MonitorInfo;
+
+	BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+
+	std::vector<MonitorInfo> GetMonitorsInfo();
+
+	void ToggleFullscreen();
 }
 
 
