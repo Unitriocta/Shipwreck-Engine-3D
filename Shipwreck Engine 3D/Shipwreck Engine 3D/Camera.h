@@ -26,22 +26,7 @@ public:
 	DirectX::XMMATRIX GetMatrixD3D();
 
 
-	DirectX::XMMATRIX GetOrthographicMatrixD3D() {
-		if (transform.parent != nullptr) {
-			return DirectX::XMMatrixTranslation(-transform.position.x - transform.parent->position.x, -transform.position.y - transform.parent->position.y, -transform.position.z - transform.parent->position.z) *
-				DirectX::XMMatrixRotationY(-transform.rotation.y - transform.parent->rotation.y) *
-				DirectX::XMMatrixRotationX(-transform.rotation.x - transform.parent->rotation.x) *
-				DirectX::XMMatrixRotationZ(-transform.rotation.z - transform.parent->rotation.z) *
-				DirectX::XMMatrixOrthographicLH(2.0f, 2.0f, clippingNear, clippingFar);
-		}
-		else {
-			return DirectX::XMMatrixTranslation(-transform.position.x, -transform.position.y, -transform.position.z) *
-				DirectX::XMMatrixRotationY(-transform.rotation.y) *
-				DirectX::XMMatrixRotationX(-transform.rotation.x) *
-				DirectX::XMMatrixRotationZ(-transform.rotation.z) *
-				DirectX::XMMatrixOrthographicLH(2.0f, 2.0f, clippingNear, clippingFar);
-		}
-	}
+	DirectX::XMMATRIX GetOrthographicMatrixD3D();
 
 
 	glm::mat4 GetMatrixGL(Vec2 view) {

@@ -104,7 +104,7 @@ public:
 	void ClearBuffer(float r, float g, float b) noexcept {
 		const float color[] = { r,g,b,1.0f }; //alpha
 		deviceContext->ClearRenderTargetView(target, color);
-		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	};
 	void DrawTestTri(HWND hWnd);
 	void RenderTriangles(std::vector<Vertice> vertices, HWND hWnd);
@@ -153,7 +153,7 @@ public:
 
 	D3DRenderer* renderer;
 
-	int msaaSamples = 4;
+	int msaaSamples = 8;
 };
 
 

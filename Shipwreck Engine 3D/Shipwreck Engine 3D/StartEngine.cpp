@@ -229,7 +229,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     MyRegisterClass(hInstance);
 
     // Perform application initialization:
-    if (!InitInstance(hInstance, nCmdShow, Vec2(900,900)))
+    if (!InitInstance(hInstance, nCmdShow, Vec2(defaultWindowWidth, defaultWindowHeight)))
     {
         return FALSE;
     }
@@ -328,9 +328,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (GetMessage(&msg, nullptr, 0, 0) <= 0) {
 
         }*/
-        if (isD3D && PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+        if (isD3D) {
+
+            while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
         if (!isD3D) {
             glfwPollEvents();
@@ -529,7 +533,7 @@ void StartEngine::RenderFrame() {
                 pos2D = containers[i]->rigidbody.rb2D->GetPosition();
                 rot2D = glm::degrees(containers[i]->rigidbody.rb2D->GetAngle());
 
-                containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, 0.0f);
+                containers[i]->transform.position = Vec3(pos2D.x, pos2D.y, -5.0f);
                 containers[i]->transform.rotation = Vec3(0.0f, 0.0f, rot2D);
             }
         }
@@ -727,7 +731,7 @@ void StartEngine::SaveEngine() {
         char dynamic;
         char is2D;
 
-        if (containers[i]->rigidbody.isDynamic) {
+        if (containers[i]->rigidbody.getDynamic()) {
             dynamic = 't';
         }
         else {
@@ -961,18 +965,18 @@ void StartEngine::LoadEngine() {
 
                 if (classParameters == 0) {
                     if (loadedSegment == "t") {
-                        curContainer.rigidbody.isDynamic = true;
+                        //curContainer.rigidbody.isDynamic = true;
                     }
                     else if (loadedSegment == "f") {
-                        curContainer.rigidbody.isDynamic = false;
+                        //curContainer.rigidbody.isDynamic = false;
                     }
                 }
                 else if (classParameters == 1) {
                     if (loadedSegment == "t") {
-                        curContainer.rigidbody.NewRB2D();
+                        //curContainer.rigidbody.NewRB2D();
                     }
                     else if (loadedSegment == "f") {
-                        curContainer.rigidbody.NewRB();
+                        //curContainer.rigidbody.NewRB();
                     }
                 }
             }
@@ -1342,42 +1346,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
     {
         if (isD3D) {
-            //if (startEng.postD3DGraphics) {
-
-            //    if (startEng.D3DGfx().target != nullptr) {
-
-            //        windowWidth = LOWORD(lParam);
-            //        windowHeight = HIWORD(lParam);
-
-            //        // Release all references to the swap chain's buffers
-            //        startEng.D3DGfx().deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-            //        startEng.D3DGfx().target->Release();
-            //        startEng.D3DGfx().depthView->Release();
-
-            //        // Resize the swap chain
-            //        startEng.D3DGfx().swapChain->ResizeBuffers(0, windowWidth, windowHeight, DXGI_FORMAT_UNKNOWN, 0);
-
-            //        // Recreate the render target view
-            //        ID3D11Texture2D* backBuffer = nullptr;
-            //        startEng.D3DGfx().swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
-            //        startEng.D3DGfx().device->CreateRenderTargetView(backBuffer, nullptr, &startEng.D3DGfx().target);
-            //        backBuffer->Release();
-
-            //        // Recreate the depth-stencil view with the new dimensions
-            //        // (You'll need to recreate the depth-stencil texture similar to how it's done in the initialization code)
-
-            //        // Set the new render target and depth-stencil view
-            //        startEng.D3DGfx().deviceContext->OMSetRenderTargets(1, &startEng.D3DGfx().target, startEng.D3DGfx().depthView);
-
-            //        // Update the viewport
-            //        D3D11_VIEWPORT viewport = {};
-            //        viewport.Width = static_cast<float>(windowWidth);
-            //        viewport.Height = static_cast<float>(windowHeight);
-            //        viewport.MinDepth = 0.0f;
-            //        viewport.MaxDepth = 1.0f;
-            //        startEng.D3DGfx().deviceContext->RSSetViewports(1, &viewport);
-            //    }
-            //}
 
             if (startEng.postD3DGraphics) {
                 if (startEng.D3DGfx().target != nullptr) {

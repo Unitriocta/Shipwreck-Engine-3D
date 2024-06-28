@@ -63,6 +63,65 @@ float MathFunctions::NormalizeRotationFloat(float eulerAngle) {
 }
 
 
+// By Ken Perlin
+float MathFunctions::Fade(float t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+
+float MathFunctions::Lerp(float t, float a, float b) {
+    return a + t * (b - a);
+}
+
+
+float MathFunctions::Gradient(int hash, float x, float y) {
+    switch (hash & 0x3) {
+    case 0x0: return  x + y;
+    case 0x1: return -x + y;
+    case 0x2: return  x - y;
+    case 0x3: return -x - y;
+    default: return 0;
+    }
+}
+
+int MathFunctions::Increase(int num) {
+    num++;
+    int repeat = -1;
+    if (repeat > 0) num %= repeat;
+    return num;
+}
+
+
+//Ken Perlin:
+float MathFunctions::Noise(float x, float y, int seed) {
+
+
+
+    int xi = (int)x & 255;
+    int yi = (int)y & 255;
+    int si = seed & 255;
+    float xf = x - (int)x;
+    float yf = y - (int)y;
+
+    float u = Fade(xf);
+    float v = Fade(yf);
+
+    int aa, ab, ba, bb;
+    aa = p[p[xi] + yi];
+    ab = p[p[xi] + Increase(yi)];
+    ba = p[p[Increase(xi)] + yi];
+    bb = p[p[Increase(xi)] + Increase(yi)];
+
+    float x1, x2, y1;
+    x1 = Lerp(Gradient(aa, xf, yf), Gradient(ba, xf - 1, yf), u);
+    x2 = Lerp(Gradient(ab, xf, yf - 1), Gradient(bb, xf - 1, yf - 1), u);
+    y1 = Lerp(x1, x2, v);
+
+    return (y1 + 1) / 2;
+}
+
+
+
 void D3DTexture::LoadTexture(std::string _textPath)
 {
 	wchar_t texPath[512];

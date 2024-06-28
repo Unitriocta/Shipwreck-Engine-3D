@@ -59,6 +59,78 @@ void Transform::updateGlobalProperties() {
 }
 
 
+
+
+
+
+TransformVec3& TransformVec3::operator=(const Vec3 other) {
+	x = other.x;
+	y = other.y;
+	z = other.z;
+	//transform->updateGlobalProperties();
+	//transform->container->rigidbody.SetTransform(transform);
+	return *this;
+}
+TransformVec3& TransformVec3::operator+=(const Vec3 other) {
+	x += other.x;
+	y += other.y;
+	z += other.z;
+	//transform->updateGlobalProperties();
+	//transform->container->rigidbody.SetTransform(transform);
+	return *this;
+}
+TransformVec3& TransformVec3::operator+(const Vec3 other) {
+	TransformVec3 addOperation = TransformVec3(x + other.x, y + other.y, z + other.z);
+	return addOperation;
+}
+TransformVec3& TransformVec3::operator-=(const Vec3 other) {
+	x -= other.x;
+	y -= other.y;
+	z -= other.z;
+	//transform->updateGlobalProperties();
+	//transform->container->rigidbody.SetTransform(transform);
+	return *this;
+}
+TransformVec3& TransformVec3::operator-(const Vec3 other) {
+	TransformVec3 subtractOperation = TransformVec3(x - other.x, y - other.y, z - other.z);
+	return subtractOperation;
+}
+
+
+TransformVec3& TransformVec3::operator*(float other) {
+	TransformVec3 timesOperation = TransformVec3(x * other, y * other, z * other);
+	return timesOperation;
+}
+TransformVec3& TransformVec3::operator*=(float other) {
+	x *= other;
+	y *= other;
+	z *= other;
+	//transform->updateGlobalProperties();
+	//transform->container->rigidbody.SetTransform(transform);
+	return *this;
+}
+TransformVec3& TransformVec3::operator*=(Vec3 other) {
+	x *= other.x;
+	y *= other.y;
+	z *= other.z;
+	//transform->updateGlobalProperties();
+	/*if (transform->container->rigidbody.rbDynamic != nullptr && transform->container->rigidbody.rbStatic != nullptr && transform->container->rigidbody.rb2D != nullptr) {
+
+		//transform->container->rigidbody.SetTransform(transform);
+	}*/
+	//transform->container->rigidbody.SetTransform(transform);
+
+	return *this;
+}
+
+
+TransformVec3& TransformVec3::operator/(float other) {
+	TransformVec3 divideOperation = TransformVec3(x / other, y / other, z / other);
+	return divideOperation;
+}
+
+
+
 /*
 //Shakes right before the sphere collision hits the cube, but it rotates with the root object from then on,
 //The camera flips over the poles when looking left/right

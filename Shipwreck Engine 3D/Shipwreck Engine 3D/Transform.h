@@ -16,83 +16,39 @@ class Transform;
 
 //#include "MathExtras.h"
 
-class TransformVec3 : public Vec3 {
+struct TransformVec3 : public Vec3 {
 public:
-	Transform* transform;
-	//Vec3 vec;
-	float x;
-	float y;
-	float z;
+	friend class Transform;
 
-	Vec3 Zero() {
-		return Vec3{ 0.0f, 0.0f, 0.0f };
+	TransformVec3 Zero() {
+		return TransformVec3{ 0.0f, 0.0f, 0.0f };
 	};
 
-	TransformVec3(Vec3 vec3)
-		: x(vec3.x), y(vec3.y), z(vec3.z)
-	{}
-	TransformVec3(float _x, float _y, float _z)
-		: x(_x), y(_y), z(_z)
-	{}
-	TransformVec3()
-		: x(0.0f), y(0.0f), z(0.0f)
-	{}
+	TransformVec3() : Vec3(), transform(nullptr) {}
+	TransformVec3(float x, float y, float z) : Vec3(x, y, z), transform(nullptr) {}
+	TransformVec3(const Vec3& vec) : Vec3(vec), transform(nullptr) {}
 
-	TransformVec3& operator=(const Vec3& other) {
-		x = other.x;
-		y = other.y;
-		z = other.z;
-		return *this;
-	}
-	TransformVec3& operator+=(const Vec3& other) {
-		x += other.x;
-		y += other.y;
-		z += other.z;
-		return *this;
-	}
-	TransformVec3& operator+(const Vec3& other) {
-		TransformVec3 addOperation = TransformVec3(x + other.x, y + other.y, z + other.z);
-		return addOperation;
-	}
-	TransformVec3& operator-=(const Vec3& other) {
-		x -= other.x;
-		y -= other.y;
-		z -= other.z;
-		return *this;
-	}
-	TransformVec3& operator-(const Vec3& other) {
-		TransformVec3 subtractOperation = TransformVec3(x - other.x, y - other.y, z - other.z);
-		return subtractOperation;
-	}
+	TransformVec3& operator=(const Vec3 other);
+	TransformVec3& operator+=(const Vec3 other);
+	TransformVec3& operator+(const Vec3 other);
+	TransformVec3& operator-=(const Vec3 other);
+	TransformVec3& operator-(const Vec3 other);
 
 
-	TransformVec3& operator*(float other) {
-		TransformVec3 timesOperation = TransformVec3(x * other, y * other, z * other);
-		return timesOperation;
-	}
-	TransformVec3& operator*=(float other) {
-		x *= other;
-		y *= other;
-		z *= other;
-		return *this;
-	}
-	TransformVec3& operator*=(Vec3 other) {
-		x *= other.x;
-		y *= other.y;
-		z *= other.z;
-		return *this;
-	}
+	TransformVec3& operator*(float other);
+	TransformVec3& operator*=(float other);
+	TransformVec3& operator*=(Vec3 other);
 
 
-	TransformVec3& operator/(float other) {
-		TransformVec3 divideOperation = TransformVec3(x / other, y / other, z / other);
-		return divideOperation;
-	}
+	TransformVec3& operator/(float other);
 	
 
 	operator Vec3() const {
 		return Vec3(x, y, z);
 	}
+
+private:
+	Transform* transform;
 };
 
 
@@ -111,9 +67,9 @@ public:
 		container(nullptr),
 		parent(nullptr)
 	{
-		/*position.transform = this;
+		position.transform = this;
 		rotation.transform = this;
-		scale.transform = this;*/
+		scale.transform = this;
 	}
 	/*Transform(Container* container) :
 		position(_pos),
@@ -130,9 +86,9 @@ public:
 		container(nullptr),
 		parent(nullptr)
 	{
-		/*position.transform = this;
+		position.transform = this;
 		rotation.transform = this;
-		scale.transform = this;*/
+		scale.transform = this;
 	}
 
 
@@ -142,17 +98,17 @@ public:
 
 
 public:
-	Vec3 position; //Acts as the component offset if there is a parent, otherwise this is the global position of the Transform
-	Vec3 rotation;
-	Vec3 scale;
+	TransformVec3 position; //Acts as the component offset if there is a parent, otherwise this is the global position of the Transform
+	TransformVec3 rotation;
+	TransformVec3 scale;
 
 	Container* container;
 	Transform* parent;
 	std::vector<Transform*> children;
 
-	Vec3 globalPosition;
-	Vec3 globalRotation;
-	Vec3 globalScale;
+	Vec3 globalPosition; //Readonly
+	Vec3 globalRotation; //Readonly
+	Vec3 globalScale; //Readonly
 	
 	glm::quat quaternionRotation;
 	glm::quat globalQuaternionRotation;

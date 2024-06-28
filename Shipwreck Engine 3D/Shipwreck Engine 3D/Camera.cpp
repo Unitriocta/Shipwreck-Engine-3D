@@ -52,5 +52,38 @@ DirectX::XMMATRIX Camera::GetMatrixD3D() {
 	return viewMatrix * projectionMatrix;
 }
 
+
+
+DirectX::XMMATRIX Camera::GetOrthographicMatrixD3D() {
+	DirectX::XMVECTOR dxQuaternion = DirectX::XMQuaternionInverse(
+		DirectX::XMVectorSet(
+			transform.globalQuaternionRotation.x,
+			transform.globalQuaternionRotation.y,
+			transform.globalQuaternionRotation.z,
+			transform.globalQuaternionRotation.w
+		)
+	);
+
+	// Construct the view matrix
+	DirectX::XMMATRIX viewMatrix =
+		DirectX::XMMatrixTranslation(
+			-transform.globalPosition.x,
+			-transform.globalPosition.y,
+			-transform.globalPosition.z
+		) *
+		DirectX::XMMatrixRotationQuaternion(dxQuaternion);
+
+
+	float aspectRatio = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
+	DirectX::XMMATRIX projectionMatrix = DirectX::XMMatrixOrthographicLH(
+		DirectX::XMConvertToRadians(90.0f),
+		aspectRatio,
+		clippingNear,
+		clippingFar
+	);
+
+	return viewMatrix * projectionMatrix;
+}
+
 //windowWidth / windowHeight
 //windowHeight / windowWidth

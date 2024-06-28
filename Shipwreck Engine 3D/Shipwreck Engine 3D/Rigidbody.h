@@ -15,93 +15,115 @@ public:
 
     Rigidbody();
 
-	void NewRB() {
+    void NewRB(bool _isDynamic, bool _is2D) {
         
         rbStatic = nullptr;
         rbDynamic = nullptr;
+        rb2D = nullptr;
+
+        if (!_is2D) {
+            params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_CLEAN_MESH;
+            params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_ACTIVE_EDGES_PRECOMPUTE;
+
+            shapeFlags = PxShapeFlag::eSCENE_QUERY_SHAPE | PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eVISUALIZATION;
+
+            if (_isDynamic) {
+                material = physicsManager->physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
+                if (!material) {
+                    return;
+                }
+
+                rbDynamic = physicsManager->physics->createRigidDynamic(PxTransform(PxVec3(transform->globalPosition.x, transform->globalPosition.y, transform->globalPosition.z), PxQuat(transform->globalQuaternionRotation.x, transform->globalQuaternionRotation.y, transform->globalQuaternionRotation.z, transform->globalQuaternionRotation.w)));
+                rbDynamic->setLinearDamping(0.2f);
+                rbDynamic->setAngularDamping(0.1f);
+
+                rbDynamic->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_GYROSCOPIC_FORCES, true);
+                rbDynamic->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_SPECULATIVE_CCD, true);
 
 
-        // disable mesh cleaning - perform mesh validation on development configurations
-        params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_CLEAN_MESH;
-        // disable edge precompute, edges are set for each triangle, slows contact generation
-        params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_ACTIVE_EDGES_PRECOMPUTE;
 
-        shapeFlags = PxShapeFlag::eSCENE_QUERY_SHAPE | PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eVISUALIZATION;
-		
-        if (isDynamic) {    
-            //material = physicsManager->material;
-            material = physicsManager->physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
-            if (!material) {
-                //error
-                return;
+                PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbDynamic, PxSphereGeometry(1), *material, shapeFlags);
+                triMeshShape->setContactOffset(0.1f);
+                triMeshShape->setRestOffset(0.02f);
+
+                rbDynamic->attachShape(*triMeshShape);
+                triMeshShape->release();
+
+                PxReal density = 100.0f;
+                PxRigidBodyExt::updateMassAndInertia(*rbDynamic, density);
+
+                physicsManager->scene->addActor(*rbDynamic);
+
+                rbDynamic->setSolverIterationCounts(50, 1);
+                rbDynamic->setMaxDepenetrationVelocity(5.0f);
             }
+            else {
+                material = physicsManager->physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
+                if (!material) {
+                    //error
+                    return;
+                }
 
-            PxReal angle = 0/*40 / 57.2958f*/;
-            PxVec3 rot(0.0f, 0.0f, 0.0f);
-            rbDynamic = physicsManager->physics->createRigidDynamic(PxTransform(PxVec3(0.0f, 9.0f, 5.0f), PxQuat(angle, rot)));
-            rbDynamic->setLinearDamping(0.2f);
-            rbDynamic->setAngularDamping(0.1f);
-            
-            rbDynamic->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_GYROSCOPIC_FORCES, true);
-            rbDynamic->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_SPECULATIVE_CCD, true);
+                PxReal angle2 = 13 / 57.2958f; //in radians
+                PxVec3 rot2(-1.0f, -1.0f, 0.0f); //normalized
+                rbStatic = physicsManager->physics->createRigidStatic(PxTransform(PxVec3(transform->globalPosition.x, transform->globalPosition.y, transform->globalPosition.z), PxQuat(transform->globalQuaternionRotation.x, transform->globalQuaternionRotation.y, transform->globalQuaternionRotation.z, transform->globalQuaternionRotation.w)));
+                rbStatic->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 
-            /*PxTriangleMeshGeometry geom(triangleMesh);
-            geom.scale = PxVec3(1.0f, 1.0f, 1.0f);*/
+                /*rigidbody2->setLinearDamping(0.2f);
+                rigidbody2->setAngularDamping(0.1f);
 
+                rigidbody2->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_GYROSCOPIC_FORCES, true);
+                rigidbody2->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_SPECULATIVE_CCD, true);*/
 
 
-           PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbDynamic, PxSphereGeometry(1), *material, shapeFlags);
-            triMeshShape->setContactOffset(0.1f);
-            triMeshShape->setRestOffset(0.02f);
 
-            rbDynamic->attachShape(*triMeshShape);
-            triMeshShape->release();
+                /*PxTriangleMeshGeometry geom2(triangleMesh);
+                geom2.scale = PxVec3(1.0f, 1.0f, 1.0f);*/
 
-            PxReal density = 100.0f;
-            PxRigidBodyExt::updateMassAndInertia(*rbDynamic, density);
 
-            physicsManager->scene->addActor(*rbDynamic);
+                PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbStatic, PxBoxGeometry(1, 1, 1), *material, shapeFlags);
+                triMeshShape->setContactOffset(0.1f);
+                triMeshShape->setRestOffset(0.02f);
 
-            rbDynamic->setSolverIterationCounts(50, 1);
-            rbDynamic->setMaxDepenetrationVelocity(5.0f);
-            //rbDynamic->setMass(1000);
-		}
-		else {
-            //material = physicsManager->material;
-            material = physicsManager->physics->createMaterial(0.5f, 0.5f, 0.1f); //static (fric), dynamic (fric), restitution (bounciness / recoil)
-            if (!material) {
-                //error
-                return;
+                rbStatic->attachShape(*triMeshShape);
+
+
+                //physicsManager->staticRbs.push_back(rbStatic);
+
+                physicsManager->scene->addActor(*rbStatic);
             }
+        }
+        else {
+            if (_isDynamic) {
+                b2BodyDef bodyDef;
+                bodyDef.type = b2_dynamicBody;
+                bodyDef.position.Set(transform->globalPosition.x, transform->globalPosition.y);
 
-            PxReal angle2 = 13 / 57.2958f; //in radians
-            PxVec3 rot2(-1.0f, -1.0f, 0.0f); //normalized
-            rbStatic = physicsManager->physics->createRigidStatic(PxTransform(PxVec3(0.0f, -4.0f, 5.0f), PxQuat(angle2, rot2)));
-            rbStatic->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
+                rb2D = physicsManager->scene2D.CreateBody(&bodyDef);
 
-            /*rigidbody2->setLinearDamping(0.2f);
-            rigidbody2->setAngularDamping(0.1f);
+                b2PolygonShape dynamicBox;
+                dynamicBox.SetAsBox(1.0f, 1.0f);
 
-            rigidbody2->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_GYROSCOPIC_FORCES, true);
-            rigidbody2->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_SPECULATIVE_CCD, true);*/
+                b2FixtureDef fixtureDef;
+                fixtureDef.shape = &dynamicBox;
+                fixtureDef.density = 1.0f;
+                fixtureDef.friction = 0.3f;
 
+                rb2D->CreateFixture(&fixtureDef);
+            }
+            else {
+                b2BodyDef groundBodyDef;
+                groundBodyDef.type = b2_staticBody;
+                groundBodyDef.position.Set(transform->globalPosition.x, transform->globalPosition.y);
 
+                b2Body* groundBody = physicsManager->scene2D.CreateBody(&groundBodyDef);
 
-            /*PxTriangleMeshGeometry geom2(triangleMesh);
-            geom2.scale = PxVec3(1.0f, 1.0f, 1.0f);*/
+                b2PolygonShape groundBox;
+                groundBox.SetAsBox(50.0f, 10.0f);
 
-
-            PxShape* triMeshShape = PxRigidActorExt::createExclusiveShape(*rbStatic, PxBoxGeometry(1, 1, 1), *material, shapeFlags);
-            triMeshShape->setContactOffset(0.1f);
-            triMeshShape->setRestOffset(0.02f);
-
-            rbStatic->attachShape(*triMeshShape);
-
-
-            //physicsManager->staticRbs.push_back(rbStatic);
-
-            physicsManager->scene->addActor(*rbStatic);
-		}
+                groundBody->CreateFixture(&groundBox, 0.0f);
+            }
+        }
 	}
 
     
@@ -158,7 +180,7 @@ public:
         if (transform != nullptr) {
             transform->updateGlobalProperties();
 
-            pxScale = PxVec3(transform->globalScale.x, transform->globalScale.y, transform->globalScale.z) * 2.0f;
+            pxScale = PxVec3(transform->globalScale.x, transform->globalScale.y, transform->globalScale.z);
         }
         else {
             pxScale = PxVec3(1.0f, 1.0f, 1.0f);
@@ -191,10 +213,10 @@ public:
         PxTriangleMeshGeometry geom(triangleMesh);
         PxShape* triMeshShape = physicsManager->physics->createShape(geom, *material, true, shapeFlags);
 
-        if (isDynamic) {
+        if (rbDynamic != nullptr) {
             rbDynamic->attachShape(*triMeshShape);
         }
-        else {
+        else if (rbStatic != nullptr) {
             rbStatic->attachShape(*triMeshShape);
         }
 
@@ -202,14 +224,21 @@ public:
     }
 
 
+    void SetTransform(Transform* _transform) {
 
+        if (_transform != nullptr) {
+            SetPosition(_transform->globalPosition);
+            SetRotation(_transform->globalRotation);
+            SetScale(_transform->globalScale);
+        }
+    }
     void SetPosition(Vec3 newPosition) {
 
         if (rbDynamic != nullptr) {
             rbDynamic->setGlobalPose(PxTransform(PxVec3(newPosition.x, newPosition.y, newPosition.z), rbDynamic->getGlobalPose().q));
         }
         else if (rbStatic != nullptr) {
-            rbStatic->setGlobalPose(PxTransform(PxVec3(newPosition.x, newPosition.y, newPosition.z), rbDynamic->getGlobalPose().q));
+            rbStatic->setGlobalPose(PxTransform(PxVec3(newPosition.x, newPosition.y, newPosition.z), rbStatic->getGlobalPose().q));
         }
         else if (rb2D != nullptr) {
             rb2D->SetTransform(b2Vec2(newPosition.x, newPosition.y), rb2D->GetAngle());
@@ -522,43 +551,32 @@ public:
     }
 
 
-
-
-    void NewRB2D() {
-
-        if (isDynamic) {
-            b2BodyDef bodyDef;
-            bodyDef.type = b2_dynamicBody;
-            bodyDef.position.Set(0.0f, 10.0f);
-
-            rb2D = physicsManager->scene2D.CreateBody(&bodyDef);
-
-            b2PolygonShape dynamicBox;
-            dynamicBox.SetAsBox(1.0f, 1.0f);
-
-            b2FixtureDef fixtureDef;
-            fixtureDef.shape = &dynamicBox;
-            fixtureDef.density = 1.0f;
-            fixtureDef.friction = 0.3f;
-
-            rb2D->CreateFixture(&fixtureDef);
+    void SetVelocity(Vec3 _newVelocity) {
+        if (rbDynamic != nullptr) {
+            rbDynamic->setLinearVelocity(PxVec3(_newVelocity.x, _newVelocity.y, _newVelocity.z));
         }
-        else {
-            b2BodyDef groundBodyDef;
-            groundBodyDef.type = b2_staticBody;
-            groundBodyDef.position.Set(0.0f, -10.0f);
+        else if (rbStatic != nullptr) {
+            //rbStatic->setLinearVelocity(PxVec3(_newVelocity.x, _newVelocity.y, _newVelocity.z));
+        }
+        else if (rb2D != nullptr) {
 
-            b2Body* groundBody = physicsManager->scene2D.CreateBody(&groundBodyDef);
-
-            b2PolygonShape groundBox;
-            groundBox.SetAsBox(50.0f, 10.0f);
-
-            groundBody->CreateFixture(&groundBox, 0.0f);
+            rb2D->SetLinearVelocity(b2Vec2(_newVelocity.x, _newVelocity.y));
         }
     }
 
+    Vec3 GetVelocity() {
+        if (rbDynamic != nullptr) {
+            PxVec3 pxVel = rbDynamic->getLinearVelocity();
+            return Vec3(pxVel.x, pxVel.y, pxVel.z);
+        }
+        else if (rbStatic != nullptr) {
+        }
+        else if (rb2D != nullptr) {
 
-
+            b2Vec2 b2Vel = rb2D->GetLinearVelocity();
+            return Vec3(b2Vel.x, b2Vel.y, 0.0f);
+        }
+    }
 
 
     Physics* physicsManager;
@@ -576,8 +594,15 @@ public:
     b2Body* rb2D = nullptr;
 
     PxMaterial* material;
-
+    
+private:
 	bool isDynamic;
+    bool is2D;
+   
+public:
+
+    const bool& getDynamic() const { return isDynamic; }
+    const bool& get2D() const { return is2D; }
 
     Transform* transform = nullptr;
 

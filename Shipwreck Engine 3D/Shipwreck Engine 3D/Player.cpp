@@ -11,7 +11,8 @@ using namespace GameVariables;
 bool isForce = false;
 
 //float speedMultiplier = 500000.0f;
-float speedMultiplier = 30.1f;
+//float speedMultiplier = 30.1f;
+float speedMultiplier = 20.4f;
 
 const float sensitivity = 0.1f;
 
@@ -25,8 +26,7 @@ void Player::Start(Container* container) {
 	player.name = "Player";
 
 	if (isForce) {
-		player.rigidbody.isDynamic = true;
-		player.rigidbody.NewRB();
+		player.rigidbody.NewRB(true, false);
 		
 		
 		Model newModel = Model({
@@ -48,7 +48,7 @@ void Player::Start(Container* container) {
 				6, 5, 1, 1, 2, 6
 			});
 
-		player.rigidbody.UpdateMesh(&newModel);
+		//player.rigidbody.UpdateMesh(&newModel);
 	}
 
 	startEng.containers.push_back(&player);
@@ -93,67 +93,77 @@ void Player::Update(float deltaTime, Container* container) {
 	glm::vec2 forwardVec3 = glm::vec2(player.transform.direction.x, player.transform.direction.z);
 	glm::vec2 rightVec3 = glm::vec2(player.transform.right.x, player.transform.right.z);
 
-	glm::vec2 forwardDirection = glm::vec2(forwardVec3.x, forwardVec3.y) * speedMultiplier;
-	glm::vec2 rightDirection = glm::vec2(rightVec3.x, rightVec3.y) * speedMultiplier;
+	glm::vec2 forwardDirection = glm::vec2(forwardVec3.x, forwardVec3.y);
+	glm::vec2 rightDirection = glm::vec2(rightVec3.x, rightVec3.y);
 
 	//player.transform.rotation = Vec3(0.0f, camera.transform.rotation.y, 0.0f);
 	//camera.transform.position = player.transform.position;
 
 	if (isForce) {
 
+		Vec3 frameVel = Vec3(0.0f, 0.0f, 0.0f);
+
 		if (input.GetKeyState('W')) {
 
-			player.rigidbody.AddForce(Vec3(forwardDirection.x, 0.0f, forwardDirection.y));
+			//player.rigidbody.AddForce(Vec3(forwardDirection.x, 0.0f, forwardDirection.y));
+			frameVel += Vec3(forwardDirection.x, 0.0f, forwardDirection.y);
 		}
 
 		if (input.GetKeyState('S')) {
 
-			player.rigidbody.AddForce(Vec3(-forwardDirection.x, 0.0f, -forwardDirection.y));
+			//player.rigidbody.AddForce(Vec3(-forwardDirection.x, 0.0f, -forwardDirection.y));
+			frameVel -= Vec3(forwardDirection.x, 0.0f, forwardDirection.y);
 		}
 
 
 		if (input.GetKeyState('A')) {
 
-			player.rigidbody.AddForce(Vec3(-rightDirection.x, 0.0f, -rightDirection.y));
+			//player.rigidbody.AddForce(Vec3(-rightDirection.x, 0.0f, -rightDirection.y));
+			frameVel -= Vec3(rightDirection.x, 0.0f, rightDirection.y);
 		}
 
 		if (input.GetKeyState('D')) {
 
-			player.rigidbody.AddForce(Vec3(rightDirection.x, 0.0f, rightDirection.y));
+			//player.rigidbody.AddForce(Vec3(rightDirection.x, 0.0f, rightDirection.y));
+			frameVel += Vec3(rightDirection.x, 0.0f, rightDirection.y);
 		}
 
 
 		if (input.GetKeyState(VK_SPACE)) {
 
-			player.transform.position += Vec3(0.0f, speedMultiplier, 0.0f);
+			//player.transform.position += Vec3(0.0f, speedMultiplier, 0.0f);
+			frameVel += Vec3(0.0f, 1.0f, 0.0f);
 		}
 
 		if (input.GetKeyState(VK_SHIFT)) {
 
-			player.transform.position -= Vec3(0.0f, speedMultiplier, 0.0f);
+			//player.transform.position -= Vec3(0.0f, speedMultiplier, 0.0f);
+			frameVel -= Vec3(0.0f, 1.0f, 0.0f);
 		}
+
+		player.rigidbody.SetVelocity(frameVel * speedMultiplier);
 	}
 	else {
 
 		if (input.GetKeyState('W')) {
 
-			player.transform.position += Vec3(forwardDirection.x, 0.0f, forwardDirection.y);
+			player.transform.position += Vec3(forwardDirection.x, 0.0f, forwardDirection.y) * speedMultiplier;
 		}
 
 		if (input.GetKeyState('S')) {
 
-			player.transform.position -= Vec3(forwardDirection.x, 0.0f, forwardDirection.y);
+			player.transform.position -= Vec3(forwardDirection.x, 0.0f, forwardDirection.y) * speedMultiplier;
 		}
 
 
 		if (input.GetKeyState('A')) {
 
-			player.transform.position += Vec3(rightDirection.x, 0.0f, rightDirection.y);
+			player.transform.position += Vec3(rightDirection.x, 0.0f, rightDirection.y) * speedMultiplier;
 		}
 
 		if (input.GetKeyState('D')) {
 
-			player.transform.position -= Vec3(rightDirection.x, 0.0f, rightDirection.y);
+			player.transform.position -= Vec3(rightDirection.x, 0.0f, rightDirection.y) * speedMultiplier;
 		}
 
 

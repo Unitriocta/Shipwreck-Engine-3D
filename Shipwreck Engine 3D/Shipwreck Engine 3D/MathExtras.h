@@ -183,6 +183,23 @@ private:
 		Vec3 NormalizeRotation(Vec3 eulerAngles);
 
 		float NormalizeRotationFloat(float eulerAngle);
+
+
+
+		float Noise(float x, float y, int seed);
+
+		float Lerp(float t, float a, float b);
+
+	private:
+		float Fade(float t);
+
+		float Gradient(int hash, float x, float y);
+
+		int Increase(int num);
+
+
+
+		int p[512];
 	};
 
 	struct Vec2 {
