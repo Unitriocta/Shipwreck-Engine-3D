@@ -16,12 +16,11 @@ struct VS_Out
 };
 
 
-cbuffer CBuffer
+cbuffer CBuffer : register(b0)
 {
 	matrix transform;
 	matrix camera;
 };
-
 
 
 VS_Out main(VS_In input)

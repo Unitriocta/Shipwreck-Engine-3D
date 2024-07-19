@@ -4,6 +4,7 @@
 using namespace EngineInstance;
 
 Container container1;
+Container container2;
 
 Sprite sprite;
 
@@ -30,7 +31,10 @@ void GameGeneration::Start(Container* container) {
 	//container1.models.modelList[0].modelPath = "C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx";
 
 	//container1.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
-	container1.ImportModel("D:/Downloads/shooting-building-sci-fi-low-poly/source/3D.fbx");
+	//container1.ImportModel("D:/Downloads/shooting-building-sci-fi-low-poly/source/3D.fbx");
+	//container1.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
+	container2.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
+	//container2.ImportModel("D:/Downloads/test-ani/source/testAni.fbx");
 
 
 	//container3.sprites.AddSprite(&sprite);
@@ -42,8 +46,15 @@ void GameGeneration::Start(Container* container) {
 	//container2.rigidbody.NewRB();
 	//container3.rigidbody.NewRB2D();
 
+	std::string dataPath = "D:/AnimationName";
+	std::string writeData = "";
+
+	writeData += container2.transform.children[1]->container->models.skinnedModelList[0].animations[0].name;
+
+
+	WriteDataToFile(dataPath, writeData);
 }
 
 void GameGeneration::Update(float deltaTime, Container* container) {
-
+	container2.transform.children[1]->container->models.skinnedModelList[0].UpdateAnimation(deltaTime);
 }

@@ -18,10 +18,6 @@ struct Vec3;
 
 struct Rotation;
 
-
-
-
-
 struct Color;
 
 class MathFunctions;
@@ -31,11 +27,7 @@ struct Vec2;
 
 struct UV_Vertice;
 
-
-
 class D3DTexture;
-
-
 
 struct Vertice;
 
@@ -46,6 +38,8 @@ struct ColorVertex;
 
 
 struct TexturedVertex;
+
+struct SkinnedVertex;
 
 
 struct Vec3 {
@@ -340,4 +334,43 @@ private:
 		TexturedVertex()
 			: position(Vec3(0,0,0)), normal(Vec3(0,0,0)), color(Color(0,0,0,0)), uv(Vec2(0,0))
 		{}
+	};
+
+	struct SkinnedVertex {
+
+	public:
+		Color color;
+
+		Vec3 normal;
+
+		Vec3 position;
+
+		Vec2 uv;
+
+		int boneIDs[4] = { 0, 0, 0, 0 };
+		float boneWeights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	public:
+		SkinnedVertex(Vec3 _position, Vec3 _normal, Color _color, Vec2 _uv, const float _boneWeights[4], const int _boneIDs[4])
+			: position(_position), normal(_normal), color(_color), uv(_uv)
+		{
+			std::copy(_boneWeights, _boneWeights + 4, boneWeights);
+			std::copy(_boneIDs, _boneIDs + 4, boneIDs);
+		}
+
+		SkinnedVertex()
+			: position(Vec3(0, 0, 0)), normal(Vec3(0, 0, 0)), color(Color(0, 0, 0, 0)), uv(Vec2(0, 0))
+		{}
+
+
+
+		void AddBoneData(int boneID, float weight) {
+			for (int i = 0; i < 4; i++) {
+				if (boneWeights[i] == 0.0f) {
+					boneIDs[i] = boneID;
+					boneWeights[i] = weight;
+					return;
+				}
+			}
+		}
 	};

@@ -77,6 +77,7 @@ public:
 
 	ID3DBlob* SetPSAndVS(const wchar_t* psName, const wchar_t* vsName, ID3D11Device* _device, ID3D11DeviceContext* _deviceContext);
 
+
 };
 
 class D3DGraphics
@@ -116,7 +117,9 @@ public:
 
 	void Render3DTriangles(std::vector<ColorVertex> vertices, std::vector<unsigned short> indices, Vec3 position, Rotation rotation, Camera camera, HWND hWnd);
 
-	void RenderModel(Model model, Transform transform, Camera camera, ModelImporter* importer, HWND hWnd);
+	void RenderModel(Model model, Transform transform, Camera camera, HWND hWnd);
+
+	void RenderSkinnedModel(SkinnedModel model, Transform transform, Camera camera, HWND hWnd);
 
 
 
@@ -134,6 +137,15 @@ public:
 
 	void ShowText(Textbox text); //loops through characters and calls DrawTextRect()
 
+	DirectX::XMMATRIX ConvertMatrixToDirectX(const glm::mat4& glmMatrix)
+	{
+		return DirectX::XMMATRIX(
+			glmMatrix[0][0], glmMatrix[0][1], glmMatrix[0][2], glmMatrix[0][3],
+			glmMatrix[1][0], glmMatrix[1][1], glmMatrix[1][2], glmMatrix[1][3],
+			glmMatrix[2][0], glmMatrix[2][1], glmMatrix[2][2], glmMatrix[2][3],
+			glmMatrix[3][0], glmMatrix[3][1], glmMatrix[3][2], glmMatrix[3][3]
+		);
+	}
 
 public:
 	ID3D11Device* device = nullptr;
@@ -153,7 +165,7 @@ public:
 
 	D3DRenderer* renderer;
 
-	int msaaSamples = 8;
+	int msaaSamples = 4;
 };
 
 

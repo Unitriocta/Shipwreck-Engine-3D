@@ -92,7 +92,8 @@ namespace EngineInstance {
 
 	extern NetworkManager networkManager;
 
-	extern Camera camera;
+	extern Container cameraContainer;
+	extern Camera* camera;
 
 	extern ModelImporter modelImporter;
 

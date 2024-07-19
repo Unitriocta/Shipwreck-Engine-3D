@@ -152,5 +152,11 @@ public:
 	void updateGlobalScale() {
 
 	}
+
+private:
+	void onVec3Change();
+	void onQuatChange();
+
+	friend class TransformVec3;
 	//Container* container;
 };

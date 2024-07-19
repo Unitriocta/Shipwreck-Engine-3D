@@ -111,7 +111,7 @@
       <AdditionalIncludeDirectories>D:\Shipwreck Engine 3D\imgui docking;D:\Shipwreck Engine 3D\imgui docking\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>NotSet</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -139,6 +139,7 @@
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(ProjectDir)%(Filename).cso</ObjectFileOutput>
+      <ShaderModel>5.0</ShaderModel>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -166,6 +167,7 @@
     <ClCompile Include="ShipwreckEngine.cpp" />
     <ClCompile Include="ShipwreckUI.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="SkinnedModel.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="Sprites.cpp" />
     <ClCompile Include="StartupGame.cpp" />
@@ -204,6 +206,7 @@
     <ClInclude Include="Scripts.h" />
     <ClInclude Include="ShipwreckEngine.h" />
     <ClInclude Include="ShipwreckUI.h" />
+    <ClInclude Include="SkinnedModel.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="Sprites.h" />
     <ClInclude Include="StartEngine.h" />
@@ -226,6 +229,9 @@
     <Image Include="icon2.ico" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="3DSkinnedTexturedVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="3DTexturedPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -267,7 +273,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="VertexShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
@@ -291,6 +296,10 @@
   <ItemGroup>
     <None Include="3DGLShader.frag" />
     <None Include="3DGLShader.vert" />
+    <FxCompile Include="3DSkinnedTexturedPS.hlsl">
+      <FileType>Document</FileType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <None Include="GLPS.frag" />
     <None Include="GLVS.vert" />
   </ItemGroup>

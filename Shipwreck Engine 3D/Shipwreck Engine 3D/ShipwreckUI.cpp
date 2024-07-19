@@ -776,7 +776,7 @@ void D3DGraphics::Render3DTriangles(std::vector<ColorVertex> vertices, std::vect
 }
 
 
-void D3DGraphics::RenderModel(Model model, Transform transform, Camera camera, ModelImporter* importer, HWND hWnd) {
+void D3DGraphics::RenderModel(Model model, Transform transform, Camera camera, HWND hWnd) {
 
 	int indexSize = model.indices.size() * sizeof(unsigned int);
 	int vertSize = model.vertices.size() * sizeof(TexturedVertex);
@@ -842,6 +842,107 @@ void D3DGraphics::RenderModel(Model model, Transform transform, Camera camera, M
 	deviceContext->DrawIndexed(std::size(model.indices), 0, 0u);
 }
 
+
+void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Camera camera, HWND hWnd) {
+
+	int indexSize = model.indices.size() * sizeof(unsigned int);
+	int vertSize = model.vertices.size() * sizeof(SkinnedVertex);
+	int vertCount = model.vertices.size();
+
+	const UINT stride = sizeof(SkinnedVertex);
+	const UINT offset = 0u;
+
+
+
+	renderer->AddTransparency(device, deviceContext);
+
+
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = std::data(model.vertices); //model.vertices
+
+	renderer->SetVertexBuffer(vertSize, stride, offset, sd, device, deviceContext);
+
+
+	D3D11_SUBRESOURCE_DATA indexSd = {};
+	indexSd.pSysMem = std::data(model.indices);
+
+	renderer->SetIndexBuffer(indexSize, indexSd, device, deviceContext);
+
+
+	renderer->SetConstantBuffers(false, camera, &transform, device, deviceContext);
+
+
+
+	struct BoneBuffer {
+		DirectX::XMMATRIX boneTransforms[100];
+	};
+	
+
+	BoneBuffer boneCBuffer;
+
+	for (auto& pair : model.boneInfoMap) {
+		const BoneInfo& boneInfo = pair.second;
+		boneCBuffer.boneTransforms[boneInfo.boneKey] = ConvertMatrixToDirectX(boneInfo.finalTransformation);
+	}
+
+	D3D11_BUFFER_DESC boneBufferDesc = {};
+	boneBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	boneBufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	boneBufferDesc.CPUAccessFlags = 0;
+	boneBufferDesc.MiscFlags = 0u;
+	boneBufferDesc.ByteWidth = sizeof(BoneBuffer);
+	boneBufferDesc.StructureByteStride = 0u;
+
+	D3D11_SUBRESOURCE_DATA boneSd = {};
+	boneSd.pSysMem = &boneCBuffer;
+
+	ID3D11Buffer* boneBuffer;
+	HRESULT result = device->CreateBuffer(&boneBufferDesc, &boneSd, &boneBuffer);
+	if (FAILED(result)) {
+	}
+
+	deviceContext->VSSetConstantBuffers(1u, 1u, &boneBuffer);
+
+	boneBuffer->Release();
+
+
+
+
+
+	renderer->SetTextures(&model.textures, device, deviceContext);
+
+
+	ID3DBlob* blob = renderer->SetPSAndVS(L"3DSkinnedTexturedPS.cso", L"3DSkinnedTexturedVS.cso", device, deviceContext);
+
+
+
+
+	ID3D11InputLayout* inputLayout;
+
+	const D3D11_INPUT_ELEMENT_DESC ied[] = {
+	{"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, offsetof(SkinnedVertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	{"Normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(SkinnedVertex, normal), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(SkinnedVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	{"UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(SkinnedVertex, uv), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	{"BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offsetof(SkinnedVertex, boneIDs), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	{"BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(SkinnedVertex, boneWeights), D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+	device->CreateInputLayout(ied, (UINT)std::size(ied), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout);
+	blob->Release();
+
+	deviceContext->IASetInputLayout(inputLayout);
+	inputLayout->Release();
+
+
+	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
+
+	renderer->SetViewports(hWnd, device, deviceContext);
+
+
+	deviceContext->DrawIndexed(std::size(model.indices), 0, 0u);
+}
 
 /*
 		Start of Official UI Functions:
@@ -914,103 +1015,6 @@ void D3DGraphics::ShowText(Textbox text) {
 
 		FT_Done_Glyph(text.glyphs[i].glyph);
 	}
-	//FT_UInt prevGlyph;
-
-	//FT_Vector kerning;
-
-
-	//FT_Vector pen;
-	//pen.x = text.textPos.x/*300 * 64*/;
-	//pen.y = text.textPos.y/*(480 - 200) * 64*/;
-
-
-
-	//RECT rect;
-
-	//GetWindowRect(text.hWnd, &rect);
-
-
-	//int winWidth = (rect.right - rect.left);
-	//int winHeight = (rect.bottom - rect.top);
-
-
-
-
-
-	//FT_Matrix matrix;
-	//float angle = (0.0f / 360) * 3.14159 * 2;
-
-	//matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
-	//matrix.xy = (FT_Fixed)(-sin(angle) * 0x10000L);
-	//matrix.yx = (FT_Fixed)(sin(angle) * 0x10000L);
-	//matrix.yy = (FT_Fixed)(cos(angle) * 0x10000L);
-
-	//for (int i = 0; i < strlen(text.textToLoad); i++) {
-
-	//	//FT_Set_Transform(fontManager->fontFace.face, &matrix, &pen);
-
-
-	//	FT_GlyphSlot slot = text.fontManager->LoadCharacter(text.textToLoad[i])->glyph;
-	//	FT_Bitmap* textBitmap = &slot->bitmap;
-
-	//	//row increments:
-	//	if (pen.x > text.textPos.x + text.textRect.x) {
-	//		pen.x = text.textPos.x;
-	//		pen.y += (FT_UInt)(slot->face->height * 1.15f) >> 6/*55*/;
-	//	}
-
-	//	if (text.textToLoad[i] == ' ') {
-	//		pen.x += slot->face->glyph->metrics.horiAdvance / 700;
-	//	}
-	//	else {
-	//		/*if (i >= 1 && FT_HAS_KERNING(slot->face)) {
-	//			FT_Get_Kerning(slot->face, prevGlyph, slot->glyph_index, FT_KERNING_DEFAULT, &kerning);
-	//			pen.x += kerning.x / 620;
-	//		}*/
-
-
-
-	//		float advance = (slot->advance.x / 5) >> 6;
-
-	//		float xOffset = (advance - (textBitmap->width / 9));
-	//		float yOffset = (slot->face->bbox.yMax) - (slot->face->glyph->metrics.horiBearingY) - (slot->face->glyph->metrics.vertBearingY);
-
-
-
-	//		float height = slot->face->height;
-	//		float letHeight = textBitmap->rows / height;
-
-	//		Vec2 letPos = Vec2(pen.x + xOffset, pen.y + yOffset / 330);
-
-	//		Vec2 letPosConverted = Vec2(
-	//			(/*To make it centered: */  ( (winWidth / 2) + letPos.x - (winWidth / 2)) / (winWidth / 2)), // + 1 and - 1 make it centered>>
-	//			-(/*To make it centered: */ ( (winHeight / 2) + letPos.y - (winHeight / 2)) / (winHeight / 2)) );
-	//		//WIDTH: (coord + 1) * (windowWidth / 2), HEIGHT: abs((coord - 1) * (windowWidth / 2))
-
-
-	//		DrawTextRect(
-	//			Vec2(((float)textBitmap->width / textBitmap->rows) * letHeight, /*1 */ letHeight), //box rect //Fix size problem
-	//			letPosConverted, //position of letter
-	//			textBitmap,
-	//			text.hWnd);
-
-
-
-
-
-	//		LPARAM lparam = height;
-	//		WPARAM wparam = letHeight * 1000;
-	//		//SendMessageA(text.hWnd, Msgbox, wparam, lparam);
-
-
-	//		
-	//		prevGlyph = slot->glyph_index;
-
-
-	//		pen.x += advance;
-	//		pen.y += slot->advance.y;
-	//	}
-	//}
 }
 
 
@@ -1379,7 +1383,7 @@ ID3DBlob* D3DRenderer::SetPSAndVS(const wchar_t* psName, const wchar_t* vsName, 
 
 
 	ID3D11VertexShader* vertexShader;
-	D3DReadFileToBlob(L"3DTexturedVS.cso", &blob);
+	D3DReadFileToBlob(vsName, &blob);
 	device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 
 	deviceContext->VSSetShader(vertexShader, nullptr, 0u);

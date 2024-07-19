@@ -39,7 +39,8 @@ namespace EngineInstance {
 
     NetworkManager networkManager;
 
-    Camera camera;
+    Container cameraContainer;
+    Camera* camera = &cameraContainer.camera;
 
     ModelImporter modelImporter;
 
@@ -251,8 +252,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         LPARAM lp = 1000;
         SendMessageA(hWnd, Msgbox, wp, lp);
     }
-
-
 
     input.mouse = &startEng.mouse;
     input.keyboard = &startEng.keyboard;
@@ -473,15 +472,20 @@ void StartEngine::RenderFrame() {
 
 
 
-    camera.transform.update();
+    /*camera.transform.update();
     camera.transform.updateGlobalProperties();
 
 
     for (int i = 0; i < containers.size(); i++) {
         containers[i]->transform.updateQuaternion();
         containers[i]->transform.update();
+    }*/
+    camera->transform.update();
+    camera->transform.updateGlobalProperties();
+    for (int i = 0; i < containers.size(); i++) {
+        containers[i]->transform.updateQuaternion();
+        containers[i]->transform.update();
     }
-
 
     for (int i = 0; i < containers.size(); i++) {
         for (int j = 0; j < containers[i]->scripts.size(); j++) {
@@ -546,15 +550,20 @@ void StartEngine::RenderFrame() {
 
         for (int i = 0; i < containers.size(); i++) {
             for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
-                D3DGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, camera, &modelImporter, hWnd);
+                D3DGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, *camera, hWnd);
             }
         }
 
+        for (int i = 0; i < containers.size(); i++) {
+            for (int j = 0; j < containers[i]->models.skinnedModelList.size(); j++) {
+                D3DGfx().RenderSkinnedModel(containers[i]->models.skinnedModelList[j], containers[i]->transform, *camera, hWnd);
+            }
+        }
 
         for (int i = 0; i < containers.size(); i++) {
             if (containers[i]->sprites.sprites.size() > 0) {
                 for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
-                    D3DGfx().DrawSprite(camera,
+                    D3DGfx().DrawSprite(*camera,
                         Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f),
                         Vec2(1.0f, 1.0f),
                         &containers[i]->sprites.sprites[k]->texture,
@@ -650,7 +659,7 @@ void StartEngine::RenderFrame() {
 
         for (int i = 0; i < containers.size(); i++) {
             for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
-                GLGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, &camera, window);
+                GLGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, camera, window);
             }
         }
 

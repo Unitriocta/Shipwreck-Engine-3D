@@ -12,7 +12,7 @@ bool isForce = false;
 
 //float speedMultiplier = 500000.0f;
 //float speedMultiplier = 30.1f;
-float speedMultiplier = 20.4f;
+float speedMultiplier = 1.4f;
 
 const float sensitivity = 0.1f;
 
@@ -74,20 +74,15 @@ void Player::Update(float deltaTime, Container* container) {
 
 		camTransform.quaternionRotation = glm::quat(glm::radians(currentEulerAngles));
 
-		camera.transform.rotation = camTransform.rotation;
-		camera.transform.quaternionRotation = camTransform.quaternionRotation;
+		camera->transform.rotation = camTransform.rotation;
+		camera->transform.quaternionRotation = camTransform.quaternionRotation;
 
 		player.transform.rotation.y = currentEulerAngles.y;
 
 
-		camera.transform.updateQuaternion();
-		camera.transform.update();
-		
-		player.transform.updateQuaternion();
-		player.transform.update();
 	}
 
-	camera.transform.position = player.transform.position;
+	camera->transform.position = player.transform.position;
 
 
 	glm::vec2 forwardVec3 = glm::vec2(player.transform.direction.x, player.transform.direction.z);

@@ -7,3 +7,9 @@ To-Do List
 3. 3D Animation... (somehow we'll do it)
 
 4. GAME PROGRESS!!!
+
+
+
+Later (After FPS Finished)
+
+1. Change 3DTexturedVS skinned mesh properties to none and separate it to a different hlsl

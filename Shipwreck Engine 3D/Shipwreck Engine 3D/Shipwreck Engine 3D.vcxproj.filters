@@ -19,33 +19,6 @@
     <Filter Include="Engine Code\Objects">
       <UniqueIdentifier>{33455f58-d1bb-4dba-ba00-5814208bb81a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine Code\Rendering">
-      <UniqueIdentifier>{7e42c7fe-3556-4407-924d-2325748a5b9d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders">
-      <UniqueIdentifier>{30acea8c-cd82-4b2b-854c-e43f82d08859}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\HLSL">
-      <UniqueIdentifier>{3306a5b3-32e6-4a03-8df7-4c4ce1d297ff}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\HLSL\2D Color Shaders">
-      <UniqueIdentifier>{19a201fa-c703-47e7-9c9b-3d50f2c467fc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\HLSL\2D Texture Shaders">
-      <UniqueIdentifier>{575e5df5-4641-4a8a-87bc-3d117ae02f92}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\HLSL\3D Shaders">
-      <UniqueIdentifier>{d0f3676b-be52-40bc-9d37-63d6cbecee4d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\GL">
-      <UniqueIdentifier>{adf4b71b-389a-4925-a355-b2fbdccd3122}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\GL\Default 2D Color Shader">
-      <UniqueIdentifier>{deec5d62-9d96-4b69-bd5b-c96eb064e3b5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine Code\Rendering\Shaders\GL\3D Shaders">
-      <UniqueIdentifier>{40252e01-0048-4b04-9217-f334114ec27f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine Code\Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -86,6 +59,33 @@
     <Filter Include="Game\Startup Scripts">
       <UniqueIdentifier>{60eecd17-f7c4-4562-ac1f-395a2c90d2d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Code\Rendering">
+      <UniqueIdentifier>{7e42c7fe-3556-4407-924d-2325748a5b9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders">
+      <UniqueIdentifier>{30acea8c-cd82-4b2b-854c-e43f82d08859}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\HLSL">
+      <UniqueIdentifier>{3306a5b3-32e6-4a03-8df7-4c4ce1d297ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\HLSL\2D Color Shaders">
+      <UniqueIdentifier>{19a201fa-c703-47e7-9c9b-3d50f2c467fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\HLSL\2D Texture Shaders">
+      <UniqueIdentifier>{575e5df5-4641-4a8a-87bc-3d117ae02f92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\HLSL\3D Shaders">
+      <UniqueIdentifier>{d0f3676b-be52-40bc-9d37-63d6cbecee4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\GL">
+      <UniqueIdentifier>{adf4b71b-389a-4925-a355-b2fbdccd3122}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\GL\Default 2D Color Shader">
+      <UniqueIdentifier>{deec5d62-9d96-4b69-bd5b-c96eb064e3b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Code\Rendering\Shaders\GL\3D Shaders">
+      <UniqueIdentifier>{40252e01-0048-4b04-9217-f334114ec27f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StartEngine.cpp">
@@ -114,9 +114,6 @@
     </ClCompile>
     <ClCompile Include="UITypes.cpp">
       <Filter>Engine Code\UI Resources\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>Engine Code\3D</Filter>
     </ClCompile>
     <ClCompile Include="ModelImporter.cpp">
       <Filter>Engine Code\3D</Filter>
@@ -191,6 +188,12 @@
     <ClCompile Include="GameScript.cpp">
       <Filter>Engine Code\Objects</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Engine Code\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedModel.cpp">
+      <Filter>Engine Code\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StartEngine.h">
@@ -225,9 +228,6 @@
     </ClInclude>
     <ClInclude Include="UITypes.h">
       <Filter>Engine Code\UI Resources\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>Engine Code\3D</Filter>
     </ClInclude>
     <ClInclude Include="ModelImporter.h">
       <Filter>Engine Code\3D</Filter>
@@ -305,6 +305,12 @@
     <ClInclude Include="GameScript.h">
       <Filter>Engine Code\Objects</Filter>
     </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Engine Code\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedModel.h">
+      <Filter>Engine Code\Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico">
@@ -343,6 +349,12 @@
       <Filter>Engine Code\Rendering\Shaders\HLSL\3D Shaders</Filter>
     </FxCompile>
     <FxCompile Include="3DTexturedVS.hlsl">
+      <Filter>Engine Code\Rendering\Shaders\HLSL\3D Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="3DSkinnedTexturedVS.hlsl">
+      <Filter>Engine Code\Rendering\Shaders\HLSL\3D Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="3DSkinnedTexturedPS.hlsl">
       <Filter>Engine Code\Rendering\Shaders\HLSL\3D Shaders</Filter>
     </FxCompile>
   </ItemGroup>

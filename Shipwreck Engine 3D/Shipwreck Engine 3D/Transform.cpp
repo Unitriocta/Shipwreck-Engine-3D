@@ -61,22 +61,39 @@ void Transform::updateGlobalProperties() {
 
 
 
+void Transform::onVec3Change() {
+
+	updateQuaternion();
+	updateGlobalProperties();
+	update();
+	//container->rigidbody.SetTransform(this);
+
+}
+
+
+void Transform::onQuatChange() {
+
+	updateEuler();
+	updateGlobalProperties();
+	update();
+	//container->rigidbody.SetTransform(this);
+
+}
+
 
 
 TransformVec3& TransformVec3::operator=(const Vec3 other) {
 	x = other.x;
 	y = other.y;
 	z = other.z;
-	//transform->updateGlobalProperties();
-	//transform->container->rigidbody.SetTransform(transform);
+	transform->onVec3Change();
 	return *this;
 }
 TransformVec3& TransformVec3::operator+=(const Vec3 other) {
 	x += other.x;
 	y += other.y;
 	z += other.z;
-	//transform->updateGlobalProperties();
-	//transform->container->rigidbody.SetTransform(transform);
+	transform->onVec3Change();
 	return *this;
 }
 TransformVec3& TransformVec3::operator+(const Vec3 other) {
@@ -87,8 +104,7 @@ TransformVec3& TransformVec3::operator-=(const Vec3 other) {
 	x -= other.x;
 	y -= other.y;
 	z -= other.z;
-	//transform->updateGlobalProperties();
-	//transform->container->rigidbody.SetTransform(transform);
+	transform->onVec3Change();
 	return *this;
 }
 TransformVec3& TransformVec3::operator-(const Vec3 other) {
@@ -105,20 +121,18 @@ TransformVec3& TransformVec3::operator*=(float other) {
 	x *= other;
 	y *= other;
 	z *= other;
-	//transform->updateGlobalProperties();
-	//transform->container->rigidbody.SetTransform(transform);
+	transform->onVec3Change();
 	return *this;
 }
 TransformVec3& TransformVec3::operator*=(Vec3 other) {
 	x *= other.x;
 	y *= other.y;
 	z *= other.z;
-	//transform->updateGlobalProperties();
+	transform->onVec3Change();
 	/*if (transform->container->rigidbody.rbDynamic != nullptr && transform->container->rigidbody.rbStatic != nullptr && transform->container->rigidbody.rb2D != nullptr) {
 
 		//transform->container->rigidbody.SetTransform(transform);
 	}*/
-	//transform->container->rigidbody.SetTransform(transform);
 
 	return *this;
 }
