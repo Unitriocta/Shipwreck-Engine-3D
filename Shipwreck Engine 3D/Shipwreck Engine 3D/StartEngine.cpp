@@ -489,7 +489,7 @@ void StartEngine::RenderFrame() {
 
     for (int i = 0; i < containers.size(); i++) {
         for (int j = 0; j < containers[i]->scripts.size(); j++) {
-            containers[i]->scripts[j]->Update(timeManager._time, containers[i]);
+            containers[i]->scripts[j]->Update(timeManager.GetTime(), containers[i]);
         }
     }
 

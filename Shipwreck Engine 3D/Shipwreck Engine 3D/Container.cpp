@@ -17,6 +17,9 @@ Container::Container() :
 	transform.container = this;
 
 	startEng.containers.push_back(this);
+
+
+	importer = new Assimp::Importer();
 }
 
 
@@ -24,9 +27,9 @@ Container::Container() :
 
 void Container::ImportModel(const char* filename) {
 
-	Assimp::Importer importer;
+	//static Assimp::Importer importer; // moving this to Container would fix it, then it allocates an unneccessary amount of data (for future reference to optomize it)
 
-	const aiScene* scene = importer.ReadFile(filename,
+	const aiScene* scene = importer->ReadFile(filename,
 		aiProcess_Triangulate |
 		aiProcess_GenSmoothNormals |
 		aiProcess_ConvertToLeftHanded |
@@ -37,6 +40,7 @@ void Container::ImportModel(const char* filename) {
 		aiProcess_FixInfacingNormals |
 		aiProcess_SortByPType |
 		aiProcess_FindDegenerates |
+		aiProcess_PopulateArmatureData |
 		aiProcess_FindInvalidData);
 
 
@@ -51,6 +55,7 @@ void Container::ImportModel(const char* filename) {
 		LoadScene(this, scene, filename, nullptr);
 	}
 }
+std::string dataToWrite;
 
 
 void Container::LoadScene(Container* rootContainer, const aiScene* scene, const char* filename, ID3D11Device* device) {
@@ -61,11 +66,10 @@ void Container::LoadScene(Container* rootContainer, const aiScene* scene, const 
 }
 
 void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, std::string& modelDir) {
-	
-	std::string dataToWrite;
+
 	dataToWrite = "Container Name:" + name + "\n";
-	
-	
+
+
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		if (!scene->mMeshes[node->mMeshes[i]]->HasBones()) {
@@ -143,52 +147,71 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 				}
 			}
 
-			models->AddModel(mesh);
+			models->AddModel(&mesh);
 		}
 		else {
 
-			SkinnedModel skinnedMesh;
-			skinnedMesh.rootBoneNode = scene->mRootNode;
-			skinnedMesh.vertices.resize(scene->mMeshes[node->mMeshes[i]]->mNumVertices);
+
+			//Populate parent-child node name relationships
+
+
+
+
+
+			SkinnedModel* skinnedMesh = new SkinnedModel();
+
+
+			std::unordered_set<std::string> boneNames;
+
+			CollectBoneNames(scene, boneNames);
+			aiNode* rootBone = FindRootBoneNode(scene->mRootNode, boneNames);
+
+
+
+			//skinnedMesh->rootBoneNode = rootBone;
+			skinnedMesh->vertices.resize(scene->mMeshes[node->mMeshes[i]]->mNumVertices);
 
 			for (unsigned int j = 0; j < scene->mMeshes[node->mMeshes[i]]->mNumVertices; j++)
 			{
 				if (scene->mMeshes[node->mMeshes[i]]->HasPositions())
 				{
-					skinnedMesh.vertices[j].position.x = scene->mMeshes[node->mMeshes[i]]->mVertices[j].x;
-					skinnedMesh.vertices[j].position.y = scene->mMeshes[node->mMeshes[i]]->mVertices[j].y;
-					skinnedMesh.vertices[j].position.z = scene->mMeshes[node->mMeshes[i]]->mVertices[j].z;
+					skinnedMesh->vertices[j].position.x = scene->mMeshes[node->mMeshes[i]]->mVertices[j].x;
+					skinnedMesh->vertices[j].position.y = scene->mMeshes[node->mMeshes[i]]->mVertices[j].y;
+					skinnedMesh->vertices[j].position.z = scene->mMeshes[node->mMeshes[i]]->mVertices[j].z;
 				}
 
 				if (scene->mMeshes[node->mMeshes[i]]->HasNormals())
 				{
-					skinnedMesh.vertices[j].normal.x = scene->mMeshes[node->mMeshes[i]]->mNormals[j].x;
-					skinnedMesh.vertices[j].normal.y = scene->mMeshes[node->mMeshes[i]]->mNormals[j].y;
-					skinnedMesh.vertices[j].normal.z = scene->mMeshes[node->mMeshes[i]]->mNormals[j].z;
+					skinnedMesh->vertices[j].normal.x = scene->mMeshes[node->mMeshes[i]]->mNormals[j].x;
+					skinnedMesh->vertices[j].normal.y = scene->mMeshes[node->mMeshes[i]]->mNormals[j].y;
+					skinnedMesh->vertices[j].normal.z = scene->mMeshes[node->mMeshes[i]]->mNormals[j].z;
 				}
 				if (scene->mMeshes[node->mMeshes[i]]->HasTextureCoords(0)) {
-					skinnedMesh.vertices[j].uv.x = scene->mMeshes[node->mMeshes[i]]->mTextureCoords[0][j].x;
-					skinnedMesh.vertices[j].uv.y = scene->mMeshes[node->mMeshes[i]]->mTextureCoords[0][j].y;
+					skinnedMesh->vertices[j].uv.x = scene->mMeshes[node->mMeshes[i]]->mTextureCoords[0][j].x;
+					skinnedMesh->vertices[j].uv.y = scene->mMeshes[node->mMeshes[i]]->mTextureCoords[0][j].y;
 				}
 			}
 
-			
+
 			dataToWrite += "\nBoneData:";
 			dataToWrite += "\nNumBones: ";
 			dataToWrite += std::to_string(scene->mMeshes[node->mMeshes[i]]->mNumBones);
 			dataToWrite += "\n";
 
 			for (unsigned int k = 0; k < scene->mMeshes[node->mMeshes[i]]->mNumBones; k++) {
-				
+
 				unsigned int boneIndex = 0;
 				std::string boneName = scene->mMeshes[node->mMeshes[i]]->mBones[k]->mName.C_Str();
-				if (skinnedMesh.boneInfoMap.find(boneName) == skinnedMesh.boneInfoMap.end()) {
-					boneIndex = skinnedMesh.boneInfoMap.size();
+				if (skinnedMesh->boneInfoMap.find(boneName) == skinnedMesh->boneInfoMap.end()) {
+					boneIndex = skinnedMesh->boneInfoMap.size();
 					BoneInfo bi;
 					//bi.offsetMatrix = glm::make_mat4(&scene->mMeshes[node->mMeshes[i]]->mBones[k]->mOffsetMatrix.a1);
 					bi.offsetMatrix = AssimpMatToGlmMat(scene->mMeshes[node->mMeshes[i]]->mBones[k]->mOffsetMatrix);
 					bi.boneKey = boneIndex;
-					skinnedMesh.boneInfoMap[boneName] = bi;
+					bi.nodeName = scene->mMeshes[node->mMeshes[i]]->mBones[k]->mNode->mName.C_Str();
+
+
+					skinnedMesh->boneInfoMap[boneName] = bi;
 
 
 
@@ -227,18 +250,55 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 
 				}
 				else {
-					boneIndex = std::distance(skinnedMesh.boneInfoMap.begin(), skinnedMesh.boneInfoMap.find(boneName));
+					boneIndex = std::distance(skinnedMesh->boneInfoMap.begin(), skinnedMesh->boneInfoMap.find(boneName));
 				}
-				skinnedMesh.bones.push_back(scene->mMeshes[node->mMeshes[i]]->mBones[k]);
+				skinnedMesh->bones.push_back(scene->mMeshes[node->mMeshes[i]]->mBones[k]);
 
 				const aiBone* bone = scene->mMeshes[node->mMeshes[i]]->mBones[k];
 				for (unsigned int weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++) {
 					const aiVertexWeight& weight = bone->mWeights[weightIndex];
 					unsigned int vertexID = weight.mVertexId;
 					float boneWeight = weight.mWeight;
-					skinnedMesh.vertices[vertexID].AddBoneData(boneIndex, boneWeight);
+					skinnedMesh->vertices[vertexID].AddBoneData(boneIndex, boneWeight);
 				}
 			}
+
+			/*for (auto& curBone : skinnedMesh->boneInfoMap) {
+				if (curBone.second.nodeName == rootBone->mName.C_Str()) {
+					skinnedMesh->rootBone = &curBone.second;
+					break;
+				}
+				for (int i = 0; i < rootBone->mNumChildren; i++) {
+					if (curBone.second.nodeName == rootBone->mChildren[i]->mName.C_Str()) {
+						skinnedMesh->rootBone = &curBone.second;
+						break;
+					}
+				}
+			}*/
+
+			/*BoneInfo* rootBoneInfo = new BoneInfo();
+			rootBoneInfo->nodeName = rootBone->mName.C_Str();
+			rootBoneInfo->offsetMatrix = glm::mat4(0.0f);
+			skinnedMesh->rootBone = rootBoneInfo;*/
+
+			BoneInfo* rootBoneInfo = nullptr;
+
+			for (auto& curBone : skinnedMesh->boneInfoMap) {
+				if (curBone.first == "hand.R") {
+					rootBoneInfo = &curBone.second;
+					skinnedMesh->rootBone = &curBone.second;
+					break;
+				}
+			}
+			for (unsigned int k = 0; k < scene->mMeshes[node->mMeshes[i]]->mNumBones; k++) {
+				
+				if (scene->mMeshes[node->mMeshes[i]]->mBones[i]->mName.C_Str() == rootBoneInfo->nodeName) {
+					rootBone = scene->mMeshes[node->mMeshes[i]]->mBones[i]->mNode;
+				}
+			}
+
+
+			BuildBoneHierarchy(rootBone, skinnedMesh);
 
 			dataToWrite += "\n\n";
 
@@ -250,33 +310,33 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 				std::string fullPathStr;
 
 				if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS) {
-					skinnedMesh.hasDiffuse = true;
+					skinnedMesh->hasDiffuse = true;
 
 					std::string narrowString = path.C_Str();
 					fullPath = fs::path(modelDir) / narrowString;
 					fullPathStr = fullPath.string();
 					std::replace(fullPathStr.begin(), fullPathStr.end(), '\\', '/');
 
-					texLoader.LoadTextureFromFile(startEng.D3DGfx().device, fullPathStr, &skinnedMesh.textures.diffuseTex);
+					texLoader.LoadTextureFromFile(startEng.D3DGfx().device, fullPathStr, &skinnedMesh->textures.diffuseTex);
 				}
 				else {
-					skinnedMesh.hasDiffuse = false;
+					skinnedMesh->hasDiffuse = false;
 				}
 
 
 				if (material->GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS) {
 
-					skinnedMesh.hasSpecular = true;
+					skinnedMesh->hasSpecular = true;
 
 					std::string narrowString = path.C_Str();
 					fullPath = fs::path(modelDir) / narrowString;
 					fullPathStr = fullPath.string();
 					std::replace(fullPathStr.begin(), fullPathStr.end(), '\\', '/');
 
-					texLoader.LoadTextureFromFile(startEng.D3DGfx().device, fullPathStr, &skinnedMesh.textures.specularTex);
+					texLoader.LoadTextureFromFile(startEng.D3DGfx().device, fullPathStr, &skinnedMesh->textures.specularTex);
 				}
 				else {
-					skinnedMesh.hasSpecular = false;
+					skinnedMesh->hasSpecular = false;
 				}
 			}
 
@@ -285,7 +345,7 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 				const struct aiFace* face = &scene->mMeshes[node->mMeshes[i]]->mFaces[m];
 				for (unsigned int k = 0; k < face->mNumIndices; k++)
 				{
-					skinnedMesh.indices.push_back(face->mIndices[k]);
+					skinnedMesh->indices.push_back(face->mIndices[k]);
 				}
 			}
 
@@ -307,44 +367,165 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 
 						unsigned int numPositionKeys = channel->mNumPositionKeys;
 						unsigned int numRotationKeys = channel->mNumRotationKeys;
-						unsigned int numScalingKeys = channel->mNumScalingKeys;
+						unsigned int numScaleKeys = channel->mNumScalingKeys;
 
-						unsigned int numKeys = std::min({ numPositionKeys, numRotationKeys, numScalingKeys });
 
-						for (unsigned int keyframeIndex = 0; keyframeIndex < numKeys; keyframeIndex++) {
+						for (unsigned int keyframeIndex = 0; keyframeIndex < numPositionKeys; keyframeIndex++) {
 							Keyframe keyframe;
 							keyframe.time = channel->mPositionKeys[keyframeIndex].mTime;
-							keyframe.position = glm::vec3(channel->mPositionKeys[keyframeIndex].mValue.x, channel->mPositionKeys[keyframeIndex].mValue.y, channel->mPositionKeys[keyframeIndex].mValue.z);
-							keyframe.rotation = glm::quat(channel->mRotationKeys[keyframeIndex].mValue.w, channel->mRotationKeys[keyframeIndex].mValue.x, channel->mRotationKeys[keyframeIndex].mValue.y, channel->mRotationKeys[keyframeIndex].mValue.z);
-							keyframe.scale = glm::vec3(channel->mScalingKeys[keyframeIndex].mValue.x, channel->mScalingKeys[keyframeIndex].mValue.y, channel->mScalingKeys[keyframeIndex].mValue.z);
+							keyframe.positionData.position = glm::vec3(channel->mPositionKeys[keyframeIndex].mValue.x, channel->mPositionKeys[keyframeIndex].mValue.y, channel->mPositionKeys[keyframeIndex].mValue.z);
+							keyframe.positionData.hasPositionData = true;
 							animChannel.keyframes.push_back(keyframe);
-
-							if ((keyframeIndex == 0 || keyframeIndex == 1) && animIndex == 0 && (channelIndex == 0 || channelIndex == 1)) {
-								dataToWrite += "\nKeyframe " + std::to_string(keyframeIndex) + ": ";
-								dataToWrite += channel->mNodeName.C_Str();
-								dataToWrite += "\nPosition: " + std::to_string(keyframe.position.x) + ", " + std::to_string(keyframe.position.y) + ", " + std::to_string(keyframe.position.z);
-								dataToWrite += "\nRotation: " + std::to_string(keyframe.rotation.w) + ", " + std::to_string(keyframe.rotation.x) + ", " + std::to_string(keyframe.rotation.y) + ", " + std::to_string(keyframe.rotation.z);
-								dataToWrite += "\nScale: " + std::to_string(keyframe.scale.x) + ", " + std::to_string(keyframe.scale.y) + ", " + std::to_string(keyframe.scale.z);
-							}
 						}
+
+						for (unsigned int keyframeIndex = 0; keyframeIndex < numRotationKeys; keyframeIndex++) {
+							Keyframe keyframe;
+							keyframe.time = channel->mRotationKeys[keyframeIndex].mTime;
+							keyframe.rotationData.rotation = glm::quat(channel->mRotationKeys[keyframeIndex].mValue.w, channel->mRotationKeys[keyframeIndex].mValue.x, channel->mRotationKeys[keyframeIndex].mValue.y, channel->mRotationKeys[keyframeIndex].mValue.z);
+							keyframe.rotationData.hasRotationData = true;
+							animChannel.keyframes.push_back(keyframe);
+						}
+
+						for (unsigned int keyframeIndex = 0; keyframeIndex < numScaleKeys; keyframeIndex++) {
+							Keyframe keyframe;
+							keyframe.time = channel->mScalingKeys[keyframeIndex].mTime;
+							keyframe.scaleData.scale = glm::vec3(channel->mScalingKeys[keyframeIndex].mValue.x, channel->mScalingKeys[keyframeIndex].mValue.y, channel->mScalingKeys[keyframeIndex].mValue.z);
+							keyframe.scaleData.hasScaleData = true;
+							animChannel.keyframes.push_back(keyframe);
+						}
+
 
 						animData.channels.push_back(animChannel);
 					}
 
-					skinnedMesh.animations.push_back(animData);
+					
+					
+					//SaveAnimationChannelHierarchy(rootBone, &animData);
+
+					skinnedMesh->animations.push_back(animData);
+
+					dataToWrite += "\n\n";
 				}
-				dataToWrite += "\n\n";
+
+
+				models->AddSkinnedModel(skinnedMesh);
 			}
+		}
+
+		std::string dataPath = "D:/SkinnedMeshData";
+
+		WriteDataToFile(dataPath, dataToWrite);
+	}
+}
 
 
-			models->AddSkinnedModel(skinnedMesh);
+void Container::BuildBoneHierarchy(aiNode* boneNode, SkinnedModel* skinnedModel) {
+
+	if (!boneNode || !skinnedModel) {
+		dataToWrite += "Error: boneNode or skinnedModel is null.";
+		return;
+	}
+
+	BoneInfo* curBoneInfo = nullptr;
+
+	auto it = std::find_if(skinnedModel->boneInfoMap.begin(), skinnedModel->boneInfoMap.end(),
+		[&](const std::pair<std::string, BoneInfo>& bone) {
+			return bone.second.nodeName == boneNode->mName.C_Str();
+		});
+
+	if (it != skinnedModel->boneInfoMap.end()) {
+		curBoneInfo = &it->second;
+	}
+
+	if (!curBoneInfo) {
+		curBoneInfo = skinnedModel->rootBone;
+		if (!curBoneInfo) {
+			dataToWrite += "WTF";
 		}
 	}
-	
-	std::string dataPath = "D:/SkinnedMeshData";
-	
-	WriteDataToFile(dataPath, dataToWrite);
+
+	if (curBoneInfo) {
+		dataToWrite += "\n";
+		dataToWrite += curBoneInfo->nodeName;
+		for (unsigned int i = 0; i < boneNode->mNumChildren; ++i) {
+			aiNode* childNode = boneNode->mChildren[i];
+
+			auto childIt = std::find_if(skinnedModel->boneInfoMap.begin(), skinnedModel->boneInfoMap.end(),
+				[&](const std::pair<std::string, BoneInfo>& bone) {
+					return bone.first == childNode->mName.C_Str();
+				});
+
+			if (childIt != skinnedModel->boneInfoMap.end()) {
+				BoneInfo* childBoneInfo = &childIt->second;
+				curBoneInfo->childBones.push_back(childBoneInfo->nodeName);
+				BuildBoneHierarchy(childNode, skinnedModel);
+			}
+		}
+	}
 }
+
+
+
+void Container::SaveAnimationChannelHierarchy(aiNode* rootBoneNode, AnimationData* animation) {
+	std::map<std::string, aiNode*> nodeMap;
+	BuildNodeMap(rootBoneNode, nodeMap);
+
+	AnimationChannel rootChannel;
+	SaveNodeHierarchy(rootBoneNode, rootChannel, nodeMap);
+
+	animation->channels.push_back(rootChannel);
+}
+
+void Container::BuildNodeMap(aiNode* node, std::map<std::string, aiNode*>& nodeMap) {
+	nodeMap[node->mName.C_Str()] = node;
+	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+		BuildNodeMap(node->mChildren[i], nodeMap);
+	}
+}
+
+void Container::SaveNodeHierarchy(aiNode* node, AnimationChannel& channel, const std::map<std::string, aiNode*>& nodeMap) {
+	channel.nodeName = node->mName.C_Str();
+
+	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+		AnimationChannel childChannel;
+		SaveNodeHierarchy(node->mChildren[i], childChannel, nodeMap);
+		channel.childrenChannels.push_back(new AnimationChannel(childChannel));
+	}
+}
+
+
+void Container::CollectBoneNames(const aiScene* scene, std::unordered_set<std::string>& boneNames) {
+	for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
+		aiMesh* mesh = scene->mMeshes[i];
+
+		for (unsigned int j = 0; j < mesh->mNumBones; ++j) {
+			aiBone* bone = mesh->mBones[j];
+			boneNames.insert(bone->mName.C_Str());
+		}
+	}
+}
+
+aiNode* Container::FindRootBoneNode(aiNode* node, const std::unordered_set<std::string>& boneNames) {
+	if (boneNames.find(node->mName.C_Str()) != boneNames.end()) {
+		bool isRoot = true;
+
+		aiNode* parent = node->mParent;
+		while (parent) {
+			if (boneNames.find(parent->mName.C_Str()) != boneNames.end()) {
+				isRoot = false;
+				break;
+			}
+			parent = parent->mParent;
+		}
+
+		if (isRoot) {
+			return node;
+		}
+	}
+}
+
+
+
 
 void Container::LoadHierarchy(aiNode* node, Container* parentContainer, const aiScene* scene, std::string& modelDir) {
 

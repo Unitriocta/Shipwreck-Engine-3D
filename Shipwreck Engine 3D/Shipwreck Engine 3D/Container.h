@@ -18,6 +18,7 @@ class Sprites;
 class GameScript;
 #include "GameScript.h"
 
+#include <unordered_set>
 
 
 #include <assimp/Importer.hpp>
@@ -59,6 +60,20 @@ private:
 
 	void LoadHierarchy(aiNode* node, Container* parentContainer, const aiScene* scene, std::string& modelDir);
 
+
+	void SaveAnimationChannelHierarchy(aiNode* rootBoneNode, AnimationData* animation);
+	void BuildNodeMap(aiNode* node, std::map<std::string, aiNode*>& nodeMap);
+	void SaveNodeHierarchy(aiNode* node, AnimationChannel& channel, const std::map<std::string, aiNode*>& nodeMap);
+
+
+	void CollectBoneNames(const aiScene* scene, std::unordered_set<std::string>& boneNames);
+
+	aiNode* FindRootBoneNode(aiNode* node, const std::unordered_set<std::string>& boneNames);
+
+
+	void BuildBoneHierarchy(aiNode* boneNode, SkinnedModel* skinnedModel);
+
+
 	glm::mat4 AssimpMatToGlmMat(const aiMatrix4x4& from) {
 		glm::mat4 to;
 		to[0][0] = from.a1; to[0][1] = from.b1; to[0][2] = from.c1; to[0][3] = from.d1;
@@ -68,6 +83,8 @@ private:
 		return to;
 	}
 
+
+	Assimp::Importer* importer;
 
 public:                      //Necessary:
 	std::string name;

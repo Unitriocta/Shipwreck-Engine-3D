@@ -16,12 +16,12 @@ public:
 	modelList(std::vector<Model>())
 	{}
 
-	void AddModel(Model _model) {
-		modelList.push_back(_model);
+	void AddModel(Model* _model) {
+		modelList.push_back(*_model);
 	}
 
-	void AddSkinnedModel(SkinnedModel _model) {
-		skinnedModelList.push_back(_model);
+	void AddSkinnedModel(SkinnedModel* _model) {
+		skinnedModelList.push_back(*_model);
 	}
 
 public:

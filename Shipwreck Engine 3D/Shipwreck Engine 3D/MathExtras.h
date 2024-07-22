@@ -372,5 +372,19 @@ private:
 					return;
 				}
 			}
+
+			int minIndex = 0;
+			for (int j = 0; j < 4; j++) {
+				if (boneWeights[j] < boneWeights[minIndex]) {
+					minIndex = j;
+				}
+			}
+
+			if (weight > boneWeights[minIndex]) {
+
+				boneIDs[minIndex] = boneID;
+				boneWeights[minIndex] = weight;
+				return;
+			}
 		}
 	};

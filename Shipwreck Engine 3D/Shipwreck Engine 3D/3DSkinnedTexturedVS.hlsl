@@ -4,8 +4,8 @@ struct VS_In
     float3 normal : NORMAL;
     float4 color : COLOR;
     float2 uv : UV;
-    float4 weights : BLENDWEIGHT; //BLENDWEIGHT;
-    int4 boneIDs : BLENDINDICES; //BLENDINDICES;
+    int4 boneIDs : BLENDINDICES0; //BLENDINDICES;
+    float4 weights : BLENDWEIGHT0; //BLENDWEIGHT;
 };
 
 struct VS_Out

@@ -925,7 +925,7 @@ void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Ca
 	{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(SkinnedVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0},
 	{"UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(SkinnedVertex, uv), D3D11_INPUT_PER_VERTEX_DATA, 0},
 	{"BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, offsetof(SkinnedVertex, boneIDs), D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(SkinnedVertex, boneWeights), D3D11_INPUT_PER_VERTEX_DATA, 0}
+	{"BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(SkinnedVertex, boneWeights), D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	device->CreateInputLayout(ied, (UINT)std::size(ied), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout);
 	blob->Release();

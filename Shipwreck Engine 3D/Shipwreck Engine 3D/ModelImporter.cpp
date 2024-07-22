@@ -206,7 +206,7 @@ void ModelImporter::StoreModels(Models* models, aiNode* node, const aiScene* sce
 			}
 		}
 
-		models->AddModel(mesh);
+		models->AddModel(&mesh);
 	}
 }
 
