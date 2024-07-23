@@ -48,15 +48,21 @@ VS_Out main(VS_In input)
             skinnedNormal += mul((float3x3) boneTransforms[input.boneIDs[i]], input.normal) * input.weights[i];
         }
     }
+    /*float epsilon = 1e-6;
+    if (length(skinnedPos.xyz) < epsilon)
+    {
+        skinnedPos = float4(input.pos, 1.0f);
+    }*/
     
     skinnedPos.w = 1.0f;
     
     // Apply transformations
-    //vsout.pos = mul(float4(input.pos, 1.0f), transform);
-    vsout.pos = mul(skinnedPos, transform);
+    vsout.pos = mul(float4(input.pos, 1.0f), transform);
+    //vsout.pos = mul(skinnedPos, transform);
     vsout.pos = mul(vsout.pos, camera);
 
-    vsout.normal = normalize(skinnedNormal);
+    //vsout.normal = normalize(skinnedNormal);
+    vsout.normal = normalize(input.normal);
 
     vsout.color = input.color;
 

@@ -231,6 +231,8 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 
 					dataToWrite += "\nBone Name: ";
 					dataToWrite += boneName;
+					dataToWrite += "\nBone Index: ";
+					dataToWrite += std::to_string(boneIndex);
 					dataToWrite += ",";
 					dataToWrite += "\nBone Position: ";
 					dataToWrite += std::to_string(position.x) + ", ";
@@ -252,7 +254,6 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 				else {
 					boneIndex = std::distance(skinnedMesh->boneInfoMap.begin(), skinnedMesh->boneInfoMap.find(boneName));
 				}
-				skinnedMesh->bones.push_back(scene->mMeshes[node->mMeshes[i]]->mBones[k]);
 
 				const aiBone* bone = scene->mMeshes[node->mMeshes[i]]->mBones[k];
 				for (unsigned int weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++) {
@@ -290,10 +291,14 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 					break;
 				}
 			}
-			for (unsigned int k = 0; k < scene->mMeshes[node->mMeshes[i]]->mNumBones; k++) {
-				
-				if (scene->mMeshes[node->mMeshes[i]]->mBones[i]->mName.C_Str() == rootBoneInfo->nodeName) {
-					rootBone = scene->mMeshes[node->mMeshes[i]]->mBones[i]->mNode;
+			
+			if (rootBoneInfo) {
+
+				for (unsigned int k = 0; k < scene->mMeshes[node->mMeshes[i]]->mNumBones; k++) {
+
+					if (scene->mMeshes[node->mMeshes[i]]->mBones[i]->mName.C_Str() == rootBoneInfo->nodeName) {
+						rootBone = scene->mMeshes[node->mMeshes[i]]->mBones[i]->mNode;
+					}
 				}
 			}
 
@@ -392,6 +397,10 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 							keyframe.scaleData.scale = glm::vec3(channel->mScalingKeys[keyframeIndex].mValue.x, channel->mScalingKeys[keyframeIndex].mValue.y, channel->mScalingKeys[keyframeIndex].mValue.z);
 							keyframe.scaleData.hasScaleData = true;
 							animChannel.keyframes.push_back(keyframe);
+							dataToWrite += "\nScaling for " + animChannel.nodeName + ":   ";
+							dataToWrite += std::to_string(keyframe.scaleData.scale.x) + ", ";
+							dataToWrite += std::to_string(keyframe.scaleData.scale.y) + ", ";
+							dataToWrite += std::to_string(keyframe.scaleData.scale.z) + ", ";
 						}
 
 
@@ -412,7 +421,7 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 			}
 		}
 
-		std::string dataPath = "D:/SkinnedMeshData";
+		std::string dataPath = "D:/SkinnedMeshData.txt";
 
 		WriteDataToFile(dataPath, dataToWrite);
 	}

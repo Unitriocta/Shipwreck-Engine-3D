@@ -126,6 +126,6 @@ PS_Out main(VS_Out input) : SV_TARGET
     }
     
     //psout.depth = input.pos.z / input.pos.w;
-    
+    //psout.color = input.color;
     return psout;
 }

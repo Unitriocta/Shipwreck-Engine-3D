@@ -853,36 +853,17 @@ void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Ca
 	const UINT offset = 0u;
 
 
-
-	renderer->AddTransparency(device, deviceContext);
-
-
-	D3D11_SUBRESOURCE_DATA sd = {};
-	sd.pSysMem = std::data(model.vertices); //model.vertices
-
-	renderer->SetVertexBuffer(vertSize, stride, offset, sd, device, deviceContext);
-
-
-	D3D11_SUBRESOURCE_DATA indexSd = {};
-	indexSd.pSysMem = std::data(model.indices);
-
-	renderer->SetIndexBuffer(indexSize, indexSd, device, deviceContext);
-
-
-	renderer->SetConstantBuffers(false, camera, &transform, device, deviceContext);
-
-
-
 	struct BoneBuffer {
 		DirectX::XMMATRIX boneTransforms[100];
 	};
-	
+	glm::mat4 boneTransforms[100];
 
 	BoneBuffer boneCBuffer;
 
 	for (auto& pair : model.boneInfoMap) {
 		const BoneInfo& boneInfo = pair.second;
-		boneCBuffer.boneTransforms[boneInfo.boneKey] = ConvertMatrixToDirectX(boneInfo.finalTransformation);
+		//boneCBuffer.boneTransforms[boneInfo.boneKey] = ConvertMatrixToDirectX(boneInfo.finalTransformation);
+		boneTransforms[boneInfo.boneKey] = boneInfo.finalTransformation;
 	}
 
 	D3D11_BUFFER_DESC boneBufferDesc = {};
@@ -904,6 +885,71 @@ void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Ca
 	deviceContext->VSSetConstantBuffers(1u, 1u, &boneBuffer);
 
 	boneBuffer->Release();
+
+	//Skinning vertice calculations:
+	for (SkinnedVertex& vertex : model.vertices) {
+		glm::mat4 skinMatrix = glm::mat4(0.0f);
+
+		bool hasBoneWeights = false;
+
+		for (int i = 0; i < 4; ++i) {
+			int boneIndex = vertex.boneIDs[i];
+			float weight = vertex.boneWeights[i];
+			if (weight > 0.0f) {
+				hasBoneWeights = true;
+
+				glm::mat4 boneTransform = boneTransforms[boneIndex];
+				skinMatrix += boneTransform * weight;
+			}
+		}
+
+		/*if (!hasBoneWeights) {
+			vertex.boneIDs[0] = model.rootBone->boneKey;
+			vertex.boneWeights[0] = 1.0f;
+
+			glm::mat4 boneTransform = boneTransforms[vertex.boneIDs[0]];
+			skinMatrix += boneTransform * vertex.boneWeights[0];
+		}*/
+
+
+		glm::vec3 newVertexPosition = glm::vec3(skinMatrix * glm::vec4(vertex.position.x, vertex.position.y, vertex.position.z, 1.0f));
+		vertex.position = Vec3(newVertexPosition.x, newVertexPosition.y, newVertexPosition.z);
+		
+		
+		glm::vec3 newVertexNormal = glm::mat3(skinMatrix) * glm::vec3(vertex.normal.x, vertex.normal.y, vertex.normal.z);
+		vertex.normal = Vec3(newVertexNormal.x, newVertexNormal.y, newVertexNormal.z);
+	}
+
+
+
+
+
+
+
+
+
+
+
+	renderer->AddTransparency(device, deviceContext);
+
+
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = std::data(model.vertices); //model.vertices
+
+	renderer->SetVertexBuffer(vertSize, stride, offset, sd, device, deviceContext);
+
+
+	D3D11_SUBRESOURCE_DATA indexSd = {};
+	indexSd.pSysMem = std::data(model.indices);
+
+	renderer->SetIndexBuffer(indexSize, indexSd, device, deviceContext);
+
+
+	renderer->SetConstantBuffers(false, camera, &transform, device, deviceContext);
+
+
+
+	
 
 
 

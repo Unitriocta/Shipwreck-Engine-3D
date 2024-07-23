@@ -365,6 +365,8 @@ private:
 
 
 		void AddBoneData(int boneID, float weight) {
+			
+
 			for (int i = 0; i < 4; i++) {
 				if (boneWeights[i] == 0.0f) {
 					boneIDs[i] = boneID;

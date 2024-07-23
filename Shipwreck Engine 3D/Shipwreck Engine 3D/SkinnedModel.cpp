@@ -51,7 +51,7 @@ void SkinnedModel::UpdateAnimation(float time) {
         THEdata += std::to_string(time);
         THEdata += std::to_string(animationTime);
 
-        ReadNodeAnimation(animationTime, glm::mat4(1.0f), rootBone);  // Start the recursive reading from the root bone node
+        ReadNodeAnimation(animationTime, glm::mat4(1.0f), &boneInfoMap[rootBone->nodeName]);  // Start the recursive reading from the root bone node
 
         if (ReadFromFile(fileSavePath) == "") {
             for (auto& curBone : boneInfoMap) {
@@ -72,6 +72,7 @@ void SkinnedModel::UpdateAnimation(float time) {
                 THEdata += "\nBone Rotation: " + std::to_string(eulerAngles.x) + ", " + std::to_string(eulerAngles.y) + ", " + std::to_string(eulerAngles.z) + ", ";
                 THEdata += "\nBone Scale: " + std::to_string(scale.x) + ", " + std::to_string(scale.y) + ", " + std::to_string(scale.z) + ", ";
             }
+            THEdata += "\nROOTBONENAME: " + rootBone->nodeName + "\n\n";
             PrintNodeChildren(&boneInfoMap[rootBone->nodeName], 0);
             WriteDataToFile(fileSavePath, THEdata);
         }
@@ -96,6 +97,11 @@ void SkinnedModel::ReadNodeAnimation(float animationTime, glm::mat4 parentTransf
     glm::quat rotation = InterpolateRotation(animationTime, *channel);
     glm::vec3 scale = InterpolateScale(animationTime, *channel);
 
+    /*glm::vec3 eulerAngles = glm::eulerAngles(rotation);
+    eulerAngles.z = -eulerAngles.z;
+    rotation = glm::quat(eulerAngles);*/
+
+
     nodeTransformation = ConstructTransformMatrix(position, rotation, scale);
 
 
@@ -114,10 +120,10 @@ void SkinnedModel::ReadNodeAnimation(float animationTime, glm::mat4 parentTransf
 
     glm::decompose(bone->finalTransformation, lscale, lrotation, lposition, skew, perspective);
 
-    glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(lrotation));
+    glm::vec3 leulerAngles = glm::degrees(glm::eulerAngles(lrotation));
 
     THEdata += "\Node Position: " + std::to_string(lposition.x) + ", " + std::to_string(lposition.y) + ", " + std::to_string(lposition.z) + ", ";
-    THEdata += "\Node Rotation: " + std::to_string(eulerAngles.x) + ", " + std::to_string(eulerAngles.y) + ", " + std::to_string(eulerAngles.z) + ", ";
+    THEdata += "\Node Rotation: " + std::to_string(leulerAngles.x) + ", " + std::to_string(leulerAngles.y) + ", " + std::to_string(leulerAngles.z) + ", ";
     THEdata += "\nNode Scale: " + std::to_string(lscale.x) + ", " + std::to_string(lscale.y) + ", " + std::to_string(lscale.z) + ", ";
 
 

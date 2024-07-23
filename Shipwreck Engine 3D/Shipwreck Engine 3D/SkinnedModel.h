@@ -246,7 +246,6 @@ private:
 
 public:
     std::map<std::string, BoneInfo> boneInfoMap;
-    std::vector<aiBone*> bones;
 
     std::vector<SkinnedVertex> vertices;
     std::vector<unsigned int> indices;
