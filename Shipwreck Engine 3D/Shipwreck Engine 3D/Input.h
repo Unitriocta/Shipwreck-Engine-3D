@@ -1,6 +1,7 @@
 #pragma once
 #include "Keyboard.h"
 #include "Mouse.h"
+#include "OpenXRInput.h"
 
 class Input
 {
@@ -13,8 +14,13 @@ public:
 		return mouse->ReadMouse(mouseState);
 	}
 
+	bool GetXRState(XRInputState xrState) {
+		return xrInput->ReadInput(xrState);
+	}
+
 public:
 	Keyboard* keyboard;
 	Mouse* mouse;
+	OpenXRInput* xrInput;
 };
 

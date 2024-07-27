@@ -1,4 +1,7 @@
 #pragma once
+#include <iostream>
+#include <algorithm>
+
 #include <d3d11.h>
 
 #include <dxtex/DirectXTex.h>
@@ -8,6 +11,8 @@
 #include "glm/glm.hpp" //Math
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+
 
 
 //#include "Transform.h"
@@ -336,6 +341,10 @@ private:
 		{}
 	};
 
+
+#define MAX_BONE_WEIGHTS 4
+
+
 	struct SkinnedVertex {
 
 	public:
@@ -364,10 +373,14 @@ private:
 
 
 
+		void NormalizeWeights();
+
+
+
 		void AddBoneData(int boneID, float weight) {
 			
 
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < MAX_BONE_WEIGHTS; i++) {
 				if (boneWeights[i] == 0.0f) {
 					boneIDs[i] = boneID;
 					boneWeights[i] = weight;
@@ -375,8 +388,10 @@ private:
 				}
 			}
 
+			/*
+			exit(53253);
 			int minIndex = 0;
-			for (int j = 0; j < 4; j++) {
+			for (int j = 0; j < MAX_BONE_WEIGHTS; j++) {
 				if (boneWeights[j] < boneWeights[minIndex]) {
 					minIndex = j;
 				}
@@ -387,6 +402,8 @@ private:
 				boneIDs[minIndex] = boneID;
 				boneWeights[minIndex] = weight;
 				return;
-			}
+			}*/
+
+
 		}
 	};

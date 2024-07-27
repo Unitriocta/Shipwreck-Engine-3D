@@ -57,6 +57,8 @@ namespace EngineInstance {
     float defaultWindowWidth = 900; //set to monitor size
     float defaultWindowHeight = 900;
 
+    D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
+
     GLFWwindow* window;
 
     bool exitedProgram = false;
@@ -229,11 +231,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     MyRegisterClass(hInstance);
 
+
     // Perform application initialization:
     if (!InitInstance(hInstance, nCmdShow, Vec2(defaultWindowWidth, defaultWindowHeight)))
     {
         return FALSE;
     }
+
+    if (!startEng.SetupXRInput()) {
+        exit(5325);
+    }
+
 
     startEng.timeManager.StartTime();
 
@@ -253,8 +261,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         SendMessageA(hWnd, Msgbox, wp, lp);
     }
 
+
     input.mouse = &startEng.mouse;
     input.keyboard = &startEng.keyboard;
+    input.xrInput = &startEng.xrInput;
 
 
     for (int i = 0; i < startupScripts.size(); i++) {
@@ -279,20 +289,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
     
-    
-    
+
     //{Transform(0.000000,-4.000000,5.000000,0.025306,0.974694,-0.222105,0.000000,0.000000,0.000000),Rigidbody(f,f),Model("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx"),Name("Ground")},{Transform(0.000000,16.000000,5.000000,0.000000,1.000000,0.000000,0.000000,0.000000,0.000000),Rigidbody(t,f),Model("C:/Users/smsal/OneDrive/Documents/Blender Modules/sphereV2.fbx"),Name("Ball")},{Transform(0.000000,9.997253,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000),Rigidbody(t,t),Name("PlayerSprite")}
     //startEng.LoadEngine();
     //startEng.SaveEngine();
     //startEng.LoadEngine();
 
     
-
    
-
-
-
-
     //Hides mouse and centers it so the delta doesn't skyrocket the moment the loop starts
     if (isD3D) {
         if (!startEng.mouse.mouseShown) {
@@ -311,7 +315,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
 
-    MSG msg;
+    MSG msg = MSG();
 
     /*std::thread renderThread(&StartEngine::RenderFrame, &startEng);
     std::thread inputThread(&StartEngine::HandleInput, &startEng);
@@ -338,6 +342,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (!isD3D) {
             glfwPollEvents();
         }
+
+        startEng.ProcessXRInput();
+
+
+
         //startEng.networkManager.StartRecieveThread(startEng.networkManager);
         UpdateWindowSize();
         
@@ -495,13 +504,9 @@ void StartEngine::RenderFrame() {
 
 
     if (isD3D) {
-        startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
 
 
-        RECT rect;
-        GetWindowRect(hWnd, &rect);
-        int width = (rect.right - rect.left);
-        int height = (rect.bottom - rect.top);
+
 
 
         physics.Simulate();
@@ -515,7 +520,8 @@ void StartEngine::RenderFrame() {
         b2Vec2 pos2D;
         float rot2D;
 
-
+        
+        //Physics rotations:
         for (int i = 0; i < containers.size(); i++) {
             if (containers[i]->rigidbody.rbDynamic != nullptr) {
                 pos = containers[i]->rigidbody.rbDynamic->getGlobalPose().p;
@@ -548,29 +554,114 @@ void StartEngine::RenderFrame() {
         }
 
 
-        for (int i = 0; i < containers.size(); i++) {
-            for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
-                D3DGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, *camera, hWnd);
-            }
-        }
 
-        for (int i = 0; i < containers.size(); i++) {
-            for (int j = 0; j < containers[i]->models.skinnedModelList.size(); j++) {
-                D3DGfx().RenderSkinnedModel(containers[i]->models.skinnedModelList[j], containers[i]->transform, *camera, hWnd);
-            }
-        }
 
-        for (int i = 0; i < containers.size(); i++) {
-            if (containers[i]->sprites.sprites.size() > 0) {
-                for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
-                    D3DGfx().DrawSprite(*camera,
-                        Vec2(containers[i]->transform.position.x / 10.0f, containers[i]->transform.position.y / 10.0f),
-                        Vec2(1.0f, 1.0f),
-                        &containers[i]->sprites.sprites[k]->texture,
-                        hWnd);
-                }
-            }
-        }
+        //OpenXR
+        XrFrameBeginInfo frameBeginInfo = {};
+        frameBeginInfo.type = XR_TYPE_FRAME_BEGIN_INFO;
+        xrBeginFrame(xrSession, &frameBeginInfo);
+
+
+
+        XrSwapchainImageBaseHeader* swapchainImageBaseHeader;
+        uint32_t imageIndex;
+
+        XrSwapchainImageAcquireInfo leftEyeAcquireInfo = { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+        XrSwapchainImageWaitInfo leftEyeWaitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, 0, XR_INFINITE_DURATION };
+
+        xrAcquireSwapchainImage(xrLeftEyeSwapchain, &leftEyeAcquireInfo, &imageIndex);
+        xrWaitSwapchainImage(xrLeftEyeSwapchain, &leftEyeWaitInfo);
+
+
+
+        uint32_t swapchainImageCount;
+        xrEnumerateSwapchainImages(xrLeftEyeSwapchain, 0, &swapchainImageCount, nullptr);
+
+        std::vector<XrSwapchainImageD3D11KHR> swapchainImageData(swapchainImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR });
+
+        xrEnumerateSwapchainImages(xrLeftEyeSwapchain, swapchainImageCount, &swapchainImageCount, reinterpret_cast<XrSwapchainImageBaseHeader*>(swapchainImageData.data()));
+
+        swapchainImages[0] = &swapchainImageData[0];
+        swapchainImages[1] = &swapchainImageData[1];
+
+
+
+
+
+
+
+        ID3D11Texture2D* leftEyeTexture = swapchainImages[0]->texture;
+        ID3D11RenderTargetView* leftEyeRTV = nullptr;
+        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+        rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        rtvDesc.Texture2D.MipSlice = 0;
+        D3DGfx().device->CreateRenderTargetView(leftEyeTexture, &rtvDesc, &leftEyeRTV);
+
+
+
+
+        D3DGfx().deviceContext->OMSetRenderTargets(1, &leftEyeRTV, D3DGfx().depthView);
+
+        RenderScene();
+
+
+
+
+        XrSwapchainImageAcquireInfo rightEyeAcquireInfo = { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+        XrSwapchainImageWaitInfo rightEyeWaitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, 0, XR_INFINITE_DURATION };
+
+        xrAcquireSwapchainImage(xrRightEyeSwapchain, &rightEyeAcquireInfo, &imageIndex);
+        xrWaitSwapchainImage(xrRightEyeSwapchain, &rightEyeWaitInfo);
+
+
+        ID3D11Texture2D* rightEyeTexture = swapchainImages[1]->texture;
+        ID3D11RenderTargetView* rightEyeRTV = nullptr;
+        rtvDesc = {};
+        rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        rtvDesc.Texture2D.MipSlice = 0;
+        D3DGfx().device->CreateRenderTargetView(rightEyeTexture, &rtvDesc, &rightEyeRTV);
+
+
+
+
+        D3DGfx().deviceContext->OMSetRenderTargets(1, &leftEyeRTV, D3DGfx().depthView);
+
+        RenderScene();
+
+
+
+
+        XrTime predictedDisplayTime = GetPredictedDisplayTime();
+
+
+
+        XrCompositionLayerBaseHeader* layers[] = { reinterpret_cast<XrCompositionLayerBaseHeader*>(&projectionLayer) };
+
+
+        XrFrameEndInfo frameEndInfo = {};
+        frameEndInfo.type = XR_TYPE_FRAME_END_INFO;
+        frameEndInfo.displayTime = predictedDisplayTime;
+        frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+        frameEndInfo.layerCount = 2;
+        frameEndInfo.layers = layers;
+
+        xrEndFrame(xrSession, &frameEndInfo);
+
+
+
+
+
+
+
+
+
+        D3DGfx().deviceContext->OMSetRenderTargets(1, &D3DGfx().target, D3DGfx().depthView);
+
+        startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
+
+        RenderScene();
 
         D3DGfx().EndFrame();
     }
@@ -684,8 +775,595 @@ void StartEngine::RenderFrame() {
     }
 }
 
+
+
+void StartEngine::RenderScene() {
+
+    for (int i = 0; i < containers.size(); i++) {
+        for (int j = 0; j < containers[i]->models.modelList.size(); j++) {
+            D3DGfx().RenderModel(containers[i]->models.modelList[j], containers[i]->transform, *camera, hWnd);
+        }
+    }
+
+    for (int i = 0; i < containers.size(); i++) {
+        for (int j = 0; j < containers[i]->models.skinnedModelList.size(); j++) {
+            D3DGfx().RenderSkinnedModel(containers[i]->models.skinnedModelList[j], containers[i]->transform, *camera, hWnd);
+        }
+    }
+
+    //Sprites
+    for (int i = 0; i < containers.size(); i++) {
+        if (containers[i]->sprites.sprites.size() > 0) {
+            for (int k = 0; k < containers[i]->sprites.sprites.size(); k++) {
+                D3DGfx().DrawSprite(*camera,
+                    Vec2(containers[i]->transform.globalPosition.x / 10.0f, containers[i]->transform.globalPosition.y / 10.0f),
+                    Vec2(1.0f, 1.0f),
+                    &containers[i]->sprites.sprites[k]->texture,
+                    hWnd);
+            }
+        }
+    }
+}
+
+
+
+
 void StartEngine::InputThread() {
 
+}
+
+
+
+XrTime StartEngine::GetPredictedDisplayTime() {
+
+    XrFrameState frameState = {};
+    frameState.type = XR_TYPE_FRAME_STATE;
+
+    XrResult result = xrWaitFrame(xrSession, nullptr, &frameState);
+    if (XR_FAILED(result)) {
+        return 0;
+    }
+
+    return frameState.predictedDisplayTime;
+}
+
+
+
+void StartEngine::SetupXRLayers() {
+
+
+
+    XrReferenceSpaceCreateInfo referenceSpaceCreateInfo = {};
+    referenceSpaceCreateInfo.type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO;
+    referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE; // or XR_REFERENCE_SPACE_TYPE_LOCAL
+    referenceSpaceCreateInfo.poseInReferenceSpace.orientation.w = 1.0f;
+    referenceSpaceCreateInfo.poseInReferenceSpace.position = { 0.0f, 0.0f, 0.0f };
+
+    XrSpace referenceSpace;
+    XrResult result = xrCreateReferenceSpace(xrSession, &referenceSpaceCreateInfo, &referenceSpace);
+    if (XR_FAILED(result)) {
+
+    }
+
+
+
+    projectionLayer = {};
+    projectionLayer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION;
+    projectionLayer.layerFlags = 0;
+    projectionLayer.space = referenceSpace;
+
+    // Set up projection views for each eye
+
+
+    float horizontalFovDegrees = 90.0f;
+    float verticalFovDegrees = 90.0f;
+
+    XrFovf fov = {};
+    fov.angleLeft = glm::radians(-horizontalFovDegrees * 0.5f);
+    fov.angleRight = glm::radians(horizontalFovDegrees * 0.5f);
+    fov.angleUp = glm::radians(verticalFovDegrees * 0.5f);
+    fov.angleDown = glm::radians(-verticalFovDegrees * 0.5f);
+
+
+
+
+    
+    XrPosef defaultPose = {};
+    defaultPose.orientation.x = 0.0f;
+    defaultPose.orientation.y = 0.0f;
+    defaultPose.orientation.z = 0.0f;
+    defaultPose.orientation.w = 1.0f;
+    defaultPose.position.x = 0.0f;
+    defaultPose.position.y = 0.0f;
+    defaultPose.position.z = 0.0f;
+
+
+
+
+    projectionViews[0].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+    projectionViews[0].pose = defaultPose;
+    projectionViews[0].fov = fov;
+    projectionViews[0].subImage.swapchain = xrLeftEyeSwapchain;
+    projectionViews[0].subImage.imageArrayIndex = 0;
+    projectionViews[0].subImage.imageRect.offset.x = 0;
+    projectionViews[0].subImage.imageRect.offset.y = 0;
+    projectionViews[0].subImage.imageRect.extent.width = 1344;
+    projectionViews[0].subImage.imageRect.extent.height = 1600;
+
+
+
+    projectionViews[1].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+    projectionViews[1].pose = defaultPose;
+    projectionViews[1].fov = fov;
+    projectionViews[1].subImage.swapchain = xrRightEyeSwapchain;
+    projectionViews[1].subImage.imageArrayIndex = 0;
+    projectionViews[1].subImage.imageRect.offset.x = 0;
+    projectionViews[1].subImage.imageRect.offset.y = 0;
+    projectionViews[1].subImage.imageRect.extent.width = 1344;
+    projectionViews[1].subImage.imageRect.extent.height = 1600;
+
+
+
+    projectionLayer.views = projectionViews;
+    projectionLayer.viewCount = 2;
+}
+
+
+
+
+bool checkExtensionSupport(XrInstance instance) {
+    uint32_t extensionCount = 0;
+    XrResult result = xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr);
+    if (result != XR_SUCCESS) {
+        throw std::runtime_error("Failed to query instance extension count.");
+    }
+
+    std::vector<XrExtensionProperties> extensionProperties(extensionCount, { XR_TYPE_EXTENSION_PROPERTIES });
+    result = xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, extensionProperties.data());
+    if (result != XR_SUCCESS) {
+        throw std::runtime_error("Failed to enumerate instance extensions.");
+    }
+
+    bool extensionFound = false;
+    for (const auto& extension : extensionProperties) {
+        if (strcmp(extension.extensionName, XR_KHR_D3D11_ENABLE_EXTENSION_NAME) == 0) {
+            extensionFound = true;
+            break;
+        }
+    }
+
+    if (!extensionFound) {
+        throw std::runtime_error("Required extension XR_KHR_D3D11_enable is not supported.");
+    }
+
+    return true;
+}
+
+std::string debugInfo = "";
+
+XrResult StringToPath(XrInstance instance, const char* pathStr, XrPath* path) {
+
+    XrResult result = xrStringToPath(instance, pathStr, path);
+    if (result != XR_SUCCESS) {
+        debugInfo += pathStr;
+    }
+
+    return result;
+}
+
+
+#define XR_CURRENT_API_VERSION XR_MAKE_VERSION(1, 0, 28)
+
+bool StartEngine::SetupXRInput() {
+
+    if (!checkExtensionSupport(xrInstance)) {
+        throw std::runtime_error("w");
+    }
+
+    std::string debugInfoPath = "D:/DEBUG_INFO_XR_YAY.txt";
+
+    XrInstanceCreateInfo instanceCreateInfo{ XR_TYPE_INSTANCE_CREATE_INFO };
+    strcpy_s(instanceCreateInfo.applicationInfo.applicationName, "Shipwreck 3D");
+    instanceCreateInfo.applicationInfo.applicationVersion = 1;
+    strcpy_s(instanceCreateInfo.applicationInfo.engineName, "Shipwreck Engine 3D");
+    instanceCreateInfo.applicationInfo.engineVersion = 1;
+    instanceCreateInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
+
+    uint32_t extensionCount = 1; // Count of extensions you want to enable
+    const char* extensions[] = { XR_KHR_D3D11_ENABLE_EXTENSION_NAME, "XR_EXT_hand_tracking"};
+
+    instanceCreateInfo.enabledExtensionCount = extensionCount;
+    instanceCreateInfo.enabledExtensionNames = extensions;
+
+
+
+    XrResult result = xrCreateInstance(&instanceCreateInfo, &xrInstance);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("xrCreateInstance(&instanceCreateInfo, &xrInstance)");
+        return false;
+    }
+
+    XrSystemGetInfo systemInfo{ XR_TYPE_SYSTEM_GET_INFO };
+    systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+
+    XrSystemId systemId;
+    result = xrGetSystem(xrInstance, &systemInfo, &systemId);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("w");
+        return false;
+    }
+    
+    if (isD3D) {
+        PFN_xrGetD3D11GraphicsRequirementsKHR xrGetD3D11GraphicsRequirementsKHR = nullptr;
+        xrGetInstanceProcAddr(xrInstance, "xrGetD3D11GraphicsRequirementsKHR", (PFN_xrVoidFunction*)&xrGetD3D11GraphicsRequirementsKHR);
+
+        XrGraphicsRequirementsD3D11KHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR };
+
+        result = xrGetD3D11GraphicsRequirementsKHR(xrInstance, systemId, &graphicsRequirements);
+        if (XR_FAILED(result)) {
+            throw std::runtime_error("Failed to get D3D11 graphics requirements.");
+            return false;
+        }
+        debugInfo += std::to_string(graphicsRequirements.minFeatureLevel);
+
+        featureLevel = graphicsRequirements.minFeatureLevel;
+
+        XrGraphicsBindingD3D11KHR d3d11Binding{ XR_TYPE_GRAPHICS_BINDING_D3D11_KHR };
+        d3d11Binding.device = startEng.D3DGfx().device;
+        
+        XrSessionCreateInfo sessionCreateInfo{ XR_TYPE_SESSION_CREATE_INFO };
+        sessionCreateInfo.next = &d3d11Binding;
+        sessionCreateInfo.systemId = systemId;
+
+        result = xrCreateSession(xrInstance, &sessionCreateInfo, &xrSession);
+        if (XR_FAILED(result)) {
+            throw std::runtime_error("result = xrCreateSession(xrInstance, &sessionCreateInfo, &xrSession);");
+            return false;
+        }
+    }
+    else {
+        
+        XrSessionCreateInfo sessionCreateInfo{ XR_TYPE_SESSION_CREATE_INFO };
+        sessionCreateInfo.next = nullptr;
+        sessionCreateInfo.systemId = systemId;
+
+        result = xrCreateSession(xrInstance, &sessionCreateInfo, &xrSession);
+        if (XR_FAILED(result)) {
+            throw std::runtime_error("w");
+            return false;
+        }
+    }
+
+
+    XrActionSetCreateInfo actionSetCreateInfo{ XR_TYPE_ACTION_SET_CREATE_INFO };
+    strcpy_s(actionSetCreateInfo.actionSetName, "input");
+    strcpy_s(actionSetCreateInfo.localizedActionSetName, "Input");
+    result = xrCreateActionSet(xrInstance, &actionSetCreateInfo, &actionSet);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to create action set.");
+    }
+
+    /*PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT = nullptr;
+    xrGetInstanceProcAddr(xrInstance, "xrCreateHandTrackerEXT", (PFN_xrVoidFunction*)&xrCreateHandTrackerEXT);
+
+
+
+    XrHandTrackerEXT handTracker;
+    XrHandTrackerCreateInfoEXT handTrackerCreateInfo = { XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT };
+    handTrackerCreateInfo.next = nullptr;
+    handTrackerCreateInfo.type = XR_TYPE_HAND_TRACKER;
+    XrResult result = xrCreateHandTrackerEXT(xrSession, &handTrackerCreateInfo, &handTracker);
+    if (result != XR_SUCCESS) {
+        std::cerr << "Failed to create hand tracker." << std::endl;
+        exit(-1);
+    }*/
+
+
+
+
+    // Create Actions
+    auto createAction = [&](const char* name, const char* localized, XrActionType type, XrAction* action) {
+        XrActionCreateInfo actionCreateInfo{ XR_TYPE_ACTION_CREATE_INFO };
+        strcpy_s(actionCreateInfo.actionName, name);
+        strcpy_s(actionCreateInfo.localizedActionName, localized);
+        actionCreateInfo.actionType = type;
+        return XR_FAILED(xrCreateAction(actionSet, &actionCreateInfo, action));
+        };
+    
+    if (createAction("button_a", "Button A", XR_ACTION_TYPE_BOOLEAN_INPUT, &buttonAAction) ||
+        createAction("button_b", "Button B", XR_ACTION_TYPE_BOOLEAN_INPUT, &buttonBAction) ||
+        createAction("button_x", "Button X", XR_ACTION_TYPE_BOOLEAN_INPUT, &buttonXAction) ||
+        createAction("button_y", "Button Y", XR_ACTION_TYPE_BOOLEAN_INPUT, &buttonYAction) ||
+        createAction("left_trigger", "Left Trigger", XR_ACTION_TYPE_FLOAT_INPUT, &leftTriggerAction) ||
+        createAction("right_trigger", "Right Trigger", XR_ACTION_TYPE_FLOAT_INPUT, &rightTriggerAction) ||
+        createAction("left_thumbstick_x", "Left Thumbstick X", XR_ACTION_TYPE_FLOAT_INPUT, &leftXThumbstickAction) ||
+        createAction("left_thumbstick_y", "Left Thumbstick Y", XR_ACTION_TYPE_FLOAT_INPUT, &leftYThumbstickAction) ||
+        createAction("right_thumbstick_x", "Right Thumbstick X", XR_ACTION_TYPE_FLOAT_INPUT, &rightXThumbstickAction) ||
+        createAction("right_thumbstick_y", "Right Thumbstick Y", XR_ACTION_TYPE_FLOAT_INPUT, &rightYThumbstickAction) ||
+        createAction("left_grip", "Left Grip", XR_ACTION_TYPE_FLOAT_INPUT, &leftGripAction) ||
+        createAction("right_grip", "Right Grip", XR_ACTION_TYPE_FLOAT_INPUT, &rightGripAction) ||
+        createAction("menu_button", "Menu Button", XR_ACTION_TYPE_BOOLEAN_INPUT, &menuAction)) {
+        throw std::runtime_error("Failed to create one or more actions.");
+    }
+
+    // Convert interaction profile string to XrPath
+    XrPath interactionProfilePath;
+    result = xrStringToPath(xrInstance, "/interaction_profiles/oculus/touch_controller", &interactionProfilePath);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to convert interaction profile string to path.");
+    }
+
+    // Convert action paths to XrPath
+    auto StringToPath = [&](const char* pathStr, XrPath* path) {
+        return xrStringToPath(xrInstance, pathStr, path);
+        };
+
+    XrPath buttonAPath, buttonBPath, buttonXPath, buttonYPath, leftTriggerPath, rightTriggerPath, leftXThumbstickPath, leftYThumbstickPath, rightXThumbstickPath, rightYThumbstickPath, leftGripPath, rightGripPath, menuPath;
+    if (StringToPath("/user/hand/right/input/a/touch", &buttonAPath) ||
+        StringToPath("/user/hand/right/input/b/click", &buttonBPath) ||
+        StringToPath("/user/hand/left/input/x/click", &buttonXPath) ||
+        StringToPath("/user/hand/left/input/y/click", &buttonYPath) ||
+        StringToPath("/user/hand/left/input/trigger/value", &leftTriggerPath) ||
+        StringToPath("/user/hand/right/input/trigger/value", &rightTriggerPath) ||
+        StringToPath("/user/hand/left/input/thumbstick/x", &leftXThumbstickPath) ||
+        StringToPath("/user/hand/left/input/thumbstick/y", &leftYThumbstickPath) ||
+        StringToPath("/user/hand/right/input/thumbstick/x", &rightXThumbstickPath) ||
+        StringToPath("/user/hand/right/input/thumbstick/y", &rightYThumbstickPath) ||
+        StringToPath("/user/hand/left/input/squeeze/value", &leftGripPath) ||
+        StringToPath("/user/hand/right/input/squeeze/value", &rightGripPath) ||
+        StringToPath("/user/hand/left/input/menu/click", &menuPath)) {
+        throw std::runtime_error("Failed to convert action paths to XrPath.");
+    }
+
+    // Suggest Interaction Profile Bindings
+    std::vector<XrActionSuggestedBinding> bindings = {
+        {buttonAAction, buttonAPath},
+        {buttonBAction, buttonBPath},
+        {buttonXAction, buttonXPath},
+        {buttonYAction, buttonYPath},
+        {leftTriggerAction, leftTriggerPath},
+        {rightTriggerAction, rightTriggerPath},
+        {leftXThumbstickAction, leftXThumbstickPath},
+        {leftYThumbstickAction, leftYThumbstickPath},
+        {rightXThumbstickAction, rightXThumbstickPath},
+        {rightYThumbstickAction, rightYThumbstickPath},
+        {leftGripAction, leftGripPath},
+        {rightGripAction, rightGripPath},
+        {menuAction, menuPath}
+    };
+
+    XrInteractionProfileSuggestedBinding suggestedBinding{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+    suggestedBinding.interactionProfile = interactionProfilePath;
+    suggestedBinding.suggestedBindings = bindings.data();
+    suggestedBinding.countSuggestedBindings = static_cast<uint32_t>(bindings.size());
+
+    result = xrSuggestInteractionProfileBindings(xrInstance, &suggestedBinding);
+    if (XR_FAILED(result)) {
+        std::string errorMessage = "Failed to suggest interaction profile bindings: ";
+
+        switch (result) {
+        case XR_ERROR_VALIDATION_FAILURE:
+            errorMessage += "Validation failure.";
+            break;
+        case XR_ERROR_RUNTIME_FAILURE:
+            errorMessage += "Runtime failure.";
+            break;
+        case XR_ERROR_INSTANCE_LOST:
+            errorMessage += "Instance lost.";
+            break;
+        case XR_ERROR_SESSION_LOST:
+            errorMessage += "Session lost.";
+            break;
+        case XR_ERROR_HANDLE_INVALID:
+            errorMessage += "Handle invalid.";
+            break;
+        case XR_ERROR_ACTIONSETS_ALREADY_ATTACHED:
+            errorMessage += "Action sets already attached.";
+            break;
+        default:
+            errorMessage += "Unknown error code: " + std::to_string(result);
+            break;
+        }
+
+        WriteDataToFile(debugInfoPath, errorMessage);
+        throw std::runtime_error(errorMessage);
+    }
+
+    // Attach Action Sets to Session
+    XrSessionActionSetsAttachInfo attachInfo{ XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
+    attachInfo.countActionSets = 1;
+    attachInfo.actionSets = &actionSet;
+    result = xrAttachSessionActionSets(xrSession, &attachInfo);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to attach action sets to session.");
+    }
+
+
+
+    SetupXRLayers();
+
+
+
+    //Swap Chain
+    XrSwapchainCreateInfo swapchainCreateInfo = {};
+    swapchainCreateInfo.type = XR_TYPE_SWAPCHAIN_CREATE_INFO;
+    swapchainCreateInfo.format = DXGI_FORMAT_B8G8R8A8_UNORM; // or your preferred format
+    swapchainCreateInfo.sampleCount = 1;
+    swapchainCreateInfo.width = 1344;
+    swapchainCreateInfo.height = 1600;
+    swapchainCreateInfo.faceCount = 1;
+    swapchainCreateInfo.arraySize = 1;
+    swapchainCreateInfo.mipCount = 1;
+    swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+
+    // Create swapchains for both eyes
+    xrCreateSwapchain(xrSession, &swapchainCreateInfo, &xrLeftEyeSwapchain);
+    xrCreateSwapchain(xrSession, &swapchainCreateInfo, &xrRightEyeSwapchain);
+
+    return true;
+}
+
+void StartEngine::ProcessXRInput() {
+
+    XrActiveActionSet activeActionSet{ actionSet, XR_NULL_PATH };
+    XrActionsSyncInfo syncInfo{ XR_TYPE_ACTIONS_SYNC_INFO };
+    syncInfo.countActiveActionSets = 1;
+    syncInfo.activeActionSets = &activeActionSet;
+
+    //Update Actions
+    XrResult result = xrSyncActions(xrSession, &syncInfo);
+    if (XR_FAILED(result)) {
+        return;
+    }
+
+    XrActionStateGetInfo getInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+
+    //A button
+    XrActionStateBoolean buttonAState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+    getInfo.action = buttonAAction;
+    xrGetActionStateBoolean(xrSession, &getInfo, &buttonAState);
+    if (buttonAState.changedSinceLastSync) {
+        if (buttonAState.currentState) {
+            xrInput.OnButtonAPressed();
+        }
+        else {
+            xrInput.OnButtonAReleased();
+        }
+    }
+
+    //B button
+    XrActionStateBoolean buttonBState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+    getInfo.action = buttonBAction;
+    xrGetActionStateBoolean(xrSession, &getInfo, &buttonBState);
+    if (buttonBState.changedSinceLastSync) {
+        if (buttonBState.currentState) {
+            xrInput.OnButtonBPressed();
+        }
+        else {
+            xrInput.OnButtonBReleased();
+        }
+    }
+
+    //X button
+    XrActionStateBoolean buttonXState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+    getInfo.action = buttonXAction;
+    xrGetActionStateBoolean(xrSession, &getInfo, &buttonXState);
+    if (buttonXState.changedSinceLastSync) {
+        if (buttonBState.currentState) {
+            xrInput.OnButtonXPressed();
+        }
+        else {
+            xrInput.OnButtonXReleased();
+        }
+    }
+
+    //Y button
+    XrActionStateBoolean buttonYState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+    getInfo.action = buttonYAction;
+    xrGetActionStateBoolean(xrSession, &getInfo, &buttonYState);
+    if (buttonYState.changedSinceLastSync) {
+        if (buttonYState.currentState) {
+            xrInput.OnButtonYPressed();
+        }
+        else {
+            xrInput.OnButtonYReleased();
+        }
+    }
+
+
+    //Menu button
+    XrActionStateBoolean menuState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+    getInfo.action = menuAction;
+    xrGetActionStateBoolean(xrSession, &getInfo, &menuState);
+    if (menuState.changedSinceLastSync) {
+        if (menuState.currentState) {
+            xrInput.OnMenuPressed();
+        }
+        else {
+            xrInput.OnMenuReleased();
+        }
+    }
+
+
+    //Left Trigger float
+    XrActionStateFloat leftTriggerState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = leftTriggerAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &leftTriggerState);
+    if (leftTriggerState.changedSinceLastSync) {
+        if (leftTriggerState.currentState > 0.0f) {
+            xrInput.OnLeftTriggerPressed(leftTriggerState.currentState);
+        }
+        else {
+            xrInput.OnLeftTriggerReleased();
+        }
+    }
+
+    //Right Trigger float
+    XrActionStateFloat rightTriggerState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = rightTriggerAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &rightTriggerState);
+    if (rightTriggerState.changedSinceLastSync) {
+        if (rightTriggerState.currentState > 0.0f) {
+            xrInput.OnRightTriggerPressed(rightTriggerState.currentState);
+        }
+        else {
+            xrInput.OnRightTriggerReleased();
+        }
+    }
+
+
+    //Left Grip float
+    XrActionStateFloat leftGripState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = leftGripAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &leftGripState);
+    if (leftGripState.changedSinceLastSync) {
+        if (leftGripState.currentState > 0.0f) {
+            xrInput.OnLeftGripPressed(leftGripState.currentState);
+        }
+        else {
+            xrInput.OnLeftGripReleased();
+        }
+    }
+
+    //Right Grip float
+    XrActionStateFloat rightGripState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = rightGripAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &rightGripState);
+    if (rightGripState.changedSinceLastSync) {
+        if (rightGripState.currentState > 0.0f) {
+            xrInput.OnRightGripPressed(rightGripState.currentState);
+        }
+        else {
+            xrInput.OnRightGripReleased();
+        }
+    }
+
+
+    //Left Thumbstick axes
+    XrActionStateFloat leftXThumbstickState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = leftXThumbstickAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &leftXThumbstickState);
+
+    XrActionStateFloat leftYThumbstickState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = leftYThumbstickAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &leftYThumbstickState);
+
+    if (leftXThumbstickState.changedSinceLastSync || leftYThumbstickState.changedSinceLastSync) {
+        xrInput.OnLeftThumbstickMove(leftXThumbstickState.currentState, leftYThumbstickState.currentState);
+    }
+
+    //Right Thumbstick axes
+    XrActionStateFloat rightXThumbstickState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = rightXThumbstickAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &rightXThumbstickState);
+
+    XrActionStateFloat rightYThumbstickState{ XR_TYPE_ACTION_STATE_FLOAT };
+    getInfo.action = rightYThumbstickAction;
+    xrGetActionStateFloat(xrSession, &getInfo, &rightYThumbstickState);
+
+    if (rightXThumbstickState.changedSinceLastSync || rightYThumbstickState.changedSinceLastSync) {
+        xrInput.OnRightThumbstickMove(rightXThumbstickState.currentState, rightYThumbstickState.currentState);
+    }
 }
 
 

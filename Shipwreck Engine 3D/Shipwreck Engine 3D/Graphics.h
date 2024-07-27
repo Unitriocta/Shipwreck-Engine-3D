@@ -119,6 +119,10 @@ public:
 
 	void RenderModel(Model model, Transform transform, Camera camera, HWND hWnd);
 
+
+	void RenderBones(SkinnedModel model, Transform transform, Camera camera, HWND hWnd);
+
+
 	void RenderSkinnedModel(SkinnedModel model, Transform transform, Camera camera, HWND hWnd);
 
 

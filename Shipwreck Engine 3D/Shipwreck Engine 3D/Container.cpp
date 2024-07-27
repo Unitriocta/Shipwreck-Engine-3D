@@ -166,6 +166,18 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 			CollectBoneNames(scene, boneNames);
 			aiNode* rootBone = FindRootBoneNode(scene->mRootNode, boneNames);
 
+			if (rootBone) {
+
+				dataToWrite += "\n\nRoot Bone Info: ";
+
+				dataToWrite += "\nName: ";
+				dataToWrite += rootBone->mName.C_Str();
+
+				dataToWrite += "\nNum Children: ";
+				dataToWrite += std::to_string(rootBone->mNumChildren);
+			}
+
+
 
 
 			//skinnedMesh->rootBoneNode = rootBone;
@@ -193,10 +205,6 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 			}
 
 
-			dataToWrite += "\nBoneData:";
-			dataToWrite += "\nNumBones: ";
-			dataToWrite += std::to_string(scene->mMeshes[node->mMeshes[i]]->mNumBones);
-			dataToWrite += "\n";
 
 			for (unsigned int k = 0; k < scene->mMeshes[node->mMeshes[i]]->mNumBones; k++) {
 
@@ -208,7 +216,8 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 					//bi.offsetMatrix = glm::make_mat4(&scene->mMeshes[node->mMeshes[i]]->mBones[k]->mOffsetMatrix.a1);
 					bi.offsetMatrix = AssimpMatToGlmMat(scene->mMeshes[node->mMeshes[i]]->mBones[k]->mOffsetMatrix);
 					bi.boneKey = boneIndex;
-					bi.nodeName = scene->mMeshes[node->mMeshes[i]]->mBones[k]->mNode->mName.C_Str();
+					//bi.nodeName = scene->mMeshes[node->mMeshes[i]]->mBones[k]->mNode->mName.C_Str();
+					bi.nodeName = boneName;
 
 
 					skinnedMesh->boneInfoMap[boneName] = bi;
@@ -228,28 +237,10 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 
 					glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(rotation));
 
-
-					dataToWrite += "\nBone Name: ";
-					dataToWrite += boneName;
-					dataToWrite += "\nBone Index: ";
-					dataToWrite += std::to_string(boneIndex);
-					dataToWrite += ",";
-					dataToWrite += "\nBone Position: ";
-					dataToWrite += std::to_string(position.x) + ", ";
-					dataToWrite += std::to_string(position.y) + ", ";
-					dataToWrite += std::to_string(position.z) + ", ";
-					dataToWrite += "\n";
-					dataToWrite += "\nBone Rotation: ";
-					dataToWrite += std::to_string(eulerAngles.x) + ", ";
-					dataToWrite += std::to_string(eulerAngles.y) + ", ";
-					dataToWrite += std::to_string(eulerAngles.z) + ", ";
-					dataToWrite += "\n";
-					dataToWrite += "\nBone Scale: ";
-					dataToWrite += std::to_string(scale.x) + ", ";
-					dataToWrite += std::to_string(scale.y) + ", ";
-					dataToWrite += std::to_string(scale.z) + ", ";
-					dataToWrite += "\n";
-
+					dataToWrite += "\nBone Name:" + bi.nodeName;
+					dataToWrite += "\nPosition: " + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z);
+					dataToWrite += "\nRotation: " + std::to_string(rotation.x) + ", " + std::to_string(rotation.y) + ", " + std::to_string(rotation.z);
+					dataToWrite += "\nScale: " + std::to_string(scale.x) + ", " + std::to_string(scale.y) + ", " + std::to_string(scale.z);
 				}
 				else {
 					boneIndex = std::distance(skinnedMesh->boneInfoMap.begin(), skinnedMesh->boneInfoMap.find(boneName));
@@ -264,39 +255,33 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 				}
 			}
 
+
+			//BoneInfo* rootBoneInfo = nullptr;
+			BoneInfo* rootBoneInfo = &skinnedMesh->boneInfoMap[rootBone->mName.C_Str()];
+			skinnedMesh->rootBone = rootBoneInfo;
+
 			/*for (auto& curBone : skinnedMesh->boneInfoMap) {
-				if (curBone.second.nodeName == rootBone->mName.C_Str()) {
+				if (curBone.first == rootBone->mName.C_Str()) {
+					rootBoneInfo = &curBone.second;
 					skinnedMesh->rootBone = &curBone.second;
 					break;
 				}
-				for (int i = 0; i < rootBone->mNumChildren; i++) {
-					if (curBone.second.nodeName == rootBone->mChildren[i]->mName.C_Str()) {
-						skinnedMesh->rootBone = &curBone.second;
-						break;
-					}
-				}
 			}*/
 
-			/*BoneInfo* rootBoneInfo = new BoneInfo();
-			rootBoneInfo->nodeName = rootBone->mName.C_Str();
-			rootBoneInfo->offsetMatrix = glm::mat4(0.0f);
-			skinnedMesh->rootBone = rootBoneInfo;*/
 
-			BoneInfo* rootBoneInfo = nullptr;
-
-			for (auto& curBone : skinnedMesh->boneInfoMap) {
+			/*for (auto& curBone : skinnedMesh->boneInfoMap) {
 				if (curBone.first == "hand.R") {
 					rootBoneInfo = &curBone.second;
 					skinnedMesh->rootBone = &curBone.second;
 					break;
 				}
-			}
+			}*/
 			
 			if (rootBoneInfo) {
 
 				for (unsigned int k = 0; k < scene->mMeshes[node->mMeshes[i]]->mNumBones; k++) {
 
-					if (scene->mMeshes[node->mMeshes[i]]->mBones[i]->mName.C_Str() == rootBoneInfo->nodeName) {
+					if (scene->mMeshes[node->mMeshes[i]]->mBones[k]->mName.C_Str() == rootBoneInfo->nodeName) {
 						rootBone = scene->mMeshes[node->mMeshes[i]]->mBones[i]->mNode;
 					}
 				}
@@ -305,7 +290,6 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 
 			BuildBoneHierarchy(rootBone, skinnedMesh);
 
-			dataToWrite += "\n\n";
 
 			if (scene->mMeshes[node->mMeshes[i]]->mMaterialIndex >= 0) {
 				const aiMaterial* material = scene->mMaterials[scene->mMeshes[node->mMeshes[i]]->mMaterialIndex];
@@ -355,7 +339,6 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 			}
 
 			if (scene->HasAnimations()) {
-				dataToWrite += "\nAnimation Data: ";
 
 				for (unsigned int animIndex = 0; animIndex < scene->mNumAnimations; animIndex++) {
 					AnimationData animData;
@@ -370,37 +353,49 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 						AnimationChannel animChannel;
 						animChannel.nodeName = std::string(channel->mNodeName.C_Str());
 
-						unsigned int numPositionKeys = channel->mNumPositionKeys;
-						unsigned int numRotationKeys = channel->mNumRotationKeys;
-						unsigned int numScaleKeys = channel->mNumScalingKeys;
 
 
-						for (unsigned int keyframeIndex = 0; keyframeIndex < numPositionKeys; keyframeIndex++) {
-							Keyframe keyframe;
-							keyframe.time = channel->mPositionKeys[keyframeIndex].mTime;
-							keyframe.positionData.position = glm::vec3(channel->mPositionKeys[keyframeIndex].mValue.x, channel->mPositionKeys[keyframeIndex].mValue.y, channel->mPositionKeys[keyframeIndex].mValue.z);
-							keyframe.positionData.hasPositionData = true;
-							animChannel.keyframes.push_back(keyframe);
-						}
+						if (animIndex == 0) {
+							dataToWrite += "\n\nChannel:" + animChannel.nodeName;
 
-						for (unsigned int keyframeIndex = 0; keyframeIndex < numRotationKeys; keyframeIndex++) {
-							Keyframe keyframe;
-							keyframe.time = channel->mRotationKeys[keyframeIndex].mTime;
-							keyframe.rotationData.rotation = glm::quat(channel->mRotationKeys[keyframeIndex].mValue.w, channel->mRotationKeys[keyframeIndex].mValue.x, channel->mRotationKeys[keyframeIndex].mValue.y, channel->mRotationKeys[keyframeIndex].mValue.z);
-							keyframe.rotationData.hasRotationData = true;
-							animChannel.keyframes.push_back(keyframe);
-						}
+							unsigned int numPositionKeys = channel->mNumPositionKeys;
+							unsigned int numRotationKeys = channel->mNumRotationKeys;
+							unsigned int numScaleKeys = channel->mNumScalingKeys;
 
-						for (unsigned int keyframeIndex = 0; keyframeIndex < numScaleKeys; keyframeIndex++) {
-							Keyframe keyframe;
-							keyframe.time = channel->mScalingKeys[keyframeIndex].mTime;
-							keyframe.scaleData.scale = glm::vec3(channel->mScalingKeys[keyframeIndex].mValue.x, channel->mScalingKeys[keyframeIndex].mValue.y, channel->mScalingKeys[keyframeIndex].mValue.z);
-							keyframe.scaleData.hasScaleData = true;
-							animChannel.keyframes.push_back(keyframe);
-							dataToWrite += "\nScaling for " + animChannel.nodeName + ":   ";
-							dataToWrite += std::to_string(keyframe.scaleData.scale.x) + ", ";
-							dataToWrite += std::to_string(keyframe.scaleData.scale.y) + ", ";
-							dataToWrite += std::to_string(keyframe.scaleData.scale.z) + ", ";
+
+							dataToWrite += "\nPosition: ";
+
+							for (unsigned int keyframeIndex = 0; keyframeIndex < numPositionKeys; keyframeIndex++) {
+
+								Keyframe keyframe;
+								keyframe.time = channel->mPositionKeys[keyframeIndex].mTime;
+								keyframe.positionData.position = glm::vec3(channel->mPositionKeys[keyframeIndex].mValue.x, channel->mPositionKeys[keyframeIndex].mValue.y, channel->mPositionKeys[keyframeIndex].mValue.z);
+								keyframe.positionData.hasPositionData = true;
+								animChannel.keyframes.push_back(keyframe);
+
+								dataToWrite += "\n" + std::to_string(keyframeIndex) + ": " + std::to_string(keyframe.positionData.position.x) + ", " + std::to_string(keyframe.positionData.position.y) + ", " + std::to_string(keyframe.positionData.position.z);
+							}
+
+							dataToWrite += "\nRotation: ";
+							for (unsigned int keyframeIndex = 0; keyframeIndex < numRotationKeys; keyframeIndex++) {
+								Keyframe keyframe;
+								keyframe.time = channel->mRotationKeys[keyframeIndex].mTime;
+								keyframe.rotationData.rotation = glm::quat(channel->mRotationKeys[keyframeIndex].mValue.w, channel->mRotationKeys[keyframeIndex].mValue.x, channel->mRotationKeys[keyframeIndex].mValue.y, channel->mRotationKeys[keyframeIndex].mValue.z);
+								keyframe.rotationData.hasRotationData = true;
+								animChannel.keyframes.push_back(keyframe);
+
+								dataToWrite += "\n" + std::to_string(keyframeIndex) + ": W: " + std::to_string(keyframe.rotationData.rotation.w) + ", " + std::to_string(keyframe.rotationData.rotation.x) + ", " + std::to_string(keyframe.rotationData.rotation.y) + ", " + std::to_string(keyframe.rotationData.rotation.z);
+							}
+
+							for (unsigned int keyframeIndex = 0; keyframeIndex < numScaleKeys; keyframeIndex++) {
+								Keyframe keyframe;
+								keyframe.time = channel->mScalingKeys[keyframeIndex].mTime;
+								keyframe.scaleData.scale = glm::vec3(channel->mScalingKeys[keyframeIndex].mValue.x, channel->mScalingKeys[keyframeIndex].mValue.y, channel->mScalingKeys[keyframeIndex].mValue.z);
+								keyframe.scaleData.hasScaleData = true;
+								animChannel.keyframes.push_back(keyframe);
+
+								//dataToWrite += "\nScale on keyframe " + std::to_string(keyframeIndex) + ":" + std::to_string(keyframe.scaleData.scale.x) + ", " + std::to_string(keyframe.scaleData.scale.y) + ", " + std::to_string(keyframe.scaleData.scale.z);
+							}
 						}
 
 
@@ -419,11 +414,30 @@ void Container::StoreModels(Models* models, aiNode* node, const aiScene* scene, 
 
 				models->AddSkinnedModel(skinnedMesh);
 			}
+			
+			for (int l = 0; l < skinnedMesh->vertices.size(); l++) {
+
+				skinnedMesh->vertices[l].NormalizeWeights();
+			}
+			/*for (int l = 0; l < skinnedMesh->vertices.size(); l++) {
+
+				float weight = 0.0f;
+
+				for (int p = 0; p < 4; p++) {
+
+					weight += skinnedMesh->vertices[l].boneWeights[p];
+				}
+
+				if (( weight - 0.03f) > 1.0f || (weight + 0.03f) < 1.0f) {
+					exit(std::stoi(std::to_string(weight * 1000000)));
+				}
+			}*/
 		}
 
 		std::string dataPath = "D:/SkinnedMeshData.txt";
 
 		WriteDataToFile(dataPath, dataToWrite);
+
 	}
 }
 
@@ -531,8 +545,16 @@ aiNode* Container::FindRootBoneNode(aiNode* node, const std::unordered_set<std::
 			return node;
 		}
 	}
-}
 
+	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+		aiNode* rootBoneNode = FindRootBoneNode(node->mChildren[i], boneNames);
+		if (rootBoneNode != nullptr) {
+			return rootBoneNode;
+		}
+	}
+
+	return nullptr;
+}
 
 
 

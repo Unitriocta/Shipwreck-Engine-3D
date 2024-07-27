@@ -843,7 +843,98 @@ void D3DGraphics::RenderModel(Model model, Transform transform, Camera camera, H
 }
 
 
+void D3DGraphics::RenderBones(SkinnedModel model, Transform transform, Camera camera, HWND hWnd) {
+	Model boneModel;
+	glm::mat4 boneTransforms[100];
+
+	// Retrieve bone transformations
+	for (auto& pair : model.boneInfoMap) {
+		const BoneInfo& boneInfo = pair.second;
+		boneTransforms[boneInfo.boneKey] = boneInfo.finalTransformation;
+	}
+
+	// Create vertices and indices for bone lines
+	for (auto& pair : model.boneInfoMap) {
+		const BoneInfo& boneInfo = pair.second;
+		int boneIndex = boneInfo.boneKey;
+
+		glm::vec3 parentPosition;
+		glm::quat parentRotation;
+		glm::vec3 parentScale;
+		glm::vec3 parentSkew;
+		glm::vec4 parentPerspective;
+
+		glm::decompose(boneTransforms[boneIndex], parentScale, parentRotation, parentPosition, parentSkew, parentPerspective);
+
+		for (const std::string& childName : boneInfo.childBones) {
+			if (model.boneInfoMap.find(childName) != model.boneInfoMap.end()) {
+				const BoneInfo& childBoneInfo = model.boneInfoMap[childName];
+				int childBoneIndex = childBoneInfo.boneKey;
+
+				glm::vec3 childPosition;
+				glm::quat childRotation;
+				glm::vec3 childScale;
+				glm::vec3 childSkew;
+				glm::vec4 childPerspective;
+
+				glm::decompose(boneTransforms[childBoneIndex], childScale, childRotation, childPosition, childSkew, childPerspective);
+
+				boneModel.vertices.push_back(TexturedVertex(Vec3(parentPosition.x, parentPosition.y, parentPosition.z), Vec3(), Color(0.0f, 0.0f, 0.0f, 1.0f), Vec2()));
+				boneModel.vertices.push_back(TexturedVertex(Vec3(childPosition.x, childPosition.y, childPosition.z), Vec3(), Color(0.0f, 0.0f, 0.0f, 1.0f), Vec2()));
+
+				boneModel.indices.push_back(boneModel.vertices.size() - 2);
+				boneModel.indices.push_back(boneModel.vertices.size() - 1);
+			}
+		}
+	}
+
+	int indexSize = boneModel.indices.size() * sizeof(unsigned int);
+	int vertSize = boneModel.vertices.size() * sizeof(TexturedVertex);
+	int vertCount = boneModel.vertices.size();
+
+	const UINT stride = sizeof(TexturedVertex);
+	const UINT offset = 0u;
+
+	renderer->AddTransparency(device, deviceContext);
+
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = std::data(boneModel.vertices);
+
+	renderer->SetVertexBuffer(vertSize, stride, offset, sd, device, deviceContext);
+
+	D3D11_SUBRESOURCE_DATA indexSd = {};
+	indexSd.pSysMem = std::data(boneModel.indices);
+
+	renderer->SetIndexBuffer(indexSize, indexSd, device, deviceContext);
+
+	renderer->SetConstantBuffers(false, camera, &transform, device, deviceContext);
+	renderer->SetTextures(&boneModel.textures, device, deviceContext);
+
+	ID3DBlob* blob = renderer->SetPSAndVS(L"3DTexturedPS.cso", L"3DTexturedVS.cso", device, deviceContext);
+
+	ID3D11InputLayout* inputLayout;
+	const D3D11_INPUT_ELEMENT_DESC ied[] = {
+		{"Color",0,DXGI_FORMAT_R8G8B8A8_UNORM,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"Normal",0,DXGI_FORMAT_R32G32B32_FLOAT,0,4u,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,16u,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"UV",0,DXGI_FORMAT_R32G32_FLOAT,0,28u,D3D11_INPUT_PER_VERTEX_DATA,0}
+	};
+	device->CreateInputLayout(ied, (UINT)std::size(ied), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout);
+	blob->Release();
+
+	deviceContext->IASetInputLayout(inputLayout);
+	inputLayout->Release();
+
+	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	renderer->SetViewports(hWnd, device, deviceContext);
+
+	deviceContext->DrawIndexed(std::size(boneModel.indices), 0, 0u);
+}
+
+
 void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Camera camera, HWND hWnd) {
+	//RenderBones(model, transform, camera, hWnd);
 
 	int indexSize = model.indices.size() * sizeof(unsigned int);
 	int vertSize = model.vertices.size() * sizeof(SkinnedVertex);
@@ -853,18 +944,47 @@ void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Ca
 	const UINT offset = 0u;
 
 
-	struct BoneBuffer {
-		DirectX::XMMATRIX boneTransforms[100];
-	};
+	
 	glm::mat4 boneTransforms[100];
 
-	BoneBuffer boneCBuffer;
 
 	for (auto& pair : model.boneInfoMap) {
 		const BoneInfo& boneInfo = pair.second;
 		//boneCBuffer.boneTransforms[boneInfo.boneKey] = ConvertMatrixToDirectX(boneInfo.finalTransformation);
 		boneTransforms[boneInfo.boneKey] = boneInfo.finalTransformation;
 	}
+	
+
+	for (SkinnedVertex& vertex : model.vertices) {
+		glm::mat4 skinMatrix = glm::mat4(0.0f);
+
+		for (int i = 0; i < 4; ++i) {
+			int boneIndex = vertex.boneIDs[i];
+			float weight = vertex.boneWeights[i];
+			if (weight > 0.0f) {
+				skinMatrix += boneTransforms[boneIndex] * weight;
+			}
+		}
+
+		// Apply the transformation to the vertex position
+		glm::vec4 vertexPos = glm::vec4(vertex.position.x, vertex.position.y, vertex.position.z, 1.0f);
+		glm::vec3 newVertexPosition = glm::vec3(skinMatrix * vertexPos);
+		vertex.position = Vec3(newVertexPosition.x, newVertexPosition.y, newVertexPosition.z);
+
+		// Apply the transformation to the vertex normal
+		glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(skinMatrix)));
+		glm::vec3 newVertexNormal = normalMatrix * glm::vec3(vertex.normal.x, vertex.normal.y, vertex.normal.z);
+		vertex.normal = Vec3(newVertexNormal.x, newVertexNormal.y, newVertexNormal.z);
+	}
+
+	
+	/*struct BoneBuffer {
+		DirectX::XMMATRIX boneTransforms[100];
+	};
+
+	BoneBuffer boneCBuffer;
+
+
 
 	D3D11_BUFFER_DESC boneBufferDesc = {};
 	boneBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -884,45 +1004,7 @@ void D3DGraphics::RenderSkinnedModel(SkinnedModel model, Transform transform, Ca
 
 	deviceContext->VSSetConstantBuffers(1u, 1u, &boneBuffer);
 
-	boneBuffer->Release();
-
-	//Skinning vertice calculations:
-	for (SkinnedVertex& vertex : model.vertices) {
-		glm::mat4 skinMatrix = glm::mat4(0.0f);
-
-		bool hasBoneWeights = false;
-
-		for (int i = 0; i < 4; ++i) {
-			int boneIndex = vertex.boneIDs[i];
-			float weight = vertex.boneWeights[i];
-			if (weight > 0.0f) {
-				hasBoneWeights = true;
-
-				glm::mat4 boneTransform = boneTransforms[boneIndex];
-				skinMatrix += boneTransform * weight;
-			}
-		}
-
-		/*if (!hasBoneWeights) {
-			vertex.boneIDs[0] = model.rootBone->boneKey;
-			vertex.boneWeights[0] = 1.0f;
-
-			glm::mat4 boneTransform = boneTransforms[vertex.boneIDs[0]];
-			skinMatrix += boneTransform * vertex.boneWeights[0];
-		}*/
-
-
-		glm::vec3 newVertexPosition = glm::vec3(skinMatrix * glm::vec4(vertex.position.x, vertex.position.y, vertex.position.z, 1.0f));
-		vertex.position = Vec3(newVertexPosition.x, newVertexPosition.y, newVertexPosition.z);
-		
-		
-		glm::vec3 newVertexNormal = glm::mat3(skinMatrix) * glm::vec3(vertex.normal.x, vertex.normal.y, vertex.normal.z);
-		vertex.normal = Vec3(newVertexNormal.x, newVertexNormal.y, newVertexNormal.z);
-	}
-
-
-
-
+	boneBuffer->Release();*/
 
 
 

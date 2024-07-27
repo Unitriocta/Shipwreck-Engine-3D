@@ -194,6 +194,9 @@
     <ClCompile Include="SkinnedModel.cpp">
       <Filter>Engine Code\Objects</Filter>
     </ClCompile>
+    <ClCompile Include="OpenXRInput.cpp">
+      <Filter>Engine Code\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StartEngine.h">
@@ -311,6 +314,9 @@
     <ClInclude Include="SkinnedModel.h">
       <Filter>Engine Code\Objects</Filter>
     </ClInclude>
+    <ClInclude Include="OpenXRInput.h">
+      <Filter>Engine Code\Input</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico">
@@ -376,6 +382,7 @@
     <None Include="3DGLShader.vert">
       <Filter>Engine Code\Rendering\Shaders\GL\3D Shaders</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ToDo.txt" />

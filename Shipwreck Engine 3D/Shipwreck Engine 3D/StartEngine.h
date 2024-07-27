@@ -80,6 +80,11 @@ using namespace Console;
 #include "FileManager.h"
 using namespace FileManager;
 
+#include "OpenXRInput.h"
+
+#define XR_USE_GRAPHICS_API_D3D11
+#include <openxr/openxr.h>
+#include <openxr/openxr_platform.h>
 
 
 class StartEngine;
@@ -109,6 +114,8 @@ namespace EngineInstance {
 
 	extern float defaultWindowWidth;
 	extern float defaultWindowHeight;
+
+	extern D3D_FEATURE_LEVEL featureLevel;
 
 	extern GLFWwindow* window;
 
@@ -159,9 +166,17 @@ public:
 	};
 
 	void RenderFrame();
+	void RenderScene();
+
 	void InputThread();
 	std::mutex threadMtx;
 
+	//Returns false if it fails to setup
+	bool SetupXRInput();
+	void ProcessXRInput();
+	void SetupXRLayers();
+
+	XrTime GetPredictedDisplayTime();
 	//void HandleInput();
 
 
@@ -189,6 +204,43 @@ public:
 public:
 	Keyboard keyboard;
 	Mouse mouse;
+	OpenXRInput xrInput;
+
+
+
+	XrInstance xrInstance;
+	XrSession xrSession;
+	XrSwapchain xrLeftEyeSwapchain;
+	XrSwapchain xrRightEyeSwapchain;
+
+	XrSwapchainImageD3D11KHR* swapchainImages[2];
+	
+	XrFrameState frameState;
+	XrCompositionLayerProjection projectionLayer;
+	XrCompositionLayerProjectionView projectionViews[2];
+
+
+
+	XrActionSet actionSet;
+
+	XrAction buttonAAction;
+	XrAction buttonBAction;
+	XrAction buttonXAction;
+	XrAction buttonYAction;
+
+	XrAction leftTriggerAction;
+	XrAction rightTriggerAction;
+
+	XrAction leftXThumbstickAction;
+	XrAction leftYThumbstickAction;
+	XrAction rightXThumbstickAction;
+	XrAction rightYThumbstickAction;
+
+	XrAction leftGripAction = XR_NULL_HANDLE;
+	XrAction rightGripAction = XR_NULL_HANDLE;
+
+	XrAction menuAction;
+
 
 	std::vector<Container*> containers; //Stores container's, which store models, camera's, position, rotation, ect.
 	//std::vector<GameScript*> scripts;

@@ -5,6 +5,7 @@ using namespace EngineInstance;
 
 Container container1;
 Container container2;
+Container spriteContainer;
 
 Sprite sprite;
 
@@ -33,12 +34,17 @@ void GameGeneration::Start(Container* container) {
 	//container1.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
 	//container1.ImportModel("D:/Downloads/shooting-building-sci-fi-low-poly/source/3D.fbx");
 	//container1.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/cube.fbx");
+	//container1.ImportModel("D:/Downloads/BGE_Building_1-03/BGE_Building 1-03.fbx");
+	//container1.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/BGE_Building 1-03.fbx");
 	container2.ImportModel("C:/Users/smsal/OneDrive/Documents/Blender Modules/handV2.fbx");
 	//container2.ImportModel("D:/Downloads/test-ani/source/testAni.fbx");
 
 
-	//container3.sprites.AddSprite(&sprite);
-
+	/*spriteContainer.sprites.AddSprite(&sprite);
+	spriteContainer.transform.position = Vec3(0.0f, 5.0f, 5.0f);
+	spriteContainer.transform.updateGlobalProperties();
+	spriteContainer.rigidbody.NewRB(true, true);*/
+	container2.transform.position = Vec3(-200.0f, 0.0f, 0.0f);
 	for (int i = 0; i < container1.transform.children.size(); i++) {
 		//container1.transform.children[i]->container->rigidbody.NewRB(false, false);
 	}
@@ -49,12 +55,34 @@ void GameGeneration::Start(Container* container) {
 	std::string dataPath = "D:/AnimationName";
 	std::string writeData = "";
 
-	writeData += container2.transform.children[1]->container->models.skinnedModelList[0].animations[0].name;
+	//writeData += container2.transform.children[1]->container->models.skinnedModelList[0].animations[0].name;
 
 
 	WriteDataToFile(dataPath, writeData);
 }
 
+void FindAnimation(Container* container, float deltaTime) {
+
+	for (int i = 0; i < container->models.skinnedModelList.size(); i++) {
+		if (container->models.skinnedModelList[i].animations.size() > 0) {
+			container->models.skinnedModelList[i].UpdateAnimation(deltaTime);
+		}
+	}
+
+	for (int i = 0; i < container->transform.children.size(); i++) {
+
+		FindAnimation(container->transform.children[i]->container, deltaTime);
+	}
+}
+
+
+
 void GameGeneration::Update(float deltaTime, Container* container) {
-	container2.transform.children[1]->container->models.skinnedModelList[0].UpdateAnimation(deltaTime);
+	//container2.transform.children[1]->container->models.skinnedModelList[0].UpdateAnimation(deltaTime);
+	FindAnimation(&container2, deltaTime);
+	//container2.transform.children[1]->container->models.skinnedModelList[0].UpdateAnimation(deltaTime);
+
+	if (input.xrInput->buttonA || input.xrInput->buttonB || input.xrInput->menuButton) {
+		exit(14324);
+	}
 }

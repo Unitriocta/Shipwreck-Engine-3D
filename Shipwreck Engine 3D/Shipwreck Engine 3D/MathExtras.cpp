@@ -208,3 +208,23 @@ void D3DTexture::LoadTextureFromFile(ID3D11Device* device, std::string& path, ID
     image.Release();
     texture->Release();
 }
+
+
+
+
+
+void SkinnedVertex::NormalizeWeights() {
+    float totalWeight = 0.0f;
+
+    for (int i = 0; i < MAX_BONE_WEIGHTS; i++) {
+        totalWeight += boneWeights[i];
+    }
+
+    if (totalWeight > 0.0f) {
+        for (int i = 0; i < MAX_BONE_WEIGHTS; i++) {
+            boneWeights[i] /= totalWeight;
+        }
+    }
+
+    float newWeight = 0.0f;
+}
