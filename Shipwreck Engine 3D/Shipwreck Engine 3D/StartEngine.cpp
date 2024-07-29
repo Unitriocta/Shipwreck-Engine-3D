@@ -556,114 +556,185 @@ void StartEngine::RenderFrame() {
 
 
 
-        //OpenXR
-        XrFrameBeginInfo frameBeginInfo = {};
-        frameBeginInfo.type = XR_TYPE_FRAME_BEGIN_INFO;
-        xrBeginFrame(xrSession, &frameBeginInfo);
 
 
 
-        XrSwapchainImageBaseHeader* swapchainImageBaseHeader;
-        uint32_t imageIndex;
-
-        XrSwapchainImageAcquireInfo leftEyeAcquireInfo = { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
-        XrSwapchainImageWaitInfo leftEyeWaitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, 0, XR_INFINITE_DURATION };
-
-        xrAcquireSwapchainImage(xrLeftEyeSwapchain, &leftEyeAcquireInfo, &imageIndex);
-        xrWaitSwapchainImage(xrLeftEyeSwapchain, &leftEyeWaitInfo);
+        XrEventDataBuffer eventData = { XR_TYPE_EVENT_DATA_BUFFER };
 
 
+        bool canRenderXR = false;
 
-        uint32_t swapchainImageCount;
-        xrEnumerateSwapchainImages(xrLeftEyeSwapchain, 0, &swapchainImageCount, nullptr);
+        while (xrPollEvent(xrInstance, &eventData) == XR_SUCCESS) {
+            if (eventData.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
+                XrEventDataSessionStateChanged* sessionStateChanged =
+                    reinterpret_cast<XrEventDataSessionStateChanged*>(&eventData);
 
-        std::vector<XrSwapchainImageD3D11KHR> swapchainImageData(swapchainImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR });
-
-        xrEnumerateSwapchainImages(xrLeftEyeSwapchain, swapchainImageCount, &swapchainImageCount, reinterpret_cast<XrSwapchainImageBaseHeader*>(swapchainImageData.data()));
-
-        swapchainImages[0] = &swapchainImageData[0];
-        swapchainImages[1] = &swapchainImageData[1];
-
-
-
-
-
-
-
-        ID3D11Texture2D* leftEyeTexture = swapchainImages[0]->texture;
-        ID3D11RenderTargetView* leftEyeRTV = nullptr;
-        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-        rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        rtvDesc.Texture2D.MipSlice = 0;
-        D3DGfx().device->CreateRenderTargetView(leftEyeTexture, &rtvDesc, &leftEyeRTV);
-
-
-
-
-        D3DGfx().deviceContext->OMSetRenderTargets(1, &leftEyeRTV, D3DGfx().depthView);
-
-        RenderScene();
+                // Output or handle the session state
+                XrSessionState state = sessionStateChanged->state;
+                switch (state) {
+                case XR_SESSION_STATE_IDLE:
+                    break;
+                case XR_SESSION_STATE_READY:
+                    canRenderXR = true;
+                    break;
+                case XR_SESSION_STATE_SYNCHRONIZED:
+                    // Handle the synchronized state
+                    break;
+                case XR_SESSION_STATE_VISIBLE:
+                    // Handle the visible state
+                    break;
+                case XR_SESSION_STATE_FOCUSED:
+                    // Handle the focused state
+                    break;
+                case XR_SESSION_STATE_STOPPING:
+                    // Handle the stopping state
+                    break;
+                case XR_SESSION_STATE_EXITING:
+                    // Handle the exiting state
+                    break;
+                case XR_SESSION_STATE_LOSS_PENDING:
+                    // Handle the loss pending state
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
 
 
 
 
-        XrSwapchainImageAcquireInfo rightEyeAcquireInfo = { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
-        XrSwapchainImageWaitInfo rightEyeWaitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, 0, XR_INFINITE_DURATION };
 
-        xrAcquireSwapchainImage(xrRightEyeSwapchain, &rightEyeAcquireInfo, &imageIndex);
-        xrWaitSwapchainImage(xrRightEyeSwapchain, &rightEyeWaitInfo);
-
-
-        ID3D11Texture2D* rightEyeTexture = swapchainImages[1]->texture;
-        ID3D11RenderTargetView* rightEyeRTV = nullptr;
-        rtvDesc = {};
-        rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        rtvDesc.Texture2D.MipSlice = 0;
-        D3DGfx().device->CreateRenderTargetView(rightEyeTexture, &rtvDesc, &rightEyeRTV);
+        if (canRenderXR) {
 
 
 
-
-        D3DGfx().deviceContext->OMSetRenderTargets(1, &leftEyeRTV, D3DGfx().depthView);
-
-        RenderScene();
-
-
+            //OpenXR
+            XrFrameBeginInfo frameBeginInfo = {};
+            frameBeginInfo.type = XR_TYPE_FRAME_BEGIN_INFO;
+            xrBeginFrame(xrSession, &frameBeginInfo);
 
 
-        XrTime predictedDisplayTime = GetPredictedDisplayTime();
+            uint32_t imageIndex;
+
+            XrSwapchainImageAcquireInfo leftEyeAcquireInfo = { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+            XrSwapchainImageWaitInfo leftEyeWaitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, 0, XR_INFINITE_DURATION };
+
+            xrAcquireSwapchainImage(xrLeftEyeSwapchain, &leftEyeAcquireInfo, &imageIndex);
+            xrWaitSwapchainImage(xrLeftEyeSwapchain, &leftEyeWaitInfo);
 
 
 
-        XrCompositionLayerBaseHeader* layers[] = { reinterpret_cast<XrCompositionLayerBaseHeader*>(&projectionLayer) };
+            uint32_t swapchainImageCount;
+            xrEnumerateSwapchainImages(xrLeftEyeSwapchain, 0, &swapchainImageCount, nullptr);
 
+            std::vector<XrSwapchainImageD3D11KHR> swapchainImageData(swapchainImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR });
 
-        XrFrameEndInfo frameEndInfo = {};
-        frameEndInfo.type = XR_TYPE_FRAME_END_INFO;
-        frameEndInfo.displayTime = predictedDisplayTime;
-        frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
-        frameEndInfo.layerCount = 2;
-        frameEndInfo.layers = layers;
-
-        xrEndFrame(xrSession, &frameEndInfo);
+            xrEnumerateSwapchainImages(xrLeftEyeSwapchain, swapchainImageCount, &swapchainImageCount, reinterpret_cast<XrSwapchainImageBaseHeader*>(swapchainImageData.data()));
 
 
 
 
 
 
+            ID3D11Texture2D* leftEyeTexture = swapchainImageData[imageIndex].texture;
+            leftEyeRTV = nullptr;
+            D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+            rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            rtvDesc.Texture2D.MipSlice = 0;
+            HRESULT hResult = D3DGfx().device->CreateRenderTargetView(leftEyeTexture, &rtvDesc, &leftEyeRTV);
+            if (FAILED(hResult)) {
+
+                throw std::runtime_error("w");
+            }
 
 
 
-        D3DGfx().deviceContext->OMSetRenderTargets(1, &D3DGfx().target, D3DGfx().depthView);
 
-        startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f);
+            //Right
+            XrSwapchainImageAcquireInfo rightEyeAcquireInfo = { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+            XrSwapchainImageWaitInfo rightEyeWaitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, 0, XR_INFINITE_DURATION };
 
-        RenderScene();
+            xrAcquireSwapchainImage(xrRightEyeSwapchain, &rightEyeAcquireInfo, &imageIndex);
+            xrWaitSwapchainImage(xrRightEyeSwapchain, &rightEyeWaitInfo);
 
-        D3DGfx().EndFrame();
+
+            ID3D11Texture2D* rightEyeTexture = swapchainImageData[imageIndex].texture;
+            rightEyeRTV = nullptr;
+            rtvDesc = {};
+            rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            rtvDesc.Texture2D.MipSlice = 0;
+            hResult = D3DGfx().device->CreateRenderTargetView(rightEyeTexture, &rtvDesc, &rightEyeRTV);
+            if (FAILED(hResult)) {
+
+                throw std::runtime_error("w");
+            }
+
+
+
+
+            ID3D11RenderTargetView* rtvs[3];
+            rtvs[0] = leftEyeRTV;
+            rtvs[1] = rightEyeRTV;
+            rtvs[2] = D3DGfx().target;
+
+            D3DGfx().deviceContext->OMSetRenderTargets(3, rtvs, D3DGfx().depthView);
+
+            startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f, leftEyeRTV);
+            startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f, rightEyeRTV);
+            startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f, D3DGfx().target);
+            startEng.D3DGfx().ClearDepth();
+
+            RenderScene();
+
+
+            XrSwapchainImageReleaseInfo releaseInfo = { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+            xrReleaseSwapchainImage(xrLeftEyeSwapchain, &releaseInfo);
+
+            xrReleaseSwapchainImage(xrRightEyeSwapchain, &releaseInfo);
+
+
+
+            XrTime predictedDisplayTime = GetPredictedDisplayTime();
+
+
+
+            XrCompositionLayerBaseHeader* layers[] = { reinterpret_cast<XrCompositionLayerBaseHeader*>(&projectionLayer) };
+
+
+            XrFrameEndInfo frameEndInfo = {};
+            frameEndInfo.type = XR_TYPE_FRAME_END_INFO;
+            frameEndInfo.displayTime = predictedDisplayTime;
+            frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+            frameEndInfo.layerCount = 1;
+            frameEndInfo.layers = layers;
+
+            xrEndFrame(xrSession, &frameEndInfo);
+
+
+
+
+
+
+            //Comment this maybe to test vr, nvm
+            D3DGfx().EndFrame();
+        }
+        else {
+
+            D3DGfx().deviceContext->OMSetRenderTargets(1, &D3DGfx().target, D3DGfx().depthView);
+
+            startEng.D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f, D3DGfx().target);
+            startEng.D3DGfx().ClearDepth();
+
+            RenderScene();
+
+
+
+            //Comment this maybe to test vr
+            D3DGfx().EndFrame();
+        }
     }
     else {
         physics.Simulate();
@@ -852,11 +923,10 @@ void StartEngine::SetupXRLayers() {
     projectionLayer.layerFlags = 0;
     projectionLayer.space = referenceSpace;
 
-    // Set up projection views for each eye
 
 
-    float horizontalFovDegrees = 90.0f;
-    float verticalFovDegrees = 90.0f;
+    float horizontalFovDegrees = 100.0f;
+    float verticalFovDegrees = 100.0f;
 
     XrFovf fov = {};
     fov.angleLeft = glm::radians(-horizontalFovDegrees * 0.5f);
@@ -1037,7 +1107,7 @@ bool StartEngine::SetupXRInput() {
 
     XrActionSetCreateInfo actionSetCreateInfo{ XR_TYPE_ACTION_SET_CREATE_INFO };
     strcpy_s(actionSetCreateInfo.actionSetName, "input");
-    strcpy_s(actionSetCreateInfo.localizedActionSetName, "Input");
+    strcpy_s(actionSetCreateInfo.localizedActionSetName, "Input Actions");
     result = xrCreateActionSet(xrInstance, &actionSetCreateInfo, &actionSet);
     if (XR_FAILED(result)) {
         throw std::runtime_error("Failed to create action set.");
@@ -1099,7 +1169,7 @@ bool StartEngine::SetupXRInput() {
         };
 
     XrPath buttonAPath, buttonBPath, buttonXPath, buttonYPath, leftTriggerPath, rightTriggerPath, leftXThumbstickPath, leftYThumbstickPath, rightXThumbstickPath, rightYThumbstickPath, leftGripPath, rightGripPath, menuPath;
-    if (StringToPath("/user/hand/right/input/a/touch", &buttonAPath) ||
+    if (StringToPath("/user/hand/right/input/a/click", &buttonAPath) ||
         StringToPath("/user/hand/right/input/b/click", &buttonBPath) ||
         StringToPath("/user/hand/left/input/x/click", &buttonXPath) ||
         StringToPath("/user/hand/left/input/y/click", &buttonYPath) ||
@@ -1180,7 +1250,6 @@ bool StartEngine::SetupXRInput() {
 
 
 
-    SetupXRLayers();
 
 
 
@@ -1197,8 +1266,17 @@ bool StartEngine::SetupXRInput() {
     swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 
     // Create swapchains for both eyes
-    xrCreateSwapchain(xrSession, &swapchainCreateInfo, &xrLeftEyeSwapchain);
-    xrCreateSwapchain(xrSession, &swapchainCreateInfo, &xrRightEyeSwapchain);
+    result = xrCreateSwapchain(xrSession, &swapchainCreateInfo, &xrLeftEyeSwapchain);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to attach action sets to session.");
+    }
+
+    result = xrCreateSwapchain(xrSession, &swapchainCreateInfo, &xrRightEyeSwapchain);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to attach action sets to session.");
+    }
+
+    SetupXRLayers();
 
     return true;
 }
@@ -2036,6 +2114,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             if (startEng.postD3DGraphics) {
                 if (startEng.D3DGfx().target != nullptr) {
+
+                    /*if (startEng.xrLeftEyeSwapchain) {
+                        xrDestroySwapchain(startEng.xrLeftEyeSwapchain);
+                        startEng.xrLeftEyeSwapchain = nullptr;
+                    }
+                    if (startEng.xrRightEyeSwapchain) {
+                        xrDestroySwapchain(startEng.xrRightEyeSwapchain);
+                        startEng.xrRightEyeSwapchain = nullptr;
+                    }
+
+                    
+                    XrSwapchainCreateInfo swapchainCreateInfo = {};
+                    swapchainCreateInfo.type = XR_TYPE_SWAPCHAIN_CREATE_INFO;
+                    swapchainCreateInfo.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+                    swapchainCreateInfo.width = 1344;
+                    swapchainCreateInfo.height = 1600;
+                    swapchainCreateInfo.sampleCount = 1;
+                    swapchainCreateInfo.faceCount = 1;
+                    swapchainCreateInfo.arraySize = 1;
+                    swapchainCreateInfo.mipCount = 1;
+                    swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+
+                    xrCreateSwapchain(startEng.xrSession, &swapchainCreateInfo, &startEng.xrLeftEyeSwapchain);
+                    xrCreateSwapchain(startEng.xrSession, &swapchainCreateInfo, &startEng.xrRightEyeSwapchain);*/
+
                     windowWidth = LOWORD(lParam);
                     windowHeight = HIWORD(lParam);
 

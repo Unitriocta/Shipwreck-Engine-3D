@@ -220,6 +220,10 @@ public:
 	XrCompositionLayerProjectionView projectionViews[2];
 
 
+	ID3D11RenderTargetView* leftEyeRTV;
+	ID3D11RenderTargetView* rightEyeRTV;
+
+
 
 	XrActionSet actionSet;
 

@@ -102,11 +102,14 @@ public:
 
 
 	void EndFrame();
-	void ClearBuffer(float r, float g, float b) noexcept {
+	void ClearBuffer(float r, float g, float b, ID3D11RenderTargetView* rtv) noexcept {
 		const float color[] = { r,g,b,1.0f }; //alpha
-		deviceContext->ClearRenderTargetView(target, color);
+		deviceContext->ClearRenderTargetView(rtv, color);
+	};
+	void ClearDepth() noexcept {
 		deviceContext->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	};
+
 	void DrawTestTri(HWND hWnd);
 	void RenderTriangles(std::vector<Vertice> vertices, HWND hWnd);
 
