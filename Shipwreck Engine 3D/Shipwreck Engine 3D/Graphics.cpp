@@ -28,7 +28,7 @@ void D3DGraphics::Initialize( HWND hWnd) {
 	DXGI_SWAP_CHAIN_DESC sd = {};
 	sd.BufferDesc.Width = windowWidth;
 	sd.BufferDesc.Height = windowHeight;
-	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 0;
 	sd.BufferDesc.RefreshRate.Denominator = 0;
 	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
@@ -59,7 +59,7 @@ void D3DGraphics::Initialize( HWND hWnd) {
 	msaaDesc.Height = windowHeight;
 	msaaDesc.MipLevels = 1;
 	msaaDesc.ArraySize = 1;
-	msaaDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	msaaDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	msaaDesc.SampleDesc.Count = msaaSamples;
 	msaaDesc.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
 	msaaDesc.Usage = D3D11_USAGE_DEFAULT;

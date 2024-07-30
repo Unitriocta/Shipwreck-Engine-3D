@@ -82,10 +82,8 @@ using namespace FileManager;
 
 #include "OpenXRInput.h"
 
-#define XR_USE_GRAPHICS_API_D3D11
-#include <openxr/openxr.h>
-#include <openxr/openxr_platform.h>
 
+#include "OpenXRSetup.h"
 
 class StartEngine;
 
@@ -171,12 +169,7 @@ public:
 	void InputThread();
 	std::mutex threadMtx;
 
-	//Returns false if it fails to setup
-	bool SetupXRInput();
-	void ProcessXRInput();
-	void SetupXRLayers();
 
-	XrTime GetPredictedDisplayTime();
 	//void HandleInput();
 
 
@@ -207,43 +200,7 @@ public:
 	OpenXRInput xrInput;
 
 
-
-	XrInstance xrInstance;
-	XrSession xrSession;
-	XrSwapchain xrLeftEyeSwapchain;
-	XrSwapchain xrRightEyeSwapchain;
-
-	XrSwapchainImageD3D11KHR* swapchainImages[2];
-	
-	XrFrameState frameState;
-	XrCompositionLayerProjection projectionLayer;
-	XrCompositionLayerProjectionView projectionViews[2];
-
-
-	ID3D11RenderTargetView* leftEyeRTV;
-	ID3D11RenderTargetView* rightEyeRTV;
-
-
-
-	XrActionSet actionSet;
-
-	XrAction buttonAAction;
-	XrAction buttonBAction;
-	XrAction buttonXAction;
-	XrAction buttonYAction;
-
-	XrAction leftTriggerAction;
-	XrAction rightTriggerAction;
-
-	XrAction leftXThumbstickAction;
-	XrAction leftYThumbstickAction;
-	XrAction rightXThumbstickAction;
-	XrAction rightYThumbstickAction;
-
-	XrAction leftGripAction = XR_NULL_HANDLE;
-	XrAction rightGripAction = XR_NULL_HANDLE;
-
-	XrAction menuAction;
+	OpenXRSetup xrInstance;
 
 
 	std::vector<Container*> containers; //Stores container's, which store models, camera's, position, rotation, ect.

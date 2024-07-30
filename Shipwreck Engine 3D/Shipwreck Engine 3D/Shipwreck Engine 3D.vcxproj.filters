@@ -86,6 +86,9 @@
     <Filter Include="Engine Code\Rendering\Shaders\GL\3D Shaders">
       <UniqueIdentifier>{40252e01-0048-4b04-9217-f334114ec27f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Code\Starting and Loading\XR">
+      <UniqueIdentifier>{e961e5c2-8bf0-4ef1-9796-04f6a03ee1a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StartEngine.cpp">
@@ -196,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="OpenXRInput.cpp">
       <Filter>Engine Code\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenXRSetup.cpp">
+      <Filter>Engine Code\Starting and Loading\XR</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -317,6 +323,9 @@
     <ClInclude Include="OpenXRInput.h">
       <Filter>Engine Code\Input</Filter>
     </ClInclude>
+    <ClInclude Include="OpenXRSetup.h">
+      <Filter>Engine Code\Starting and Loading\XR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico">
@@ -383,6 +392,7 @@
       <Filter>Engine Code\Rendering\Shaders\GL\3D Shaders</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="$(OpenXRLoaderBinaryRoot)\bin\openxr_loader.dll" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ToDo.txt" />
