@@ -563,8 +563,6 @@ void StartEngine::RenderFrame() {
             xrInstance.StartFrame();
 
 
-            xrInstance.ClearBuffers();
-
             D3DGfx().ClearBuffer(0.2f, 0.2f, 0.7f, D3DGfx().target);
             D3DGfx().ClearDepth();
 
@@ -576,9 +574,6 @@ void StartEngine::RenderFrame() {
 
 
 
-
-
-            //Comment this maybe to test vr, nvm
             D3DGfx().EndFrame();
         }
         else {

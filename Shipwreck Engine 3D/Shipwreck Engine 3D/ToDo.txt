@@ -1,15 +1,11 @@
 To-Do List
 
-1. Import ALL models from 3d model file and put in Models.modelList
+1. Fix OpenXR only rendering to 1 eye, the frame color correction
 
-2. Import parents, children, transforms (positions, rotations, and scales) from 3d model files
+2. Fix 3D Animation strong weighted vertices
 
-3. 3D Animation... (somehow we'll do it)
+3. GAME PROGRESS!!!
 
-4. GAME PROGRESS!!!
+LATER:
 
-
-
-Later (After FPS Finished)
-
-1. Change 3DTexturedVS skinned mesh properties to none and separate it to a different hlsl
+1. 

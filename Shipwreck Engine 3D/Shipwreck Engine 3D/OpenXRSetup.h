@@ -17,15 +17,7 @@
 class OpenXRSetup
 {
 public:
-	OpenXRSetup() :
-		canRenderToXR(false), swapchainWidth(1080), swapchainHeight(1200), xrInstance(XR_NULL_HANDLE), xrSession(XR_NULL_HANDLE), systemId(XR_NULL_SYSTEM_ID),
-		referenceSpace(XR_NULL_HANDLE), xrLeftEyeSwapchain(XR_NULL_HANDLE), xrRightEyeSwapchain(XR_NULL_HANDLE), actionSet(XR_NULL_HANDLE),
-
-		buttonAAction(XR_NULL_HANDLE), buttonBAction(XR_NULL_HANDLE), buttonXAction(XR_NULL_HANDLE), buttonYAction(XR_NULL_HANDLE), 
-		leftTriggerAction(XR_NULL_HANDLE), rightTriggerAction(XR_NULL_HANDLE), leftXThumbstickAction(XR_NULL_HANDLE), 
-		leftYThumbstickAction(XR_NULL_HANDLE), rightXThumbstickAction(XR_NULL_HANDLE), rightYThumbstickAction(XR_NULL_HANDLE),
-		leftGripAction(XR_NULL_HANDLE), rightGripAction(XR_NULL_HANDLE), menuAction(XR_NULL_HANDLE)
-	{}
+	OpenXRSetup();
 
 
 public:
@@ -148,6 +140,7 @@ public:
 
 	ID3D11RenderTargetView* rtvs[3];
 	
+	DXGI_FORMAT colorFormat;
 
 	int swapchainWidth;
 	int swapchainHeight;
